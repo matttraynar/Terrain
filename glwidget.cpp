@@ -16,6 +16,9 @@ GLWidget::GLWidget( QWidget* parent ) :
     m_mouseDelta = 0;
     m_cameraPos = QVector3D(5.0f, 5.0f, 5.0f);
 
+    m_x = -20;
+    moveDown = false;
+
     m_wireframe = false;
 }
 
@@ -45,7 +48,8 @@ void GLWidget::initializeGL()
 
     startTimer(1);
 
-    prepareTerrain(5);
+    prepareTerrain(3);
+    qInfo()<<"Terrain prepared";
 
     m_pgm.release();
 
@@ -64,18 +68,31 @@ void GLWidget::paintGL()
 
     m_pgm.bind();
 
-    m_pgm.setUniformValue("mCol",QVector4D(1.0f,1.0f,1.0f,0.0f));
+    m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
+    m_pgm.setUniformValue("lightPos",QVector3D(m_x, 10.0f, 0.0f));
 
-    loadMatricesToShader();
+    loadMatricesToShader(QVector3D(0,0,0));
 
     drawTerrain();
 
     vao_water.bind();
     m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,1.0f,1.0f));
 
-    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
+//    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
 
     vao_water.release();
+
+    vao_trees.bind();
+    m_pgm.setUniformValue("mCol",QVector4D(1.0f,0.0f,0.0f,1.0f));
+
+    for(uint i = 0; i < m_treePositions.size(); ++i)
+    {
+        loadMatricesToShader(m_treePositions[i]);
+
+        glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
+    }
+
+    vao_trees.release();
 
     m_pgm.release();
 }
@@ -100,6 +117,17 @@ void GLWidget::timerEvent(QTimerEvent *e)
     {
         colour = 0.0f;
     }
+
+    if(m_x > 20)
+    {
+        moveDown = true;
+    }
+    else if(m_x < -20)
+    {
+        moveDown = false;
+    }
+
+    (moveDown) ? m_x -= 0.05f : m_x += 0.05f;
 
     update();
 }
@@ -259,7 +287,7 @@ bool GLWidget::prepareShaderProgram( const QString& vertexShaderPath, const QStr
      return result;
 }
 
-void GLWidget::loadMatricesToShader()
+void GLWidget::loadMatricesToShader(QVector3D position)
 {
     //Get vector from camera to the origin
     QVector3D o(0,0,0);
@@ -283,6 +311,8 @@ void GLWidget::loadMatricesToShader()
     m_model.rotate(m_xRot / 16.0f, QVector3D(1, 0, 0));
     m_model.rotate(m_yRot / 16.0f, QVector3D(0, 1, 0));
 
+    m_model.translate(position);
+
     //Calculate the MVP
     m_mvp = m_proj * m_view * m_model;
 
@@ -296,128 +326,235 @@ void GLWidget::loadMatricesToShader()
 
 void GLWidget::prepareTerrain(int iterations)
 {
-    float dimensions = pow(2, iterations) + 1;
+    float dimensions = pow(2, iterations);
 
-    m_heights.resize(dimensions, std::vector<float>(dimensions, 0.0f));
+//    m_heights.resize(dimensions + 1, std::vector<float>(dimensions + 1, 0.0f));
 
-    diamondSquare(0, 0, dimensions, dimensions, 3.0f, iterations);
+//    diamondSquare(0, 0, dimensions + 1, dimensions + 1, 3.0f, iterations);
+//    newDiamondSquare(0,0,dimensions - 1, dimensions - 1, 3.0f, 0, iterations, dimensions);
 
-    float start = -10.0f;
+//    d2(0,dimensions,0, dimensions, 5.0f, 0, iterations);
 
-    m_norms.resize(dimensions * dimensions * 4, QVector3D(0.0f, 0.0f, 1.0f));
+    std::vector<float> heightMap = {0.0f, 0.0f, 0.0f, 0.0f};
 
-    for(uint i = 0; i < dimensions - 1; ++i)
+    float range = 50.0f;
+
+    float start = (0 - (range/2.0f));
+
+    heightMap = d3(heightMap, 5.0f, 0, iterations);
+
+    qInfo()<<"Verts";
+    qInfo()<<heightMap.size();
+
+    int rowCount = 0;
+    int columnCount = 0;
+
+    //PROBLEM WITH D£ returning height maps too small?>
+
+//    !((columnCount == (pow(2, iterations) - 1) || (rowCount == (pow(2, iterations) - 1))))
+
+    while((columnCount + ((rowCount + 1)* (pow(2, iterations)))) != heightMap.size())
     {
-        for(uint j = 0; j < dimensions - 1; ++j)
+        qInfo()<<(columnCount == pow(2, iterations))<<(rowCount == (pow(2, iterations)));
+        qInfo()<<columnCount + 1 + ((rowCount + 1) * (pow(2, iterations) + 1));
+        qInfo()<<columnCount<<rowCount;
+
+        QVector3D newVertex( (((float)columnCount / (pow(2,
+                                                         iterations) + 1) ) * range) + start,
+                                        heightMap[columnCount + (rowCount * (pow(2, iterations) + 1))],
+                                        (((float)rowCount / (pow(2, iterations) + 1) ) * range) + start);
+
+        m_verts.push_back(newVertex);
+//            m_norms.push_back(getNormal(i, j));
+        m_norms.push_back(QVector3D(0,1,0));
+
+        QVector3D newVertex2( ((((float)columnCount + 1) / (pow(2, iterations) + 1) ) * range) + start,
+                                        heightMap[columnCount + 1 + (rowCount * (pow(2, iterations) + 1))],
+                                        (((float)rowCount / (pow(2, iterations) + 1) ) * range) + start);
+
+        m_verts.push_back(newVertex2);
+//            m_norms.push_back(getNormal(i + 1, j));
+        m_norms.push_back(QVector3D(0,1,0));
+
+        QVector3D newVertex3( ((((float)columnCount + 1) / (pow(2, iterations) + 1) ) * range) + start,
+                                        heightMap[columnCount + 1 + ((rowCount + 1) * (pow(2, iterations) + 1))],
+                                        ((((float)rowCount + 1) / (pow(2, iterations) + 1) ) * range) + start);
+
+        m_verts.push_back(newVertex3);
+//            m_norms.push_back(getNormal(i + 1, j + 1));
+        m_norms.push_back(QVector3D(0,1,0));
+
+        QVector3D newVertex4( (((float)columnCount / (pow(2, iterations) + 1) ) * range) + start,
+                                        heightMap[columnCount + ((rowCount + 1) * (pow(2, iterations) + 1))],
+                                        ((((float)rowCount + 1) / (pow(2, iterations) + 1) ) * range) + start);
+
+        m_verts.push_back(newVertex4);
+//            m_norms.push_back(getNormal(i, j + 1));
+        m_norms.push_back(QVector3D(0,1,0));
+
+        if(columnCount == (pow(2, iterations) - 1))
         {
-
-
-            QVector3D newVertex( (((float)i / (dimensions - 1) ) * 20.0f) + start,
-                                            m_heights[i][j],
-                                            (((float)j / (dimensions - 1) ) * 20.0f) + start);
-
-            m_verts.push_back(newVertex);
-
-            QVector3D newVertex2( ((((float)i + 1) / (dimensions - 1) ) * 20.0f) + start,
-                                            m_heights[i + 1][j],
-                                            (((float)j / (dimensions - 1) ) * 20.0f) + start);
-
-            m_verts.push_back(newVertex2);
-
-            QVector3D newVertex3( ((((float)i + 1) / (dimensions - 1) ) * 20.0f) + start,
-                                            m_heights[i + 1][j + 1],
-                                            ((((float)j + 1) / (dimensions - 1) ) * 20.0f) + start);
-
-            m_verts.push_back(newVertex3);
-
-            QVector3D newVertex4( (((float)i / (dimensions - 1) ) * 20.0f) + start,
-                                            m_heights[i][j + 1],
-                                            ((((float)j + 1) / (dimensions - 1) ) * 20.0f) + start);
-
-            m_verts.push_back(newVertex4);
+            rowCount++;
+            columnCount = 0;
+        }
+        else
+        {
+            columnCount++;
         }
     }
+
+    qInfo()<<(!((columnCount == (pow(2, iterations)) && (rowCount == (pow(2, iterations) - 1)))));
+
+//    for(uint i = 0; i < iterations - 1; ++i)
+//    {
+//        for(uint j = 0; j < iterations - 1; ++j)
+//        {
+
+//            qInfo()<<"v1";
+//            QVector3D newVertex( (((float)i / (iterations) ) * range) + start,
+//                                            heightMap[(i * iterations) + j],
+//                                            (((float)j / (iterations) ) * range) + start);
+
+//            m_verts.push_back(newVertex);
+////            m_norms.push_back(getNormal(i, j));
+//            m_norms.push_back(QVector3D(0,1,0));
+
+//            qInfo()<<"v2";
+//            QVector3D newVertex2( ((((float)i + 1) / (iterations) ) * range) + start,
+//                                            heightMap[((i + 1) * iterations) + j],
+//                                            (((float)j / (iterations) ) * range) + start);
+
+//            m_verts.push_back(newVertex2);
+////            m_norms.push_back(getNormal(i + 1, j));
+//            m_norms.push_back(QVector3D(0,1,0));
+
+//            qInfo()<<"v3";
+//            QVector3D newVertex3( ((((float)i + 1) / (iterations) ) * range) + start,
+//                                            heightMap[((i + 1) * iterations) + j + 1],
+//                                            ((((float)j + 1) / (iterations) ) * range) + start);
+
+//            m_verts.push_back(newVertex3);
+////            m_norms.push_back(getNormal(i + 1, j + 1));
+//            m_norms.push_back(QVector3D(0,1,0));
+
+//            qInfo()<<"v4";
+//            QVector3D newVertex4( (((float)i / (iterations) ) * range) + start,
+//                                            heightMap[(i * iterations) + j + 1],
+//                                            ((((float)j + 1) / (iterations ) ) * range) + start);
+
+//            m_verts.push_back(newVertex4);
+////            m_norms.push_back(getNormal(i, j + 1));
+//            m_norms.push_back(QVector3D(0,1,0));
+//        }
+//    }
+
+
+
+
+//    for(uint i = 0; i < dimensions; ++i)
+//    {
+//        for(uint j = 0; j < dimensions; ++j)
+//        {
+//            QVector3D newVertex( (((float)i / (dimensions) ) * range) + start,
+//                                            m_heights[i][j],
+//                                            (((float)j / (dimensions) ) * range) + start);
+
+//            m_verts.push_back(newVertex);
+//            m_norms.push_back(getNormal(i, j));
+
+//            QVector3D newVertex2( ((((float)i + 1) / (dimensions) ) * range) + start,
+//                                            m_heights[i + 1][j],
+//                                            (((float)j / (dimensions) ) * range) + start);
+
+//            m_verts.push_back(newVertex2);
+//            m_norms.push_back(getNormal(i + 1, j));
+
+//            QVector3D newVertex3( ((((float)i + 1) / (dimensions) ) * range) + start,
+//                                            m_heights[i + 1][j + 1],
+//                                            ((((float)j + 1) / (dimensions) ) * range) + start);
+
+//            m_verts.push_back(newVertex3);
+//            m_norms.push_back(getNormal(i + 1, j + 1));
+
+//            QVector3D newVertex4( (((float)i / (dimensions) ) * range) + start,
+//                                            m_heights[i][j + 1],
+//                                            ((((float)j + 1) / (dimensions ) ) * range) + start);
+
+//            m_verts.push_back(newVertex4);
+//            m_norms.push_back(getNormal(i, j + 1));
+//        }
+//    }
+
+
+//    m_norms.resize(m_verts.size(), QVector3D(0.5f, 0.0f, 0.0f));
 
     int count = 0;
 
-    for(int i = 0; i < dimensions - 1; ++i)
-    {
-        for(int j = 0; j < dimensions - 1; ++j)
-        {
-            float heightToLeft = 0.0f;
-            float heightToRight = 0.0f;
-            float heightToFront = 0.0f;
-            float heightToBack = 0.0f;
-
-            if(count < m_norms.size()){
-
-                ((i - 1) > 0) ? heightToLeft = m_heights[i - 1][j] : heightToLeft = 0.0f;
-                ((i + 1) < dimensions) ? heightToRight = m_heights[i + 1][j] : heightToRight = 0.0f;
-                ((j + 1) < dimensions) ? heightToFront = m_heights[i][j + 1] : heightToFront = 0.0f;
-                ((j - 1) > 0) ? heightToBack = m_heights[i][j - 1] : heightToBack = 0.0f;
-
-                m_norms[count].setX(heightToLeft - heightToRight);
-                m_norms[count].setY(heightToBack - heightToFront);
-                m_norms[count].setZ(2.0f);
-
-                m_norms[count].normalize();
+    qInfo()<<"Norms";
 
 
-                count++;
+//    for(int i = 0; i < dimensions; ++i)
+//    {
+//        for(int j = 0; j < dimensions; ++j)
+//        {
+//            float heightToLeft = 0.0f;
+//            float heightToRight = 0.0f;
+//            float heightToFront = 0.0f;
+//            float heightToBack = 0.0f;
 
-                if(count < m_norms.size())
-                {
-                    ((i + 1 - 1) > 0) ? heightToLeft = m_heights[i + 1 - 1][j] : heightToLeft = 0.0f;
-                    ((i + 1 + 1) < dimensions) ? heightToRight = m_heights[i + 1 + 1][j] : heightToRight = 0.0f;
-                    ((j + 1) < dimensions && (i + 1) < dimensions) ? heightToFront = m_heights[i + 1][j + 1] : heightToFront = 0.0f;
-                    ((j - 1) > 0 && (i + 1) < dimensions) ? heightToBack = m_heights[i + 1][j - 1] : heightToBack = 0.0f;
+//            ((i - 1) > 0) ? heightToLeft = m_heights[i - 1][j] : heightToLeft = 0.0f;
+//            ((i + 1) < dimensions) ? heightToRight = m_heights[i + 1][j] : heightToRight = 0.0f;
+//            ((j + 1) < dimensions) ? heightToFront = m_heights[i][j + 1] : heightToFront = 0.0f;
+//            ((j - 1) > 0) ? heightToBack = m_heights[i][j - 1] : heightToBack = 0.0f;
 
-                    m_norms[count].setX(heightToLeft - heightToRight);
-                    m_norms[count].setY(heightToBack - heightToFront);
-                    m_norms[count].setZ(2.0f);
+//            m_norms[count].setX(heightToLeft - heightToRight);
+//            m_norms[count].setY(heightToBack - heightToFront);
+//            m_norms[count].setZ(2.0f);
 
-                    m_norms[count].normalize();
+//            m_norms[count].normalize();
+//            count++;
 
+//            ((i + 1 - 1) > 0) ? heightToLeft = m_heights[i + 1 - 1][j] : heightToLeft = 0.0f;
+//            ((i + 1 + 1) < dimensions) ? heightToRight = m_heights[i + 1 + 1][j] : heightToRight = 0.0f;
+//            ((j + 1) < dimensions && (i + 1) < dimensions) ? heightToFront = m_heights[i + 1][j + 1] : heightToFront = 0.0f;
+//            ((j - 1) > 0 && (i + 1) < dimensions) ? heightToBack = m_heights[i + 1][j - 1] : heightToBack = 0.0f;
 
-                    count++;
+//            m_norms[count].setX(heightToLeft - heightToRight);
+//            m_norms[count].setY(heightToBack - heightToFront);
+//            m_norms[count].setZ(2.0f);
 
-                    if(count < m_norms.size())
-                    {
-                        ((i + 1 - 1) > 0 && (j + 1) < dimensions) ? heightToLeft = m_heights[i + 1 - 1][j + 1] : heightToLeft = 0.0f;
-                        ((i + 1 + 1) < dimensions && (j + 1) < dimensions) ? heightToRight = m_heights[i + 1 + 1][j + 1] : heightToRight = 0.0f;
-                        ((j + 1 + 1) < dimensions && (i + 1) < dimensions) ? heightToFront = m_heights[i + 1][j + 1 + 1] : heightToFront = 0.0f;
-                        ((j + 1 - 1) > 0 && (i + 1) < dimensions) ? heightToBack = m_heights[i + 1][j - 1 + 1] : heightToBack = 0.0f;
+//            m_norms[count].normalize();
 
-                        m_norms[count].setX(heightToLeft - heightToRight);
-                        m_norms[count].setY(heightToBack - heightToFront);
-                        m_norms[count].setZ(2.0f);
+//            count++;
 
-                        m_norms[count].normalize();
+//            ((i + 1 - 1) > 0 && (j + 1) < dimensions) ? heightToLeft = m_heights[i + 1 - 1][j + 1] : heightToLeft = 0.0f;
+//            ((i + 1 + 1) < dimensions && (j + 1) < dimensions) ? heightToRight = m_heights[i + 1 + 1][j + 1] : heightToRight = 0.0f;
+//            ((j + 1 + 1) < dimensions && (i + 1) < dimensions) ? heightToFront = m_heights[i + 1][j + 1 + 1] : heightToFront = 0.0f;
+//            ((j + 1 - 1) > 0 && (i + 1) < dimensions) ? heightToBack = m_heights[i + 1][j - 1 + 1] : heightToBack = 0.0f;
 
+//            m_norms[count].setX(heightToLeft - heightToRight);
+//            m_norms[count].setY(heightToBack - heightToFront);
+//            m_norms[count].setZ(2.0f);
 
-                        count++;
-
-                        if(count < m_norms.size())
-                        {
-                            ((i - 1) > 0 && (j + 1) < dimensions) ? heightToLeft = m_heights[i - 1][j + 1] : heightToLeft = 0.0f;
-                            ((i + 1) < dimensions && (j + 1) < dimensions) ? heightToRight = m_heights[i + 1][j + 1] : heightToRight = 0.0f;
-                            ((j + 1 + 1) < dimensions) ? heightToFront = m_heights[i][j + 1 + 1] : heightToFront = 0.0f;
-                            ((j + 1 - 1) > 0) ? heightToBack = m_heights[i][j - 1 + 1] : heightToBack = 0.0f;
-
-                            m_norms[count].setX(heightToLeft - heightToRight);
-                            m_norms[count].setY(heightToBack - heightToFront);
-                            m_norms[count].setZ(2.0f);
-
-                            m_norms[count].normalize();
+//            m_norms[count].normalize();
 
 
-                            count++;
-                        }
-                    }
-                }
-            }
-        }
-    }
+//            count++;
+
+//            ((i - 1) > 0 && (j + 1) < dimensions) ? heightToLeft = m_heights[i - 1][j + 1] : heightToLeft = 0.0f;
+//            ((i + 1) < dimensions && (j + 1) < dimensions) ? heightToRight = m_heights[i + 1][j + 1] : heightToRight = 0.0f;
+//            ((j + 1 + 1) < dimensions) ? heightToFront = m_heights[i][j + 1 + 1] : heightToFront = 0.0f;
+//            ((j + 1 - 1) > 0) ? heightToBack = m_heights[i][j - 1 + 1] : heightToBack = 0.0f;
+
+//            m_norms[count].setX(heightToLeft - heightToRight);
+//            m_norms[count].setY(heightToBack - heightToFront);
+//            m_norms[count].setZ(2.0f);
+
+//            m_norms[count].normalize();
+
+//            count++;
+//        }
+//    }
 
     vao_terrain.create();
     vao_terrain.bind();
@@ -472,7 +609,6 @@ void GLWidget::prepareTerrain(int iterations)
         }
     }
 
-
     m_waterVerts.push_back(QVector3D(-100.0f, averageHeight, -100.0f));
     m_waterVerts.push_back(QVector3D(-100.0f, averageHeight, 100.0f));
     m_waterVerts.push_back(QVector3D(100.0f, averageHeight, 100.0f));
@@ -505,13 +641,131 @@ void GLWidget::prepareTerrain(int iterations)
     nbo_water.release();
 
     vao_water.release();
+
+    m_treeVerts.push_back(QVector3D(0.1f, 0.0f, 0.1f));   //0
+    m_treeVerts.push_back(QVector3D(-0.1f, 0.0f, 0.1f));  //1
+    m_treeVerts.push_back(QVector3D(-0.1f, 0.0f, -0.1f)); //2
+    m_treeVerts.push_back(QVector3D(0.1f, 0.0f, -0.1f));  //3
+
+    m_treeVerts.push_back(QVector3D(0.1f, 0.5f, 0.1f));   //4
+    m_treeVerts.push_back(QVector3D(-0.1f, 0.5f, 0.1f));  //5
+    m_treeVerts.push_back(QVector3D(-0.1f, 0.5f, -0.1f)); //6
+    m_treeVerts.push_back(QVector3D(0.1f, 0.5f, -0.1f));  //7
+
+    //Bottom
+    m_treeIndices.push_back(0);
+    m_treeIndices.push_back(1);
+    m_treeIndices.push_back(2);
+    m_treeIndices.push_back(3);
+
+    //Sides
+    m_treeIndices.push_back(0);
+    m_treeIndices.push_back(1);
+    m_treeIndices.push_back(5);
+    m_treeIndices.push_back(4);
+
+    m_treeIndices.push_back(1);
+    m_treeIndices.push_back(2);
+    m_treeIndices.push_back(6);
+    m_treeIndices.push_back(5);
+
+    m_treeIndices.push_back(2);
+    m_treeIndices.push_back(3);
+    m_treeIndices.push_back(7);
+    m_treeIndices.push_back(6);
+
+    m_treeIndices.push_back(3);
+    m_treeIndices.push_back(0);
+    m_treeIndices.push_back(4);
+    m_treeIndices.push_back(7);
+
+    //Top
+    m_treeIndices.push_back(4);
+    m_treeIndices.push_back(5);
+    m_treeIndices.push_back(6);
+    m_treeIndices.push_back(7);
+
+    vao_trees.create();
+    vao_trees.bind();
+
+    vbo_trees.create();
+    vbo_trees.bind();
+    vbo_trees.allocate(&m_treeVerts[0], (int)m_treeVerts.size() * sizeof(GLfloat) * 3);
+
+    m_pgm.enableAttributeArray("vertexPos");
+    m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
+
+    vbo_trees.release();
+
+    ibo_trees.create();
+    ibo_trees.bind();
+    ibo_trees.allocate(&m_treeIndices[0], (int)m_treeIndices.size() * sizeof(uint));
+
+    vao_trees.release();
+
+    int switchCounter = 0;
+
+    for(int i = 0; i < m_norms.size(); i += 4)
+    {
+        QVector3D faceNorm = m_norms[i] + m_norms[i + 1] + m_norms[i + 2] + m_norms[i + 3];
+        faceNorm /= 4.0f;
+
+        float angle = (acos(QVector3D::dotProduct(faceNorm.normalized(), QVector3D(0,1,0)) / (faceNorm.length())) * 180.0) / PI;
+
+        if(angle > 125)
+        {
+            QVector3D midFace;
+
+            switch(switchCounter)
+            {
+            case 0:
+                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3];
+                m_treePositions.push_back(midFace/4.0f);
+                break;
+
+            case 1:
+                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 2];
+                m_treePositions.push_back(midFace/3.0f);
+                break;
+
+            case 2:
+                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 3];
+                m_treePositions.push_back(midFace/3.0f);
+                break;
+
+            case 3:
+                midFace = m_verts[i] + m_verts[i + 3] + m_verts[i + 2];
+                m_treePositions.push_back(midFace/3.0f);
+                break;
+
+            case 4:
+                midFace = m_verts[i + 3] + m_verts[i + 1] + m_verts[i + 2];
+                m_treePositions.push_back(midFace/3.0f);
+                break;
+
+            case 5:
+                midFace = m_verts[i] + m_verts[i + 1];
+                m_treePositions.push_back(midFace/2.0f);
+                break;
+
+            case 6:
+                midFace = m_verts[i + 1] + m_verts[i + 2];
+                m_treePositions.push_back(midFace/2.0f);
+                switchCounter = 0;
+                break;
+            }
+
+            switchCounter++;
+
+        }
+    }
 }
 
 void GLWidget::drawTerrain()
 {
     vao_terrain.bind();
 
-    (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glDrawArrays(GL_QUADS, 0, (int)m_verts.size());
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -566,4 +820,273 @@ void GLWidget::diamondSquare(uint x1, uint y1, uint x2, uint y2, float height, f
     }
 
     diamondSquare(x1, y1, x2, y2, height / 2.0f, iteration / 2.0f);
+}
+
+void GLWidget::newDiamondSquare(uint x1, uint y1, uint x2, uint y2, float height, int iteration, int maxIterations, int dimensions)
+{
+    //INTERPOLATE VALUES
+
+    if(iteration == maxIterations)
+    {
+        return;
+    }
+
+    // j
+    // |
+    // |
+    // |
+    // x--------------i
+
+    qInfo()<<"Checking iter";
+    if(iteration == 0)
+    {
+        qInfo()<<"First";
+        m_heights.resize(dimensions, std::vector<float>(dimensions, 0.0f));
+
+        m_heights[0]                       [0]                      = ((float)rand() / RAND_MAX) * height;
+        m_heights[0]                       [dimensions - 1]  = ((float)rand() / RAND_MAX) * height;
+        m_heights[dimensions - 1]   [0]                      = ((float)rand() / RAND_MAX) * height;
+        m_heights[dimensions - 1]   [dimensions - 1]   = ((float)rand() / RAND_MAX) * height;
+
+        uint xMid = x1 + (dimensions/(pow(2, iteration))) - 1;
+        uint yMid = y1 + (dimensions/(pow(2, iteration))) - 1;
+
+        newDiamondSquare(x1, y1, x2, y2, height, iteration + 1, maxIterations, dimensions);
+
+//        newDiamondSquare(x1, y1, xMid, yMid, height, iteration + 1, maxIterations, dimensions);
+
+//        newDiamondSquare(xMid, y1, x2, yMid, height, iteration + 1, maxIterations, dimensions);
+
+//        newDiamondSquare(x1, yMid, xMid, y2, height, iteration + 1, maxIterations, dimensions);
+
+//        newDiamondSquare(xMid, yMid,  x2, y2, height, iteration + 1, maxIterations, dimensions);
+    }
+    else
+    {
+        qInfo()<<"Corner step";
+
+        float h1 = m_heights[x1][y1];
+        float h2 = m_heights[x2][y1];
+        float h3 = m_heights[x1][y2];
+        float h4 = m_heights[x2][y2];
+
+        float newHeight_Center = ((h1 + h2 + h3 + h4) / 4.0f) + ((float)rand() / RAND_MAX) * height;
+
+        uint xMid = ((x2 - x1) / 2) + x1;
+        uint yMid = ((y2 - y1) / 2) + y1;
+
+        qInfo()<<"Diamond";
+        m_heights[xMid][yMid] += newHeight_Center;
+
+
+        float newHeight_Bottom = ((h2 - h1)/2.0f);// + ((float)rand() / RAND_MAX) * height;
+        float newHeight_Top = ((h4 - h3)/2.0f);// + ((float)rand() / RAND_MAX) * height;
+        float newHeight_Left = ((h3 - h1)/2.0f);// + ((float)rand() / RAND_MAX) * height;
+        float newHeight_Right = ((h4 - h2)/2.0f);// + ((float)rand() / RAND_MAX) * height;
+
+        qInfo()<<"Square";
+        m_heights[xMid][y1] = newHeight_Bottom;
+        m_heights[xMid][y2] = newHeight_Top;
+        m_heights[x1][yMid] = newHeight_Left;
+        m_heights[x2][yMid] = newHeight_Right;
+
+
+        qInfo()<<"Next iter";
+        newDiamondSquare(x1, y1, xMid, yMid, height, iteration + 1, maxIterations, dimensions);
+
+        newDiamondSquare(xMid, y1, x2, yMid, height, iteration + 1, maxIterations, dimensions);
+
+        newDiamondSquare(x1, yMid, xMid, y2, height, iteration + 1, maxIterations, dimensions);
+
+        newDiamondSquare(xMid, yMid,  x2, y2, height, iteration + 1, maxIterations, dimensions);
+    }
+
+}
+
+float GLWidget::getHeight(int x, int y)
+{
+    if( x < 0 || x >= m_heights.size() || y < 0)
+    {
+        return 0.0f;
+    }
+    else if(y >= m_heights[x].size())
+    {
+        return 0.0f;
+    }
+    else
+    {
+        return m_heights[x][y];
+    }
+}
+
+QVector3D GLWidget::getNormal(int x, int y)
+{
+    float heightToLeft = getHeight(x - 1, y);
+    float heightToRight = getHeight(x + 1, y);
+    float heightToFront = getHeight(x, y + 1);
+    float heightToBack = getHeight(x, y - 1);
+
+    QVector3D normal(heightToLeft - heightToRight, 2.0f, heightToBack - heightToFront);
+    return normal.normalized();
+}
+
+float GLWidget::getNoise(int x, int y)
+{
+    srand((x + 42) * (y + 19));
+    return (((float)rand() / RAND_MAX));
+}
+
+void GLWidget::d2(int x1, int x2, int y1, int y2, float range, int iteration, int maxIterations)
+{
+    if(iteration == maxIterations)
+    {
+        return;
+    }
+    else if(iteration == 0)
+    {
+        qInfo()<<"Intial setup";
+        std::random_device rnd;
+        std::mt19937 eng(rnd());
+        std::uniform_real_distribution<> diamondValue((-1 * (range/2.0f)), range/2.0f);
+
+        m_heights.resize(pow(2, maxIterations) + 1, std::vector<float>(pow(2, maxIterations) + 1, 0.0f));
+
+        m_heights[x1][y1] = diamondValue(eng);
+        m_heights[x2][y1] = diamondValue(eng);
+        m_heights[x1][y2] = diamondValue(eng);
+        m_heights[x2][y2] = diamondValue(eng);
+
+        d2(x1, x2, y1, y2, range, iteration + 1, maxIterations);
+    }
+    else
+    {
+        qInfo()<<"Iteration "<<iteration;
+
+        std::random_device rnd;
+        std::mt19937 eng(rnd());
+        std::uniform_real_distribution<> diamondValue((-1 * (range/2.0f)), range/2.0f);
+        std::uniform_real_distribution<> squareValue((-1 * (range/3.0f)), range/5.0f);
+
+        float h1 = m_heights[x1][y1];
+        float h2 = m_heights[x2][y1];
+        float h3 = m_heights[x1][y2];
+        float h4 = m_heights[x2][y2];
+
+        int xMid = x1 + ((pow(2, maxIterations))/(pow(2, iteration)));
+        int yMid = y1 + ((pow(2, maxIterations))/(pow(2, iteration)));
+
+        m_heights[xMid][yMid] += (h1 + h2 + h3 + h4)/4.0f + diamondValue(eng);
+
+        m_heights[xMid][y1] += (h1 + h2)/2.0f + squareValue(eng);
+        m_heights[xMid][y2] += (h4 + h3)/2.0f + squareValue(eng);
+        m_heights[x1][yMid] += (h3 + h1)/2.0f + squareValue(eng);
+        m_heights[x2][yMid] += (h4 + h2)/2.0f + squareValue(eng);
+
+        d2(x1, xMid, y1, yMid, range, iteration + 1, maxIterations);
+        d2(x1, xMid, yMid, y2, range, iteration + 1, maxIterations);
+        d2(xMid, x2, y1, yMid, range, iteration + 1, maxIterations);
+        d2(xMid, x2, yMid, y2, range, iteration + 1, maxIterations);
+    }
+}
+
+std::vector<float> GLWidget::d3(std::vector<float> heightMap, float range, int iteration, int maxIterations)
+{
+    qInfo()<<heightMap.size();
+
+    if(iteration == maxIterations)
+    {
+        return heightMap;
+    }
+    else
+    {
+        qInfo()<<"Iteration "<<iteration;
+
+        std::random_device rnd;
+        std::mt19937 eng(rnd());
+        std::uniform_real_distribution<> diamondValue((-1 * (range/2.0f)), range/2.0f);
+        std::uniform_real_distribution<> squareValue((-1 * (range/3.0f)), range/5.0f);
+
+        float h1 = heightMap[0];
+        float h2 = heightMap[1];
+        float h3 = heightMap[2];
+        float h4 = heightMap[3];
+
+        heightMap.insert(heightMap.begin() + 2, (h1 + h2 + h3 + h4)/4.0f + diamondValue(eng));
+
+        heightMap.insert(heightMap.begin() + 1, (h1 + h2)/2.0f + squareValue(eng));
+        heightMap.insert(heightMap.begin() + 3, (h4 + h3)/2.0f + squareValue(eng));
+        heightMap.insert(heightMap.begin() + 5, (h3 + h1)/2.0f + squareValue(eng));
+        heightMap.insert(heightMap.begin() + 7, (h4 + h2)/2.0f + squareValue(eng));
+
+        std::vector<float> heights1{heightMap[0], heightMap[2], heightMap[4], heightMap[5]};
+
+        heights1 = d3(heights1, range, iteration + 1, maxIterations);
+
+        if(heights1.size() != 4)
+        {
+            heightMap[0] = heights1[0];
+            heightMap[1] = heights1[2];
+            heightMap[3] = heights1[6];
+            heightMap[4] = heights1[8];
+
+            //Add diamond
+            heightMap.insert(heightMap.begin() + 3, heights1[4]);
+
+            //Add square
+            heightMap.insert(heightMap.begin() + 1, heights1[1]);
+            heightMap.insert(heightMap.begin() + 4, heights1[3]);
+            heightMap.insert(heightMap.begin() + 6, heights1[5]);
+            heightMap.insert(heightMap.begin() + 8, heights1[7]);
+
+            std::vector<float> heights2{heightMap[2], heightMap[3], heightMap[9], heightMap[10]};
+
+            heights2 = d3(heights2, range, iteration + 1, maxIterations);
+
+            heightMap[2] = heights2[0];
+            heightMap[3] = heights2[2];
+            heightMap[9] = heights2[6];
+            heightMap[10] = heights2[8];
+
+            heightMap.insert(heightMap.begin() + 7, heights2[4]);
+
+            heightMap.insert(heightMap.begin() + 3, heights2[1]);
+            heightMap[7] = heights2[3];
+            heightMap.insert(heightMap.begin() + 9, heights2[5]);
+            heightMap.insert(heightMap.begin() + 13, heights2[7]);
+
+            std::vector<float> heights3{heightMap[10], heightMap[12], heightMap[15], heightMap[16]};
+
+            heights3 = d3(heights3, range, iteration + 1, maxIterations);
+
+            heightMap[10] = heights3[0];
+            heightMap[12] = heights3[2];
+            heightMap[15] = heights3[6];
+            heightMap[16] = heights3[8];
+
+            heightMap.insert(heightMap.begin() + 15, heights3[4]);
+
+            heightMap[11] = heights3[1];
+            heightMap.insert(heightMap.begin() +15, heights3[3]);
+            heightMap.insert(heightMap.begin() + 17, heights3[5]);
+            heightMap.insert(heightMap.begin() + 19, heights3[7]);
+
+            std::vector<float> heights4{heightMap[12], heightMap[14], heightMap[20], heightMap[21]};
+
+            heights4 = d3(heights4, range, iteration + 1, maxIterations);
+
+            heightMap[12] = heights4[0];
+            heightMap[14] = heights4[2];
+            heightMap[20] = heights4[6];
+            heightMap[21] = heights4[8];
+
+            heightMap.insert(heightMap.begin() + 18, heights4[4]);
+
+            heightMap[13] = heights4[1];
+            heightMap[17] = heights4[3];
+            heightMap.insert(heightMap.begin() + 19, heights4[5]);
+            heightMap.insert(heightMap.begin() + 23, heights4[7]);
+        }
+
+        return heightMap;
+    }
 }

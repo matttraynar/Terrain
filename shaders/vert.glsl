@@ -14,5 +14,4 @@ void main()
 
     out_pos = vertexPos;
 	out_norm = vertexNorm;
-
 }

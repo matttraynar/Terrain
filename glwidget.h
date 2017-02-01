@@ -11,7 +11,12 @@
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
+
 #include <vector>
+#include <math.h>
+#include <random>
+
+#define PI 3.14159265
 
 class GLWidget : public QGLWidget
 {
@@ -51,7 +56,7 @@ private:
      //-------------------------------------------------------
     //Shader functions
     bool prepareShaderProgram(const QString& vertexShaderPath, const QString& fragmentShaderPath);
-    void loadMatricesToShader();
+    void loadMatricesToShader(QVector3D position);
 
     QOpenGLShaderProgram m_pgm;
 
@@ -61,6 +66,16 @@ private:
     void drawTerrain();
 
     void diamondSquare(uint x1, uint y1, uint x2, uint y2, float height, float iteration);
+    void newDiamondSquare(uint x1, uint y1, uint x2, uint y2, float height, int iteration, int maxIterations, int dimensions);
+
+    void d2(int x1, int x2, int y1, int y2, float range, int iteration, int maxIterations);
+    std::vector<float> d3(std::vector<float> heightMap, float range, int iteration, int maxIterations);
+
+    float getNoise(int x, int y);
+
+    float getHeight(int x, int y);
+    QVector3D getNormal(int x, int y);
+
 
     QOpenGLVertexArrayObject vao_terrain;
     QOpenGLBuffer vbo_terrain;
@@ -77,6 +92,14 @@ private:
     std::vector<QVector3D> m_waterVerts;
     std::vector<QVector3D> m_waterNorms;
 
+    QOpenGLVertexArrayObject vao_trees;
+    QOpenGLBuffer vbo_trees;
+    QOpenGLBuffer ibo_trees;
+
+    std::vector<QVector3D> m_treeVerts;
+    std::vector<uint> m_treeIndices;
+    std::vector<QVector3D> m_treePositions;
+
      //-------------------------------------------------------
     //Camera movement members
     QMatrix4x4 m_model;
@@ -86,6 +109,9 @@ private:
 
     QVector3D m_cameraPos;
     QVector3D m_dir;
+
+    float m_x;
+    bool moveDown;
 
     int m_mouseDelta;
     int m_xRot;
