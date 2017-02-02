@@ -48,7 +48,7 @@ void GLWidget::initializeGL()
 
     startTimer(1);
 
-    prepareTerrain(9);
+    prepareTerrain(6);
     qInfo()<<"Terrain prepared";
 
     m_pgm.release();
@@ -78,12 +78,13 @@ void GLWidget::paintGL()
     vao_water.bind();
     m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,1.0f,1.0f));
 
-//    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
+    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
 
     vao_water.release();
 
     vao_trees.bind();
-    m_pgm.setUniformValue("mCol",QVector4D(1.0f,0.0f,0.0f,1.0f));
+
+    m_pgm.setUniformValue("mCol",QVector4D(0.05f, 0.24f,0.01f,0.5f));
 
     for(uint i = 0; i < m_treePositions.size(); ++i)
     {
@@ -330,7 +331,7 @@ void GLWidget::prepareTerrain(int iterations)
 
     m_divisions = 1 << iterations;
 
-    float roughness = 20.0f;
+    float roughness = 5.0f;
 
     m_heights.resize(m_divisions + 1, std::vector<float>(m_divisions + 1, 0.0f));
 
@@ -394,6 +395,27 @@ void GLWidget::prepareTerrain(int iterations)
 
     m_pgm.setUniformValue("min", min);
     m_pgm.setUniformValue("range", max - min);
+
+    float minCut = ((max - min) * (5.0f/8.0f)) + min;
+    float maxCut = ((max - min) * (7.0f/8.0f)) + min;
+
+    float minCut2 = ((max - min) * (2.0f/8.0f)) + min;
+    float maxCut2 = ((max - min) * (4.0f/8.0f)) + min;
+
+    for(int i = 0; i< m_heights.size(); ++i)
+    {
+        for(int j = 0; j < m_heights[i].size(); ++j)
+        {
+            if((m_heights[i][j] <= maxCut) && (m_heights[i][j] >= minCut))
+            {
+//                m_heights[i][j] = (maxCut + minCut) / 2.0f;
+            }
+            else if((m_heights[i][j] <= maxCut2) && (m_heights[i][j] >= minCut2))
+            {
+//                m_heights[i][j] = (maxCut2 + minCut2) / 2.0f;
+            }
+        }
+    }
 
     float range = 50.0f;
     float start = 0 - (range/2.0f);
@@ -704,24 +726,18 @@ void GLWidget::prepareTerrain(int iterations)
     }
 
     float tmpHeight = averageHeight;
+
     for(uint i = 0; i < m_verts.size(); ++i)
     {
-        if(m_verts[i].y() > tmpHeight)
+        if(m_verts[i].y() < tmpHeight)
         {
             averageHeight += m_verts[i].y();
             averageHeight /= 2.0f;
         }
     }
 
-    tmpHeight = averageHeight;
-    for(uint i = 0; i < m_verts.size(); ++i)
-    {
-        if(m_verts[i].y() > tmpHeight)
-        {
-            averageHeight += m_verts[i].y();
-            averageHeight /= 2.0f;
-        }
-    }
+    qInfo()<<averageHeight;
+    m_pgm.setUniformValue("waterLevel", averageHeight);
 
     m_waterVerts.push_back(QVector3D(-100.0f, averageHeight, -100.0f));
     m_waterVerts.push_back(QVector3D(-100.0f, averageHeight, 100.0f));
@@ -761,10 +777,10 @@ void GLWidget::prepareTerrain(int iterations)
     m_treeVerts.push_back(QVector3D(-0.1f, 0.0f, -0.1f)); //2
     m_treeVerts.push_back(QVector3D(0.1f, 0.0f, -0.1f));  //3
 
-    m_treeVerts.push_back(QVector3D(0.1f, 0.5f, 0.1f));   //4
-    m_treeVerts.push_back(QVector3D(-0.1f, 0.5f, 0.1f));  //5
-    m_treeVerts.push_back(QVector3D(-0.1f, 0.5f, -0.1f)); //6
-    m_treeVerts.push_back(QVector3D(0.1f, 0.5f, -0.1f));  //7
+    m_treeVerts.push_back(QVector3D(0.01f, 0.4f, 0.01f));   //4
+    m_treeVerts.push_back(QVector3D(-0.01f, 0.4f, 0.01f));  //5
+    m_treeVerts.push_back(QVector3D(-0.01f, 0.4f, -0.01f)); //6
+    m_treeVerts.push_back(QVector3D(0.01f, 0.4f, -0.01f));  //7
 
     //Bottom
     m_treeIndices.push_back(0);
@@ -826,7 +842,7 @@ void GLWidget::prepareTerrain(int iterations)
 
         float angle = (acos(QVector3D::dotProduct(faceNorm.normalized(), QVector3D(0,1,0)) / (faceNorm.length())) * 180.0) / PI;
 
-        if(angle > 125)
+        if(angle < 45)
         {
             QVector3D midFace;
 
