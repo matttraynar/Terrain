@@ -71,10 +71,15 @@ private:
     void d2(int x1, int x2, int y1, int y2, float range, int iteration, int maxIterations);
     std::vector<float> d3(std::vector<float> heightMap, float range, int iteration, int maxIterations);
 
+    void diamond(int x, int y, int sideLength, float scale);
+    void square(int x, int y, int sideLength, float scale);
+
     float getNoise(int x, int y);
 
     float getHeight(int x, int y);
     QVector3D getNormal(int x, int y);
+
+    int m_divisions;
 
 
     QOpenGLVertexArrayObject vao_terrain;
