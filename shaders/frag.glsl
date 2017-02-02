@@ -8,6 +8,9 @@ uniform vec4 mCol;
 uniform vec3 camPos;
 uniform vec3 lightPos;
 
+uniform float min;
+uniform float range;
+
 out vec4 fragColour;
 
 void main()
@@ -18,9 +21,11 @@ void main()
 
 	vec4 colour = mCol;
 
+	float colourHeight = (out_pos.y - min) / range;
+
 	if(mCol.w == 0.0f)
 	{
-//		colour = vec4(out_norm.z / 2.0f, out_norm.z, 0.2f, 1.0f);
+		colour = vec4(1.0 - colourHeight, colourHeight, colourHeight, 1.0f);
 
 		vec3 v_pos = vec4(M * vec4(out_pos,1.0)).xyz;
 		vec3 c_pos = vec4(M * vec4(camPos,1.0)).xyz;
