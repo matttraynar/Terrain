@@ -327,14 +327,11 @@ void GLWidget::loadMatricesToShader(QVector3D position)
 
 void GLWidget::prepareTerrain(int iterations)
 {
-    float dimensions = pow(2, iterations) + 1;
-
     m_divisions = 1 << iterations;
 
     float roughness = 5.0f;
 
     m_heights.resize(m_divisions + 1, std::vector<float>(m_divisions + 1, 0.0f));
-
 
     std::random_device rnd;
     std::mt19937 eng(rnd());
@@ -349,25 +346,24 @@ void GLWidget::prepareTerrain(int iterations)
 
     for(int i = 0; i < iterations; ++i)
     {
-        int q = 1 << i;
-        int r = 1 << (iterations - i);
-        int s = r >> 1;
+        int currentSide = 1 << (iterations - i);
+        int sideLength = currentSide >> 1;
 
-        for(int j = 0; j < m_divisions; j += r)
+        for(int j = 0; j < m_divisions; j += currentSide)
         {
-            for(int k = 0; k < m_divisions; k += r)
+            for(int k = 0; k < m_divisions; k += currentSide)
             {
-                diamond(j, k , r, roughValue);
+                diamond(j, k , currentSide, roughValue);
             }
         }
 
-        if(s > 0)
+        if(sideLength > 0)
         {
-            for(int j = 0; j <= m_divisions; j += s)
+            for(int j = 0; j <= m_divisions; j += sideLength)
             {
-                for(int k = (j + s) % r; k <= m_divisions; k += r)
+                for(int k = (j + sideLength) % currentSide; k <= m_divisions; k += currentSide)
                 {
-                    square(j - s, k - s, r, roughValue);
+                    square(j - sideLength, k - sideLength, currentSide, roughValue);
                 }
             }
         }
@@ -456,241 +452,6 @@ void GLWidget::prepareTerrain(int iterations)
             m_norms.push_back(getNormal(i, j + 1));
         }
     }
-
-    float heightRange = 10.0f;
-
-//    m_heights.resize(dimensions + 1, std::vector<float>(dimensions + 1, 0.0f));
-
-//    diamondSquare(0, 0, dimensions + 1, dimensions + 1, heightRange, iterations);
-//    newDiamondSquare(0,0,dimensions - 1, dimensions - 1, 3.0f, 0, iterations, dimensions);
-
-//    d2(0,dimensions,0, dimensions, 5.0f, 0, iterations);
-
-    std::vector<float> heightMap = {0.0f, 0.0f, 0.0f, 0.0f};
-
-//    float range = 50.0f;
-
-//    float start = (0 - (range/2.0f));
-
-//    heightMap = d3(heightMap, 5.0f, 0, iterations);
-
-    qInfo()<<"Verts";
-    qInfo()<<heightMap.size();
-
-    int rowCount = 0;
-    int columnCount = 0;
-
-/*    //PROBLEM WITH D£ returning height maps too small?>
-
-//    !((columnCount == (pow(2, iterations) - 1) || (rowCount == (pow(2, iterations) - 1))))
-
-//    while((columnCount + ((rowCount + 1)* (pow(2, iterations)))) != heightMap.size())
-//    {
-//        qInfo()<<(columnCount == pow(2, iterations))<<(rowCount == (pow(2, iterations)));
-//        qInfo()<<columnCount + 1 + ((rowCount + 1) * (pow(2, iterations) + 1));
-//        qInfo()<<columnCount<<rowCount;
-
-//        QVector3D newVertex( (((float)columnCount / (pow(2,
-//                                                         iterations) + 1) ) * range) + start,
-//                                        heightMap[columnCount + (rowCount * (pow(2, iterations) + 1))],
-//                                        (((float)rowCount / (pow(2, iterations) + 1) ) * range) + start);
-
-//        m_verts.push_back(newVertex);
-////            m_norms.push_back(getNormal(i, j));
-//        m_norms.push_back(QVector3D(0,1,0));
-
-//        QVector3D newVertex2( ((((float)columnCount + 1) / (pow(2, iterations) + 1) ) * range) + start,
-//                                        heightMap[columnCount + 1 + (rowCount * (pow(2, iterations) + 1))],
-//                                        (((float)rowCount / (pow(2, iterations) + 1) ) * range) + start);
-
-//        m_verts.push_back(newVertex2);
-////            m_norms.push_back(getNormal(i + 1, j));
-//        m_norms.push_back(QVector3D(0,1,0));
-
-//        QVector3D newVertex3( ((((float)columnCount + 1) / (pow(2, iterations) + 1) ) * range) + start,
-//                                        heightMap[columnCount + 1 + ((rowCount + 1) * (pow(2, iterations) + 1))],
-//                                        ((((float)rowCount + 1) / (pow(2, iterations) + 1) ) * range) + start);
-
-//        m_verts.push_back(newVertex3);
-////            m_norms.push_back(getNormal(i + 1, j + 1));
-//        m_norms.push_back(QVector3D(0,1,0));
-
-//        QVector3D newVertex4( (((float)columnCount / (pow(2, iterations) + 1) ) * range) + start,
-//                                        heightMap[columnCount + ((rowCount + 1) * (pow(2, iterations) + 1))],
-//                                        ((((float)rowCount + 1) / (pow(2, iterations) + 1) ) * range) + start);
-
-//        m_verts.push_back(newVertex4);
-////            m_norms.push_back(getNormal(i, j + 1));
-//        m_norms.push_back(QVector3D(0,1,0));
-
-//        if(columnCount == (pow(2, iterations) - 1))
-//        {
-//            rowCount++;
-//            columnCount = 0;
-//        }
-//        else
-//        {
-//            columnCount++;
-//        }
-//    }
-
-//    qInfo()<<(!((columnCount == (pow(2, iterations)) && (rowCount == (pow(2, iterations) - 1)))));
-
-//    for(uint i = 0; i < iterations - 1; ++i)
-//    {
-//        for(uint j = 0; j < iterations - 1; ++j)
-//        {
-
-//            qInfo()<<"v1";
-//            QVector3D newVertex( (((float)i / (iterations) ) * range) + start,
-//                                            heightMap[(i * iterations) + j],
-//                                            (((float)j / (iterations) ) * range) + start);
-
-//            m_verts.push_back(newVertex);
-//            m_norms.push_back(getNormal(i, j));
-////            m_norms.push_back(QVector3D(0,1,0));
-
-//            qInfo()<<"v2";
-//            QVector3D newVertex2( ((((float)i + 1) / (iterations) ) * range) + start,
-//                                            heightMap[((i + 1) * iterations) + j],
-//                                            (((float)j / (iterations) ) * range) + start);
-
-//            m_verts.push_back(newVertex2);
-//            m_norms.push_back(getNormal(i + 1, j));
-////            m_norms.push_back(QVector3D(0,1,0));
-
-//            qInfo()<<"v3";
-//            QVector3D newVertex3( ((((float)i + 1) / (iterations) ) * range) + start,
-//                                            heightMap[((i + 1) * iterations) + j + 1],
-//                                            ((((float)j + 1) / (iterations) ) * range) + start);
-
-//            m_verts.push_back(newVertex3);
-//            m_norms.push_back(getNormal(i + 1, j + 1));
-////            m_norms.push_back(QVector3D(0,1,0));
-
-//            qInfo()<<"v4";
-//            QVector3D newVertex4( (((float)i / (iterations) ) * range) + start,
-//                                            heightMap[(i * iterations) + j + 1],
-//                                            ((((float)j + 1) / (iterations ) ) * range) + start);
-
-//            m_verts.push_back(newVertex4);
-//            m_norms.push_back(getNormal(i, j + 1));
-////            m_norms.push_back(QVector3D(0,1,0));
-//        }
-//    }
-
-
-
-
-    for(uint i = 0; i < dimensions; ++i)
-    {
-        for(uint j = 0; j < dimensions; ++j)
-        {
-            QVector3D newVertex( (((float)i / (dimensions) ) * range) + start,
-                                            m_heights[i][j],
-                                            (((float)j / (dimensions) ) * range) + start);
-
-            m_verts.push_back(newVertex);
-            m_norms.push_back(getNormal(i, j));
-
-            QVector3D newVertex2( ((((float)i + 1) / (dimensions) ) * range) + start,
-                                            m_heights[i + 1][j],
-                                            (((float)j / (dimensions) ) * range) + start);
-
-            m_verts.push_back(newVertex2);
-            m_norms.push_back(getNormal(i + 1, j));
-
-            QVector3D newVertex3( ((((float)i + 1) / (dimensions) ) * range) + start,
-                                            m_heights[i + 1][j + 1],
-                                            ((((float)j + 1) / (dimensions) ) * range) + start);
-
-            m_verts.push_back(newVertex3);
-            m_norms.push_back(getNormal(i + 1, j + 1));
-
-            QVector3D newVertex4( (((float)i / (dimensions) ) * range) + start,
-                                            m_heights[i][j + 1],
-                                            ((((float)j + 1) / (dimensions ) ) * range) + start);
-
-            m_verts.push_back(newVertex4);
-            m_norms.push_back(getNormal(i, j + 1));
-        }
-    }
-
-    for(uint i = 0; i < m_verts.size(); ++i)
-    {
-        m_verts[i].setY((m_verts[i].y() - (0 - heightRange/2.0f)) / heightRange);
-        m_verts[i].setY(m_verts[i].y() * 10);
-    }
-
-//    m_norms.resize(m_verts.size(), QVector3D(0.5f, 0.0f, 0.0f));
-
-    int count = 0;
-
-    qInfo()<<"Norms";
-
-
-//    for(int i = 0; i < dimensions; ++i)
-//    {
-//        for(int j = 0; j < dimensions; ++j)
-//        {
-//            float heightToLeft = 0.0f;
-//            float heightToRight = 0.0f;
-//            float heightToFront = 0.0f;
-//            float heightToBack = 0.0f;
-
-//            ((i - 1) > 0) ? heightToLeft = m_heights[i - 1][j] : heightToLeft = 0.0f;
-//            ((i + 1) < dimensions) ? heightToRight = m_heights[i + 1][j] : heightToRight = 0.0f;
-//            ((j + 1) < dimensions) ? heightToFront = m_heights[i][j + 1] : heightToFront = 0.0f;
-//            ((j - 1) > 0) ? heightToBack = m_heights[i][j - 1] : heightToBack = 0.0f;
-
-//            m_norms[count].setX(heightToLeft - heightToRight);
-//            m_norms[count].setY(heightToBack - heightToFront);
-//            m_norms[count].setZ(2.0f);
-
-//            m_norms[count].normalize();
-//            count++;
-
-//            ((i + 1 - 1) > 0) ? heightToLeft = m_heights[i + 1 - 1][j] : heightToLeft = 0.0f;
-//            ((i + 1 + 1) < dimensions) ? heightToRight = m_heights[i + 1 + 1][j] : heightToRight = 0.0f;
-//            ((j + 1) < dimensions && (i + 1) < dimensions) ? heightToFront = m_heights[i + 1][j + 1] : heightToFront = 0.0f;
-//            ((j - 1) > 0 && (i + 1) < dimensions) ? heightToBack = m_heights[i + 1][j - 1] : heightToBack = 0.0f;
-
-//            m_norms[count].setX(heightToLeft - heightToRight);
-//            m_norms[count].setY(heightToBack - heightToFront);
-//            m_norms[count].setZ(2.0f);
-
-//            m_norms[count].normalize();
-
-//            count++;
-
-//            ((i + 1 - 1) > 0 && (j + 1) < dimensions) ? heightToLeft = m_heights[i + 1 - 1][j + 1] : heightToLeft = 0.0f;
-//            ((i + 1 + 1) < dimensions && (j + 1) < dimensions) ? heightToRight = m_heights[i + 1 + 1][j + 1] : heightToRight = 0.0f;
-//            ((j + 1 + 1) < dimensions && (i + 1) < dimensions) ? heightToFront = m_heights[i + 1][j + 1 + 1] : heightToFront = 0.0f;
-//            ((j + 1 - 1) > 0 && (i + 1) < dimensions) ? heightToBack = m_heights[i + 1][j - 1 + 1] : heightToBack = 0.0f;
-
-//            m_norms[count].setX(heightToLeft - heightToRight);
-//            m_norms[count].setY(heightToBack - heightToFront);
-//            m_norms[count].setZ(2.0f);
-
-//            m_norms[count].normalize();
-
-
-//            count++;
-
-//            ((i - 1) > 0 && (j + 1) < dimensions) ? heightToLeft = m_heights[i - 1][j + 1] : heightToLeft = 0.0f;
-//            ((i + 1) < dimensions && (j + 1) < dimensions) ? heightToRight = m_heights[i + 1][j + 1] : heightToRight = 0.0f;
-//            ((j + 1 + 1) < dimensions) ? heightToFront = m_heights[i][j + 1 + 1] : heightToFront = 0.0f;
-//            ((j + 1 - 1) > 0) ? heightToBack = m_heights[i][j - 1 + 1] : heightToBack = 0.0f;
-
-//            m_norms[count].setX(heightToLeft - heightToRight);
-//            m_norms[count].setY(heightToBack - heightToFront);
-//            m_norms[count].setZ(2.0f);
-
-//            m_norms[count].normalize();
-
-//            count++;
-//        }
-//    }*/
 
     vao_terrain.create();
     vao_terrain.bind();
@@ -842,7 +603,7 @@ void GLWidget::prepareTerrain(int iterations)
 
         float angle = (acos(QVector3D::dotProduct(faceNorm.normalized(), QVector3D(0,1,0)) / (faceNorm.length())) * 180.0) / PI;
 
-        if(angle < 45)
+        if((angle < 45) && (m_verts[i].y() > (averageHeight + ((max - min) * 0.1f))))
         {
             QVector3D midFace;
 
