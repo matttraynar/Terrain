@@ -31,14 +31,14 @@ void main()
 
 		if(waterLevel > 0.0f)
 		{
-			if((out_pos.y >= (waterLevel * 0.5f)) && ((out_pos.y <= (waterLevel * 1.5f))))
+			if((out_pos.y >= (waterLevel * 0.9f)) && ((out_pos.y <= (waterLevel * 1.1f))))
 			{
 				colour = vec4(0.91f, 0.88f, 0.46f, 1.0f);
 			}
 		}
 		else
 		{
-			if((out_pos.y <= (waterLevel * 0.25f)) && ((out_pos.y >= (waterLevel * 1.75f))))
+			if((out_pos.y <= (waterLevel * 0.9f)) && ((out_pos.y >= (waterLevel * 1.1f))))
 			{
 				colour = vec4(0.91f, 0.88f, 0.46f, 1.0f);
 			}

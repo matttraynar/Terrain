@@ -48,7 +48,11 @@ void GLWidget::initializeGL()
 
     startTimer(1);
 
-    prepareTerrain(6);
+    generateHeightMap(6, 45.0f);
+
+    prepareTerrain();
+    prepareWater();
+    prepareTrees();
     qInfo()<<"Terrain prepared";
 
     m_pgm.release();
@@ -325,79 +329,98 @@ void GLWidget::loadMatricesToShader(QVector3D position)
 
  //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-void GLWidget::prepareTerrain(int iterations)
+void GLWidget::generateHeightMap(int iterations, float roughness)
 {
+    //We can use the bitwise shift to get 2^iterations
     m_divisions = 1 << iterations;
 
-    float roughness = 5.0f;
-
+    //Setup the height map container, initialise at 0.0f
     m_heights.resize(m_divisions + 1, std::vector<float>(m_divisions + 1, 0.0f));
 
+    //Create a new random generator
     std::random_device rnd;
     std::mt19937 eng(rnd());
     std::uniform_real_distribution<> random(-1.0f, 1.0f);
 
+    //Set the four corners of the height map to random values between -1 and 1
     m_heights[0][0] = random(eng);
     m_heights[0][m_divisions] = random(eng);
     m_heights[m_divisions][m_divisions] = random(eng);
     m_heights[m_divisions][0] = random(eng);
 
-    float roughValue = roughness;
-
+    //Iterate through the entire height map for the given number of times
     for(int i = 0; i < iterations; ++i)
     {
+        //Calculate the current diamond/square slice (this value will go down
+        //as the iterations become higher)
         int currentSide = 1 << (iterations - i);
+
+        //And the length of square side
         int sideLength = currentSide >> 1;
 
+        //Iterate through the height map using the slice as the step and
+        //do the diamond calculation
         for(int j = 0; j < m_divisions; j += currentSide)
         {
             for(int k = 0; k < m_divisions; k += currentSide)
             {
-                diamond(j, k , currentSide, roughValue);
+                diamond(j, k , currentSide, roughness);
             }
         }
 
+        //If the side length is bigger than 0 we can do the square step
         if(sideLength > 0)
         {
+            //Iterate through the height map again doing the square step this time
             for(int j = 0; j <= m_divisions; j += sideLength)
             {
                 for(int k = (j + sideLength) % currentSide; k <= m_divisions; k += currentSide)
                 {
-                    square(j - sideLength, k - sideLength, currentSide, roughValue);
+                    square(j - sideLength, k - sideLength, currentSide, roughness);
                 }
             }
         }
 
-        roughValue *= 0.5;
+        //Finally reduce the roughness by a half for the next iteration
+        roughness *= 0.5;
     }
 
-    float min = m_heights[0][0];
-    float max = min;
+    //Set the minimum and maximum values of the terrain to the value at [0][0]
+    //This makes sure when boolean operations are done on them there will be
+    //an actual value there and not one randomly assigned during creation
+    m_terrainMin = m_terrainMax = m_heights[0][0];
 
+    //Iterate through the height map and check for the smallest and largest values
     for(int i = 0; i< m_heights.size(); ++i)
     {
         for(int j = 0; j < m_heights[i].size(); ++j)
         {
-            if(m_heights[i][j] < min)
+            if(m_heights[i][j] < m_terrainMin)
             {
-                min = m_heights[i][j];
+                m_terrainMin = m_heights[i][j];
             }
-            else if(m_heights[i][j] > max)
+            else if(m_heights[i][j] > m_terrainMax)
             {
-                max = m_heights[i][j];
+                m_terrainMax = m_heights[i][j];
             }
         }
     }
 
-    m_pgm.setUniformValue("min", min);
-    m_pgm.setUniformValue("range", max - min);
+    //Next pass the minimum and height range values to the shader
+    m_pgm.setUniformValue("min", m_terrainMin);
+    m_pgm.setUniformValue("range", m_terrainMax - m_terrainMin);
 
-    float minCut = ((max - min) * (5.0f/8.0f)) + min;
-    float maxCut = ((max - min) * (7.0f/8.0f)) + min;
+    //The next bit creates the flat parts of terrain. The following variables
+    //represent the range in which the cut takes place
+    float minCut = ((m_terrainMax - m_terrainMin) * (5.0f/8.0f)) + m_terrainMin;
+    float maxCut = ((m_terrainMax - m_terrainMin) * (7.0f/8.0f)) + m_terrainMin;
 
-    float minCut2 = ((max - min) * (2.0f/8.0f)) + min;
-    float maxCut2 = ((max - min) * (4.0f/8.0f)) + min;
+    float minCut2 = ((m_terrainMax - m_terrainMin) * (2.0f/8.0f)) + m_terrainMin;
+    float maxCut2 = ((m_terrainMax - m_terrainMin) * (4.0f/8.0f)) + m_terrainMin;
 
+    //Iterate through the height map and check for values within the given
+    //slice ranges. If the value is within the margin then set it to the average
+    //of the min -> max slice
     for(int i = 0; i< m_heights.size(); ++i)
     {
         for(int j = 0; j < m_heights[i].size(); ++j)
@@ -413,20 +436,40 @@ void GLWidget::prepareTerrain(int iterations)
         }
     }
 
+    //Finally we need to convert the height map into vertex positions
+
+    //Set the range (width and height(of the terrain)
     float range = 50.0f;
+
+    //Centering around the origin. E.G. a range of 20 starts at -10
     float start = 0 - (range/2.0f);
 
+    //Iterate through the height map
     for(int i = 0; i < m_divisions; ++i)
     {
         for(int j = 0; j < m_divisions; ++j)
         {
+            //Create four vertices. Whilst some will be repeated this is just easier
+            //to do than trying to create an index list
+
+
+            //The face is assigned anti-clockwise starting at (i, j):
+            //  (i, j + 1) -------------------------- (i + 1, j + 1)
+            //       |                                          |
+            //       |                                          |
+            //       |                                          |
+            //       |                                          |
+            //       |                                          |
+            //    (i , j) --------------------------------- (i + 1, j)
+
             QVector3D v1((((float)(i)/m_divisions) * range) + start,
                                 getHeight(i, j),
                                 (((float)(j)/m_divisions) * range) + start);
 
             m_verts.push_back(v1);
-            m_norms.push_back(getNormal(i, j));
 
+            //Also ensure the norma for that vertex has been calculated
+            m_norms.push_back(getNormal(i, j));
 
             QVector3D v2((((float)(i + 1)/m_divisions) * range) + start,
                                 getHeight(i + 1, j),
@@ -452,204 +495,6 @@ void GLWidget::prepareTerrain(int iterations)
             m_norms.push_back(getNormal(i, j + 1));
         }
     }
-
-    vao_terrain.create();
-    vao_terrain.bind();
-
-    vbo_terrain.create();
-    vbo_terrain.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    vbo_terrain.bind();
-    vbo_terrain.allocate(&m_verts[0], (int)m_verts.size() * sizeof(GLfloat) * 3);
-
-    m_pgm.enableAttributeArray("vertexPos");
-    m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
-
-    vbo_terrain.release();
-
-    nbo_terrain.create();
-    nbo_terrain.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    nbo_terrain.bind();
-    nbo_terrain.allocate(&m_norms[0], (int)m_norms.size() * sizeof(GLfloat) * 3);
-
-    m_pgm.enableAttributeArray("vertexNorm");
-    m_pgm.setAttributeArray("vertexNorm", GL_FLOAT, 0, 3);
-
-    nbo_terrain.release();
-
-    vao_terrain.release();
-
-    float averageHeight = 0.0f;
-
-    for(uint i = 0; i < m_verts.size(); ++i)
-    {
-        averageHeight += m_verts[i].y();
-        averageHeight /= 2.0f;
-    }
-
-    float tmpHeight = averageHeight;
-
-    for(uint i = 0; i < m_verts.size(); ++i)
-    {
-        if(m_verts[i].y() < tmpHeight)
-        {
-            averageHeight += m_verts[i].y();
-            averageHeight /= 2.0f;
-        }
-    }
-
-    qInfo()<<averageHeight;
-    m_pgm.setUniformValue("waterLevel", averageHeight);
-
-    m_waterVerts.push_back(QVector3D(-100.0f, averageHeight, -100.0f));
-    m_waterVerts.push_back(QVector3D(-100.0f, averageHeight, 100.0f));
-    m_waterVerts.push_back(QVector3D(100.0f, averageHeight, 100.0f));
-    m_waterVerts.push_back(QVector3D(100.0f, averageHeight, -100.0f));
-
-    m_waterNorms.push_back(QVector3D(0.0f, 0.0f, 1.0f));
-    m_waterNorms.push_back(QVector3D(0.0f, 0.0f, 1.0f));
-    m_waterNorms.push_back(QVector3D(0.0f, 0.0f, 1.0f));
-    m_waterNorms.push_back(QVector3D(0.0f, 0.0f, 1.0f));
-
-    vao_water.create();
-    vao_water.bind();
-
-    vbo_water.create();
-    vbo_water.bind();
-    vbo_water.allocate(&m_waterVerts[0], (int)m_waterVerts.size() * sizeof(GLfloat) * 3);
-
-     m_pgm.enableAttributeArray("vertexPos");
-     m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
-
-     vbo_water.release();
-
-     nbo_water.create();
-     nbo_water.bind();
-     nbo_water.allocate(&m_waterNorms[0], (int)m_waterNorms.size() * sizeof(GLfloat) * 3);
-
-    m_pgm.enableAttributeArray("vertexNorm");
-    m_pgm.setAttributeArray("vertexNorm", GL_FLOAT, 0, 3);
-
-    nbo_water.release();
-
-    vao_water.release();
-
-    m_treeVerts.push_back(QVector3D(0.1f, 0.0f, 0.1f));   //0
-    m_treeVerts.push_back(QVector3D(-0.1f, 0.0f, 0.1f));  //1
-    m_treeVerts.push_back(QVector3D(-0.1f, 0.0f, -0.1f)); //2
-    m_treeVerts.push_back(QVector3D(0.1f, 0.0f, -0.1f));  //3
-
-    m_treeVerts.push_back(QVector3D(0.01f, 0.4f, 0.01f));   //4
-    m_treeVerts.push_back(QVector3D(-0.01f, 0.4f, 0.01f));  //5
-    m_treeVerts.push_back(QVector3D(-0.01f, 0.4f, -0.01f)); //6
-    m_treeVerts.push_back(QVector3D(0.01f, 0.4f, -0.01f));  //7
-
-    //Bottom
-    m_treeIndices.push_back(0);
-    m_treeIndices.push_back(1);
-    m_treeIndices.push_back(2);
-    m_treeIndices.push_back(3);
-
-    //Sides
-    m_treeIndices.push_back(0);
-    m_treeIndices.push_back(1);
-    m_treeIndices.push_back(5);
-    m_treeIndices.push_back(4);
-
-    m_treeIndices.push_back(1);
-    m_treeIndices.push_back(2);
-    m_treeIndices.push_back(6);
-    m_treeIndices.push_back(5);
-
-    m_treeIndices.push_back(2);
-    m_treeIndices.push_back(3);
-    m_treeIndices.push_back(7);
-    m_treeIndices.push_back(6);
-
-    m_treeIndices.push_back(3);
-    m_treeIndices.push_back(0);
-    m_treeIndices.push_back(4);
-    m_treeIndices.push_back(7);
-
-    //Top
-    m_treeIndices.push_back(4);
-    m_treeIndices.push_back(5);
-    m_treeIndices.push_back(6);
-    m_treeIndices.push_back(7);
-
-    vao_trees.create();
-    vao_trees.bind();
-
-    vbo_trees.create();
-    vbo_trees.bind();
-    vbo_trees.allocate(&m_treeVerts[0], (int)m_treeVerts.size() * sizeof(GLfloat) * 3);
-
-    m_pgm.enableAttributeArray("vertexPos");
-    m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
-
-    vbo_trees.release();
-
-    ibo_trees.create();
-    ibo_trees.bind();
-    ibo_trees.allocate(&m_treeIndices[0], (int)m_treeIndices.size() * sizeof(uint));
-
-    vao_trees.release();
-
-    int switchCounter = 0;
-
-    for(int i = 0; i < m_norms.size(); i += 4)
-    {
-        QVector3D faceNorm = m_norms[i] + m_norms[i + 1] + m_norms[i + 2] + m_norms[i + 3];
-        faceNorm /= 4.0f;
-
-        float angle = (acos(QVector3D::dotProduct(faceNorm.normalized(), QVector3D(0,1,0)) / (faceNorm.length())) * 180.0) / PI;
-
-        if((angle < 45) && (m_verts[i].y() > (averageHeight + ((max - min) * 0.1f))))
-        {
-            QVector3D midFace;
-
-            switch(switchCounter)
-            {
-            case 0:
-                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3];
-                m_treePositions.push_back(midFace/4.0f);
-                break;
-
-            case 1:
-                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 2];
-                m_treePositions.push_back(midFace/3.0f);
-                break;
-
-            case 2:
-                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 3];
-                m_treePositions.push_back(midFace/3.0f);
-                break;
-
-            case 3:
-                midFace = m_verts[i] + m_verts[i + 3] + m_verts[i + 2];
-                m_treePositions.push_back(midFace/3.0f);
-                break;
-
-            case 4:
-                midFace = m_verts[i + 3] + m_verts[i + 1] + m_verts[i + 2];
-                m_treePositions.push_back(midFace/3.0f);
-                break;
-
-            case 5:
-                midFace = m_verts[i] + m_verts[i + 1];
-                m_treePositions.push_back(midFace/2.0f);
-                break;
-
-            case 6:
-                midFace = m_verts[i + 1] + m_verts[i + 2];
-                m_treePositions.push_back(midFace/2.0f);
-                switchCounter = 0;
-                break;
-            }
-
-            switchCounter++;
-
-        }
-    }
 }
 
 void GLWidget::drawTerrain()
@@ -662,144 +507,6 @@ void GLWidget::drawTerrain()
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     vao_terrain.release();
-}
-
-void GLWidget::diamondSquare(uint x1, uint y1, uint x2, uint y2, float height, float iteration)
-{
-    if(iteration < 1) return;
-
-    std::random_device rnd;
-    std::mt19937 eng(rnd());
-    std::uniform_real_distribution<> diamondValue((-1 * (height/2.0f)), height/2.0f);
-    std::uniform_real_distribution<> squareValue((-1 * (height/3.0f)), height/3.0f);
-
-    for(uint i = x1 + iteration; i < x2; i += iteration)
-    {
-        for(uint j = y1 + iteration; j < y2; j += iteration)
-        {
-            float v1 = m_heights[i - iteration][j - iteration];
-            float v2 = m_heights[i][j - iteration];
-            float v3 = m_heights[i - iteration][j];
-            float v4 = m_heights[i][j];
-
-//            float center = ((v1 + v2 + v3 + v4)/4.0f) + ((float)rand() / RAND_MAX) * height;
-            float center = ((v1 + v2 + v3 + v4)/4.0f) + diamondValue(eng);
-
-            m_heights[(i - iteration) / 2][(j - iteration) / 2] = center;
-        }
-    }
-
-    for(uint i = x1 + 2 * iteration; i < x2; i += iteration)
-    {
-        for(uint j = y1 + 2 * iteration; j < y2; j += iteration)
-        {
-            float v1 = m_heights[i - iteration][j - iteration];
-            float v2 = m_heights[i][j - iteration];
-            float v3 = m_heights[i - iteration][j];
-            float v5 = m_heights[(i - iteration) / 2][(j - iteration) / 2];
-
-//            float newPoint = ((v1 + v3 + v5 + m_heights[i - 3 * iteration / 2][j - iteration / 2]) / 4.0f)  + ((float)rand() / RAND_MAX) * height;
-            float newPoint = ((v1 + v3 + v5 + m_heights[i - 3 * iteration / 2][j - iteration / 2]) / 4.0f)  + squareValue(eng);
-
-            m_heights[i - iteration][j - iteration / 2] = newPoint;
-
-//            newPoint = ((v1 + v2 + v5 + m_heights[i - iteration / 2][j - 3 * iteration / 2]) / 4.0f)  + ((float)rand() / RAND_MAX) * height;
-            newPoint = ((v1 + v2 + v5 + m_heights[i - iteration / 2][j - 3 * iteration / 2]) / 4.0f)  + squareValue(eng);
-
-            m_heights[i - iteration / 2][j - iteration] = newPoint;
-
-//            newPoint = ((v1 + v2 + v5 + m_heights[i - iteration / 2][j - iteration / 2]) / 4.0f)  + ((float)rand() / RAND_MAX) * height;
-
-//            m_heights[i - iteration / 2][j - iteration / 2] = newPoint;
-
-//            newPoint = ((v1 + v2 + v5 + m_heights[i - 3 * iteration / 2][j - 3 * iteration / 2]) / 4.0f)  + ((float)rand() / RAND_MAX) * height;
-
-//            m_heights[i - iteration][j - iteration] = newPoint;
-        }
-    }
-
-    diamondSquare(x1, y1, x2, y2, height / 2.0f, iteration / 2.0f);
-}
-
-void GLWidget::newDiamondSquare(uint x1, uint y1, uint x2, uint y2, float height, int iteration, int maxIterations, int dimensions)
-{
-    //INTERPOLATE VALUES
-
-    if(iteration == maxIterations)
-    {
-        return;
-    }
-
-    // j
-    // |
-    // |
-    // |
-    // x--------------i
-
-    qInfo()<<"Checking iter";
-    if(iteration == 0)
-    {
-        qInfo()<<"First";
-        m_heights.resize(dimensions, std::vector<float>(dimensions, 0.0f));
-
-        m_heights[0]                       [0]                      = ((float)rand() / RAND_MAX) * height;
-        m_heights[0]                       [dimensions - 1]  = ((float)rand() / RAND_MAX) * height;
-        m_heights[dimensions - 1]   [0]                      = ((float)rand() / RAND_MAX) * height;
-        m_heights[dimensions - 1]   [dimensions - 1]   = ((float)rand() / RAND_MAX) * height;
-
-        uint xMid = x1 + (dimensions/(pow(2, iteration))) - 1;
-        uint yMid = y1 + (dimensions/(pow(2, iteration))) - 1;
-
-        newDiamondSquare(x1, y1, x2, y2, height, iteration + 1, maxIterations, dimensions);
-
-//        newDiamondSquare(x1, y1, xMid, yMid, height, iteration + 1, maxIterations, dimensions);
-
-//        newDiamondSquare(xMid, y1, x2, yMid, height, iteration + 1, maxIterations, dimensions);
-
-//        newDiamondSquare(x1, yMid, xMid, y2, height, iteration + 1, maxIterations, dimensions);
-
-//        newDiamondSquare(xMid, yMid,  x2, y2, height, iteration + 1, maxIterations, dimensions);
-    }
-    else
-    {
-        qInfo()<<"Corner step";
-
-        float h1 = m_heights[x1][y1];
-        float h2 = m_heights[x2][y1];
-        float h3 = m_heights[x1][y2];
-        float h4 = m_heights[x2][y2];
-
-        float newHeight_Center = ((h1 + h2 + h3 + h4) / 4.0f) + ((float)rand() / RAND_MAX) * height;
-
-        uint xMid = ((x2 - x1) / 2) + x1;
-        uint yMid = ((y2 - y1) / 2) + y1;
-
-        qInfo()<<"Diamond";
-        m_heights[xMid][yMid] += newHeight_Center;
-
-
-        float newHeight_Bottom = ((h2 - h1)/2.0f);// + ((float)rand() / RAND_MAX) * height;
-        float newHeight_Top = ((h4 - h3)/2.0f);// + ((float)rand() / RAND_MAX) * height;
-        float newHeight_Left = ((h3 - h1)/2.0f);// + ((float)rand() / RAND_MAX) * height;
-        float newHeight_Right = ((h4 - h2)/2.0f);// + ((float)rand() / RAND_MAX) * height;
-
-        qInfo()<<"Square";
-        m_heights[xMid][y1] = newHeight_Bottom;
-        m_heights[xMid][y2] = newHeight_Top;
-        m_heights[x1][yMid] = newHeight_Left;
-        m_heights[x2][yMid] = newHeight_Right;
-
-
-        qInfo()<<"Next iter";
-        newDiamondSquare(x1, y1, xMid, yMid, height, iteration + 1, maxIterations, dimensions);
-
-        newDiamondSquare(xMid, y1, x2, yMid, height, iteration + 1, maxIterations, dimensions);
-
-        newDiamondSquare(x1, yMid, xMid, y2, height, iteration + 1, maxIterations, dimensions);
-
-        newDiamondSquare(xMid, yMid,  x2, y2, height, iteration + 1, maxIterations, dimensions);
-    }
-
 }
 
 float GLWidget::getHeight(int x, int y)
@@ -827,167 +534,6 @@ QVector3D GLWidget::getNormal(int x, int y)
 
     QVector3D normal(heightToLeft - heightToRight, 2.0f, heightToBack - heightToFront);
     return normal.normalized();
-}
-
-float GLWidget::getNoise(int x, int y)
-{
-    srand((x + 42) * (y + 19));
-    return (((float)rand() / RAND_MAX));
-}
-
-void GLWidget::d2(int x1, int x2, int y1, int y2, float range, int iteration, int maxIterations)
-{
-    if(iteration == maxIterations)
-    {
-        return;
-    }
-    else if(iteration == 0)
-    {
-        qInfo()<<"Intial setup";
-        std::random_device rnd;
-        std::mt19937 eng(rnd());
-        std::uniform_real_distribution<> diamondValue((-1 * (range/2.0f)), range/2.0f);
-
-        m_heights.resize(pow(2, maxIterations) + 1, std::vector<float>(pow(2, maxIterations) + 1, 0.0f));
-
-        m_heights[x1][y1] = diamondValue(eng);
-        m_heights[x2][y1] = diamondValue(eng);
-        m_heights[x1][y2] = diamondValue(eng);
-        m_heights[x2][y2] = diamondValue(eng);
-
-        d2(x1, x2, y1, y2, range, iteration + 1, maxIterations);
-    }
-    else
-    {
-        qInfo()<<"Iteration "<<iteration;
-
-        std::random_device rnd;
-        std::mt19937 eng(rnd());
-        std::uniform_real_distribution<> diamondValue((-1 * (range/2.0f)), range/2.0f);
-        std::uniform_real_distribution<> squareValue((-1 * (range/3.0f)), range/5.0f);
-
-        float h1 = m_heights[x1][y1];
-        float h2 = m_heights[x2][y1];
-        float h3 = m_heights[x1][y2];
-        float h4 = m_heights[x2][y2];
-
-        int xMid = x1 + ((pow(2, maxIterations))/(pow(2, iteration)));
-        int yMid = y1 + ((pow(2, maxIterations))/(pow(2, iteration)));
-
-        m_heights[xMid][yMid] += (h1 + h2 + h3 + h4)/4.0f + diamondValue(eng);
-
-        m_heights[xMid][y1] += (h1 + h2)/2.0f + squareValue(eng);
-        m_heights[xMid][y2] += (h4 + h3)/2.0f + squareValue(eng);
-        m_heights[x1][yMid] += (h3 + h1)/2.0f + squareValue(eng);
-        m_heights[x2][yMid] += (h4 + h2)/2.0f + squareValue(eng);
-
-        d2(x1, xMid, y1, yMid, range/2.0f, iteration + 1, maxIterations);
-        d2(x1, xMid, yMid, y2, range/2.0f, iteration + 1, maxIterations);
-        d2(xMid, x2, y1, yMid, range/2.0f, iteration + 1, maxIterations);
-        d2(xMid, x2, yMid, y2, range/2.0f, iteration + 1, maxIterations);
-    }
-}
-
-std::vector<float> GLWidget::d3(std::vector<float> heightMap, float range, int iteration, int maxIterations)
-{
-    qInfo()<<heightMap.size();
-
-    if(iteration == maxIterations)
-    {
-        return heightMap;
-    }
-    else
-    {
-        qInfo()<<"Iteration "<<iteration;
-
-        std::random_device rnd;
-        std::mt19937 eng(rnd());
-        std::uniform_real_distribution<> diamondValue((-1 * (range/2.0f)), range/2.0f);
-        std::uniform_real_distribution<> squareValue((-1 * (range/3.0f)), range/5.0f);
-
-        float h1 = heightMap[0];
-        float h2 = heightMap[1];
-        float h3 = heightMap[2];
-        float h4 = heightMap[3];
-
-        heightMap.insert(heightMap.begin() + 2, (h1 + h2 + h3 + h4)/4.0f + diamondValue(eng));
-
-        heightMap.insert(heightMap.begin() + 1, (h1 + h2)/2.0f + squareValue(eng));
-        heightMap.insert(heightMap.begin() + 3, (h4 + h3)/2.0f + squareValue(eng));
-        heightMap.insert(heightMap.begin() + 5, (h3 + h1)/2.0f + squareValue(eng));
-        heightMap.insert(heightMap.begin() + 7, (h4 + h2)/2.0f + squareValue(eng));
-
-        std::vector<float> heights1{heightMap[0], heightMap[2], heightMap[4], heightMap[5]};
-
-        heights1 = d3(heights1, range, iteration + 1, maxIterations);
-
-        if(heights1.size() != 4)
-        {
-            heightMap[0] = heights1[0];
-            heightMap[1] = heights1[2];
-            heightMap[3] = heights1[6];
-            heightMap[4] = heights1[8];
-
-            //Add diamond
-            heightMap.insert(heightMap.begin() + 3, heights1[4]);
-
-            //Add square
-            heightMap.insert(heightMap.begin() + 1, heights1[1]);
-            heightMap.insert(heightMap.begin() + 4, heights1[3]);
-            heightMap.insert(heightMap.begin() + 6, heights1[5]);
-            heightMap.insert(heightMap.begin() + 8, heights1[7]);
-
-            std::vector<float> heights2{heightMap[2], heightMap[3], heightMap[9], heightMap[10]};
-
-            heights2 = d3(heights2, range, iteration + 1, maxIterations);
-
-            heightMap[2] = heights2[0];
-            heightMap[3] = heights2[2];
-            heightMap[9] = heights2[6];
-            heightMap[10] = heights2[8];
-
-            heightMap.insert(heightMap.begin() + 7, heights2[4]);
-
-            heightMap.insert(heightMap.begin() + 3, heights2[1]);
-            heightMap[7] = heights2[3];
-            heightMap.insert(heightMap.begin() + 9, heights2[5]);
-            heightMap.insert(heightMap.begin() + 13, heights2[7]);
-
-            std::vector<float> heights3{heightMap[10], heightMap[12], heightMap[15], heightMap[16]};
-
-            heights3 = d3(heights3, range, iteration + 1, maxIterations);
-
-            heightMap[10] = heights3[0];
-            heightMap[12] = heights3[2];
-            heightMap[15] = heights3[6];
-            heightMap[16] = heights3[8];
-
-            heightMap.insert(heightMap.begin() + 15, heights3[4]);
-
-            heightMap[11] = heights3[1];
-            heightMap.insert(heightMap.begin() +15, heights3[3]);
-            heightMap.insert(heightMap.begin() + 17, heights3[5]);
-            heightMap.insert(heightMap.begin() + 19, heights3[7]);
-
-            std::vector<float> heights4{heightMap[12], heightMap[14], heightMap[20], heightMap[21]};
-
-            heights4 = d3(heights4, range, iteration + 1, maxIterations);
-
-            heightMap[12] = heights4[0];
-            heightMap[14] = heights4[2];
-            heightMap[20] = heights4[6];
-            heightMap[21] = heights4[8];
-
-            heightMap.insert(heightMap.begin() + 18, heights4[4]);
-
-            heightMap[13] = heights4[1];
-            heightMap[17] = heights4[3];
-            heightMap.insert(heightMap.begin() + 19, heights4[5]);
-            heightMap.insert(heightMap.begin() + 23, heights4[7]);
-        }
-
-        return heightMap;
-    }
 }
 
 void GLWidget::diamond(int x, int y, int sideLength, float scale)
@@ -1042,4 +588,223 @@ void GLWidget::square(int x, int y, int sideLength, float scale)
     }
 
     m_heights[x + midPoint][y + midPoint] = (heightAverage / heightTotal) + (squareValue(eng) * scale);
+}
+
+void GLWidget::prepareTerrain()
+{
+    //Create a VAO to store terrain drawing data in
+    vao_terrain.create();
+    vao_terrain.bind();
+
+    //Create a vertex buffer object, set it to static (the vertex
+    //data doesn't change), and then pass in the list of vertices
+    vbo_terrain.create();
+    vbo_terrain.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    vbo_terrain.bind();
+    vbo_terrain.allocate(&m_verts[0], (int)m_verts.size() * sizeof(GLfloat) * 3);
+
+    //Make sure the vertices will be passed to the right place
+    //in the shader
+    m_pgm.enableAttributeArray("vertexPos");
+    m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
+
+    vbo_terrain.release();
+
+    //Now create a normals buffer object and do the same process
+    nbo_terrain.create();
+    nbo_terrain.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    nbo_terrain.bind();
+    nbo_terrain.allocate(&m_norms[0], (int)m_norms.size() * sizeof(GLfloat) * 3);
+
+    m_pgm.enableAttributeArray("vertexNorm");
+    m_pgm.setAttributeArray("vertexNorm", GL_FLOAT, 0, 3);
+
+    nbo_terrain.release();
+
+    //Finally release the VAO
+    vao_terrain.release();
+}
+
+void GLWidget::prepareWater()
+{
+    //Set the water level to 1/4 of the terrains height range
+    m_waterLevel = ((m_terrainMax - m_terrainMin) / 4.0f) + m_terrainMin;
+
+    //Pass this value into the shader
+    m_pgm.setUniformValue("waterLevel", m_waterLevel);
+
+    //Hard code a plane at the specific level in the Y axis
+    m_waterVerts.push_back(QVector3D(-100.0f, m_waterLevel, -100.0f));
+    m_waterVerts.push_back(QVector3D(-100.0f, m_waterLevel, 100.0f));
+    m_waterVerts.push_back(QVector3D(100.0f, m_waterLevel, 100.0f));
+    m_waterVerts.push_back(QVector3D(100.0f, m_waterLevel, -100.0f));
+
+    //Set the vertex norms
+    m_waterNorms.push_back(QVector3D(0.0f, 1.0f, 0.0f));
+    m_waterNorms.push_back(QVector3D(0.0f, 1.0f, 0.0f));
+    m_waterNorms.push_back(QVector3D(0.0f, 1.0f, 0.0f));
+    m_waterNorms.push_back(QVector3D(0.0f, 1.0f, 0.0f));
+
+    //Create a VAO for the water plane
+    vao_water.create();
+    vao_water.bind();
+
+    //Same process as for the terrain, create a vbo with the vertex data
+    //and then create an nbo with the normal data
+    vbo_water.create();
+    vbo_water.bind();
+    vbo_water.allocate(&m_waterVerts[0], (int)m_waterVerts.size() * sizeof(GLfloat) * 3);
+
+     m_pgm.enableAttributeArray("vertexPos");
+     m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
+
+     vbo_water.release();
+
+     nbo_water.create();
+     nbo_water.bind();
+     nbo_water.allocate(&m_waterNorms[0], (int)m_waterNorms.size() * sizeof(GLfloat) * 3);
+
+    m_pgm.enableAttributeArray("vertexNorm");
+    m_pgm.setAttributeArray("vertexNorm", GL_FLOAT, 0, 3);
+
+    nbo_water.release();
+
+    //And then release the water VAO
+    vao_water.release();
+}
+
+void GLWidget::prepareTrees()
+{
+    //Hard code some vertices which represent a 'tree'
+    m_treeVerts.push_back(QVector3D(0.1f, 0.0f, 0.1f));   //0
+    m_treeVerts.push_back(QVector3D(-0.1f, 0.0f, 0.1f));  //1
+    m_treeVerts.push_back(QVector3D(-0.1f, 0.0f, -0.1f)); //2
+    m_treeVerts.push_back(QVector3D(0.1f, 0.0f, -0.1f));  //3
+
+    m_treeVerts.push_back(QVector3D(0.01f, 0.4f, 0.01f));   //4
+    m_treeVerts.push_back(QVector3D(-0.01f, 0.4f, 0.01f));  //5
+    m_treeVerts.push_back(QVector3D(-0.01f, 0.4f, -0.01f)); //6
+    m_treeVerts.push_back(QVector3D(0.01f, 0.4f, -0.01f));  //7
+
+    //Hard code the face indices
+    //Bottom
+    m_treeIndices.push_back(0);
+    m_treeIndices.push_back(1);
+    m_treeIndices.push_back(2);
+    m_treeIndices.push_back(3);
+
+    //Sides
+    m_treeIndices.push_back(0);
+    m_treeIndices.push_back(1);
+    m_treeIndices.push_back(5);
+    m_treeIndices.push_back(4);
+
+    m_treeIndices.push_back(1);
+    m_treeIndices.push_back(2);
+    m_treeIndices.push_back(6);
+    m_treeIndices.push_back(5);
+
+    m_treeIndices.push_back(2);
+    m_treeIndices.push_back(3);
+    m_treeIndices.push_back(7);
+    m_treeIndices.push_back(6);
+
+    m_treeIndices.push_back(3);
+    m_treeIndices.push_back(0);
+    m_treeIndices.push_back(4);
+    m_treeIndices.push_back(7);
+
+    //Top
+    m_treeIndices.push_back(4);
+    m_treeIndices.push_back(5);
+    m_treeIndices.push_back(6);
+    m_treeIndices.push_back(7);
+
+    //Now execute the same process as with the terrain and water, only
+    //this time there are no normals (but there is an index buffer)
+    vao_trees.create();
+    vao_trees.bind();
+
+    vbo_trees.create();
+    vbo_trees.bind();
+    vbo_trees.allocate(&m_treeVerts[0], (int)m_treeVerts.size() * sizeof(GLfloat) * 3);
+
+    m_pgm.enableAttributeArray("vertexPos");
+    m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
+
+    vbo_trees.release();
+
+    ibo_trees.create();
+    ibo_trees.bind();
+    ibo_trees.allocate(&m_treeIndices[0], (int)m_treeIndices.size() * sizeof(uint));
+
+    vao_trees.release();
+
+    //Finally we need to place the trees so iterate through the list of normals
+    int switchCounter = 0;
+
+    for(int i = 0; i < m_norms.size(); i += 4)
+    {
+        //Get the normal of the current face
+        QVector3D faceNorm = m_norms[i] + m_norms[i + 1] + m_norms[i + 2] + m_norms[i + 3];
+        faceNorm /= 4.0f;
+
+        //Calculate the angle between the Y axis and the face normal
+        float angle = (acos(QVector3D::dotProduct(faceNorm.normalized(), QVector3D(0,1,0)) / (faceNorm.length())) * 180.0) / PI;
+
+        //If the angle is less than 45deg and the vertex at this position is heigher than 110% of the water level
+        //we can add a new tree
+        if((angle < 45) && (m_verts[i].y() > (m_waterLevel + ((m_terrainMax - m_terrainMin) * 0.1f))))
+        {
+            //Create a variable for storing the middle of the face
+            QVector3D midFace;
+
+            //To introduce some pseudo-random placement (to ensure the trees aren't all added in a uniform
+            //grid) use various methods to calulate the new position.
+            switch(switchCounter)
+            {
+            case 0:
+                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3];
+                m_treePositions.push_back(midFace/4.0f);
+                break;
+
+            case 1:
+                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 2];
+                m_treePositions.push_back(midFace/3.0f);
+                break;
+
+            case 2:
+                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 3];
+                m_treePositions.push_back(midFace/3.0f);
+                break;
+
+            case 3:
+                midFace = m_verts[i] + m_verts[i + 3] + m_verts[i + 2];
+                m_treePositions.push_back(midFace/3.0f);
+                break;
+
+            case 4:
+                midFace = m_verts[i + 3] + m_verts[i + 1] + m_verts[i + 2];
+                m_treePositions.push_back(midFace/3.0f);
+                break;
+
+            case 5:
+                midFace = m_verts[i] + m_verts[i + 1];
+                m_treePositions.push_back(midFace/2.0f);
+                break;
+
+            case 6:
+                midFace = m_verts[i + 1] + m_verts[i + 2];
+                m_treePositions.push_back(midFace/2.0f);
+                switchCounter = 0;
+                break;
+            }
+
+            //This ensures that the trees are positioned in different places.
+            //Not the perfect way of doing it but introduces enough randominity
+            //to create visual interest
+            switchCounter++;
+
+        }
+    }
 }

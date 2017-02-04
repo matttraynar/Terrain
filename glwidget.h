@@ -62,25 +62,24 @@ private:
 
      //-------------------------------------------------------
     //Terrain generation functions
-    void prepareTerrain(int iterations);
+    void generateHeightMap(int iterations, float roughness);
     void drawTerrain();
-
-    void diamondSquare(uint x1, uint y1, uint x2, uint y2, float height, float iteration);
-    void newDiamondSquare(uint x1, uint y1, uint x2, uint y2, float height, int iteration, int maxIterations, int dimensions);
-
-    void d2(int x1, int x2, int y1, int y2, float range, int iteration, int maxIterations);
-    std::vector<float> d3(std::vector<float> heightMap, float range, int iteration, int maxIterations);
 
     void diamond(int x, int y, int sideLength, float scale);
     void square(int x, int y, int sideLength, float scale);
 
-    float getNoise(int x, int y);
-
     float getHeight(int x, int y);
     QVector3D getNormal(int x, int y);
 
-    int m_divisions;
+    void prepareTerrain();
+    void prepareWater();
+    void prepareTrees();
 
+    int m_divisions;
+    float m_waterLevel;
+
+    float m_terrainMin;
+    float m_terrainMax;
 
     QOpenGLVertexArrayObject vao_terrain;
     QOpenGLBuffer vbo_terrain;
