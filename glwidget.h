@@ -12,6 +12,8 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 
+#include <QOpenGLTexture>
+
 #include <vector>
 #include <math.h>
 #include <random>
@@ -75,6 +77,8 @@ private:
     void prepareWater();
     void prepareTrees();
 
+    QOpenGLTexture *addNewTexture(QString &filename);
+
     int m_divisions;
     float m_waterLevel;
 
@@ -84,9 +88,11 @@ private:
     QOpenGLVertexArrayObject vao_terrain;
     QOpenGLBuffer vbo_terrain;
     QOpenGLBuffer nbo_terrain;
+    QOpenGLBuffer uvbo_terrain;
 
     std::vector<QVector3D> m_verts;
     std::vector<QVector3D> m_norms;
+    std::vector<QVector2D> m_uvs;
     std::vector< std::vector<float> > m_heights;
 
     QOpenGLVertexArrayObject vao_water;

@@ -48,12 +48,28 @@ void GLWidget::initializeGL()
 
     startTimer(1);
 
-    generateHeightMap(6, 45.0f);
+    generateHeightMap(6, 10.0f);
 
     prepareTerrain();
     prepareWater();
     prepareTrees();
     qInfo()<<"Terrain prepared";
+
+    QOpenGLTexture* sand = addNewTexture(QString("textures/sand.png"));
+    sand->bind(0);
+    m_pgm.setUniformValue("sandTexture", 0);
+
+    QOpenGLTexture* grass = addNewTexture(QString("textures/grass.png"));
+    grass->bind(1);
+    m_pgm.setUniformValue("grassTexture", 1);
+
+    QOpenGLTexture* rock = addNewTexture(QString("textures/rock.png"));
+    rock->bind(2);
+    m_pgm.setUniformValue("rockTexture", 2);
+
+    QOpenGLTexture* snow = addNewTexture(QString("textures/snow.png"));
+    snow->bind(3);
+    m_pgm.setUniformValue("snowTexture", 3);
 
     m_pgm.release();
 
@@ -471,12 +487,16 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
             //Also ensure the norma for that vertex has been calculated
             m_norms.push_back(getNormal(i, j));
 
+            //And then the UV coordinates;
+            m_uvs.push_back(QVector2D(0, 0));
+
             QVector3D v2((((float)(i + 1)/m_divisions) * range) + start,
                                 getHeight(i + 1, j),
                                 (((float)(j)/m_divisions) * range) + start);
 
             m_verts.push_back(v2);
             m_norms.push_back(getNormal(i + 1, j));
+            m_uvs.push_back(QVector2D(1, 0));
 
 
             QVector3D v3((((float)(i + 1)/m_divisions) * range) + start,
@@ -485,6 +505,7 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
 
             m_verts.push_back(v3);
             m_norms.push_back(getNormal(i + 1, j + 1));
+            m_uvs.push_back(QVector2D(1, 1));
 
 
             QVector3D v4((((float)(i)/m_divisions) * range) + start,
@@ -493,6 +514,7 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
 
             m_verts.push_back(v4);
             m_norms.push_back(getNormal(i, j + 1));
+            m_uvs.push_back(QVector2D(0, 1));
         }
     }
 }
@@ -620,6 +642,16 @@ void GLWidget::prepareTerrain()
     m_pgm.setAttributeArray("vertexNorm", GL_FLOAT, 0, 3);
 
     nbo_terrain.release();
+
+    uvbo_terrain.create();
+    uvbo_terrain.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    uvbo_terrain.bind();
+    uvbo_terrain.allocate(&m_uvs[0], (int)m_uvs.size() * sizeof(GLfloat) * 2);
+
+    m_pgm.enableAttributeArray("vertexUV");
+    m_pgm.setAttributeArray("vertexUV", GL_FLOAT, 0, 2);
+
+    uvbo_terrain.release();
 
     //Finally release the VAO
     vao_terrain.release();
@@ -807,4 +839,17 @@ void GLWidget::prepareTrees()
 
         }
     }
+}
+
+QOpenGLTexture* GLWidget::addNewTexture(QString &filename)
+{
+    QOpenGLTexture* texture = new QOpenGLTexture(QImage(filename));
+
+    texture->setWrapMode(QOpenGLTexture::Repeat);
+
+    texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+
+    texture->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    return texture;
 }
