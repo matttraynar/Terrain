@@ -109,8 +109,8 @@ void main()
 
 			if(out_norm.y < 0.7f)
 			{
-				colour *= 0.7f;
-				colour += texture2D(rockTexture, out_uv) * 0.3f;// * (out_norm.y);
+//				colour *= 0.7f;
+				colour = texture2D(rockTexture, out_uv);//  * (out_norm.y);
 			}
 
 			vec3 v_pos = vec4(M * vec4(out_pos,1.0)).xyz;
