@@ -218,3 +218,4 @@ pip-log.txt
 # Build and config files
 /build*/*
 /debug/*
+/Makefile.*
