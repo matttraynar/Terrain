@@ -42,9 +42,20 @@ void main()
 
 			float waterHeight = (waterLevel - min) / range;
 
-			if(out_pos.y < waterLevel)
+			if(colourHeight < waterHeight * 0.7f)
 			{
-				colour = vec4(0.0f, 0.0f, 0.3f, 1.0f);
+				colour = vec4(0.0f, 0.0f, 0.2f, 1.0f);
+			}
+			else if(colourHeight < waterHeight * 1.0f)
+			{
+				float start = waterHeight * 0.7f;
+
+				float colourRange = waterHeight * 0.3f;
+
+				float colourScale = (colourHeight - start) / colourRange;
+
+				colour = vec4(0.0f, 0.0f, 0.2f, 1.0f) * (1 - colourScale);
+				colour += texture2D(sandTexture, out_uv) * colourScale;
 			}
 			else if(colourHeight < waterHeight * 1.1f)
 			{
@@ -84,34 +95,31 @@ void main()
 			{
 				float start = waterHeight * 2.9f;
 
-				float colourRange = waterHeight * 0.3f;
+				float colourRange = waterHeight * 0.2f;
 
 				float colourScale = (colourHeight - start) / colourRange;
 
 				colour = texture2D(rockTexture, out_uv) * (1 - colourScale);
-				colour += texture2D(snowTexture, out_uv) * colourScale;
+				colour += texture2D(snowTexture, out_uv) * (colourScale);
 			}
 			else
 			{
 				colour = texture2D(snowTexture, out_uv);
 			}
 
-			if(waterLevel > 0.0f)
+			if(out_norm.y < 0.7f)
 			{
-				if((out_pos.y >= (waterLevel * 0.9f)) && ((out_pos.y <= (waterLevel * 1.1f))))
-				{
-	//				colour = texture2D(sandTexture, out_uv);
-				}
-			}
-			else
-			{
-				if((out_pos.y <= (waterLevel * 0.9f)) && ((out_pos.y >= (waterLevel * 1.1f))))
-				{
-	//				colour = texture2D(sandTexture, out_uv);
-				}
+				colour *= 0.7f;
+				colour += texture2D(rockTexture, out_uv) * 0.3f;// * (out_norm.y);
 			}
 
-			fragColour = colour;
+			vec3 v_pos = vec4(M * vec4(out_pos,1.0)).xyz;
+			vec3 c_pos = vec4(M * vec4(camPos,1.0)).xyz;
+
+			float brightness = clamp(dot(out_norm,normalize(lightPos)), 0.0, 1.0);
+
+			fragColour = vec4(brightness * lCol.rgb * colour.rgb, 1.0);
+//			fragColour = colour;
 		}
 		else
 		{

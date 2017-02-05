@@ -48,7 +48,7 @@ void GLWidget::initializeGL()
 
     startTimer(1);
 
-    generateHeightMap(6, 10.0f);
+    generateHeightMap(6, 15.0f);
 
     prepareTerrain();
     prepareWater();
@@ -496,7 +496,7 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
 
             m_verts.push_back(v2);
             m_norms.push_back(getNormal(i + 1, j));
-            m_uvs.push_back(QVector2D(1, 0));
+            m_uvs.push_back(QVector2D(0.5f, 0));
 
 
             QVector3D v3((((float)(i + 1)/m_divisions) * range) + start,
@@ -505,7 +505,7 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
 
             m_verts.push_back(v3);
             m_norms.push_back(getNormal(i + 1, j + 1));
-            m_uvs.push_back(QVector2D(1, 1));
+            m_uvs.push_back(QVector2D(0.5f, 0.5f));
 
 
             QVector3D v4((((float)(i)/m_divisions) * range) + start,
@@ -514,7 +514,7 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
 
             m_verts.push_back(v4);
             m_norms.push_back(getNormal(i, j + 1));
-            m_uvs.push_back(QVector2D(0, 1));
+            m_uvs.push_back(QVector2D(0, 0.5f));
         }
     }
 }
@@ -786,7 +786,9 @@ void GLWidget::prepareTrees()
 
         //If the angle is less than 45deg and the vertex at this position is heigher than 110% of the water level
         //we can add a new tree
-        if((angle < 45) && (m_verts[i].y() > (m_waterLevel + ((m_terrainMax - m_terrainMin) * 0.1f))))
+
+        //CHANGE TO JUST USE Y VALUE (angle < 45)
+        if((faceNorm.y() > 0.75f) && (m_verts[i].y() > (m_waterLevel + ((m_terrainMax - m_terrainMin) * 0.1f))))
         {
             //Create a variable for storing the middle of the face
             QVector3D midFace;
