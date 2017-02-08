@@ -18,6 +18,8 @@
 #include <math.h>
 #include <random>
 
+#include "perlinnoise.h"
+
 #define PI 3.14159265
 
 class GLWidget : public QGLWidget

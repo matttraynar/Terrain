@@ -14,7 +14,7 @@ GLWidget::GLWidget( QWidget* parent ) :
     m_zRot = 0;
     m_zDis = 0;
     m_mouseDelta = 0;
-    m_cameraPos = QVector3D(5.0f, 5.0f, 5.0f);
+    m_cameraPos = QVector3D(25.0f, 25.0f, 25.0f);
 
     m_x = -0;
     moveDown = false;
@@ -48,7 +48,7 @@ void GLWidget::initializeGL()
 
     startTimer(1);
 
-    generateHeightMap(6, 15.0f);
+    generateHeightMap(6, 10.0f);
 
     prepareTerrain();
     prepareWater();
@@ -72,7 +72,6 @@ void GLWidget::initializeGL()
     m_pgm.setUniformValue("snowTexture", 3);
 
     m_pgm.release();
-
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -364,6 +363,8 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
     m_heights[m_divisions][m_divisions] = random(eng);
     m_heights[m_divisions][0] = random(eng);
 
+    float roughStore = roughness;
+
     //Iterate through the entire height map for the given number of times
     for(int i = 0; i < iterations; ++i)
     {
@@ -399,6 +400,24 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
 
         //Finally reduce the roughness by a half for the next iteration
         roughness *= 0.5;
+    }
+
+    //TRYING PERLIN NOISE-----------------------------
+
+    PerlinNoise noise;
+
+    std::uniform_real_distribution<> randomValue(0.0f, 1.0f);
+
+    double zValue = randomValue(eng);
+
+    for(double i = 0; i< m_heights.size(); ++i)
+    {
+        for(double j = 0; j < m_heights[i].size(); ++j)
+        {
+//            m_heights[i][j] = noise.octaveNoise(i/(double)m_heights.size(), 0.5,  j/(double)m_heights[j].size(), 2, 0.25) * 10.0;
+            m_heights[i][j] += noise.noise(i / m_heights.size(), j / m_heights[i].size(), zValue) * (roughStore * zValue * 10.0f);
+            m_heights[i][j] /= 2.0f;
+        }
     }
 
     //Set the minimum and maximum values of the terrain to the value at [0][0]
