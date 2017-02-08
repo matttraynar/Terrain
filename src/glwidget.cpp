@@ -14,7 +14,7 @@ GLWidget::GLWidget( QWidget* parent ) :
     m_zRot = 0;
     m_zDis = 0;
     m_mouseDelta = 0;
-    m_cameraPos = QVector3D(25.0f, 25.0f, 25.0f);
+    m_cameraPos = QVector3D(10.0f, 10.0f, 10.0f);
 
     m_x = -0;
     moveDown = false;
@@ -48,7 +48,7 @@ void GLWidget::initializeGL()
 
     startTimer(1);
 
-    generateHeightMap(6, 10.0f);
+    generateHeightMap(6, 15.0f);
 
     prepareTerrain();
     prepareWater();
@@ -95,7 +95,7 @@ void GLWidget::paintGL()
     drawTerrain();
 
     vao_water.bind();
-    m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,1.0f,1.0f));
+    m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,1.0f,0.5f));
 
     glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
 
@@ -402,18 +402,20 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
         roughness *= 0.5;
     }
 
-    //TRYING PERLIN NOISE-----------------------------
-
+    //Now combining perlin noise with this height map
     PerlinNoise noise;
 
     std::uniform_real_distribution<> randomValue(0.0f, 1.0f);
 
+    //Choose a random value to enter the 3D perlin noise with
     double zValue = randomValue(eng);
 
     for(double i = 0; i< m_heights.size(); ++i)
     {
         for(double j = 0; j < m_heights[i].size(); ++j)
         {
+            //Iterate through the height field, adding a perlin noise value and then
+            //taking the average
 //            m_heights[i][j] = noise.octaveNoise(i/(double)m_heights.size(), 0.5,  j/(double)m_heights[j].size(), 2, 0.25) * 10.0;
             m_heights[i][j] += noise.noise(i / m_heights.size(), j / m_heights[i].size(), zValue) * (roughStore * zValue * 10.0f);
             m_heights[i][j] /= 2.0f;
@@ -479,6 +481,9 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
     //Centering around the origin. E.G. a range of 20 starts at -10
     float start = 0 - (range/2.0f);
 
+    //This will be used to update the camera position
+    QVector3D terrainMiddle(0,0,0);
+
     //Iterate through the height map
     for(int i = 0; i < m_divisions; ++i)
     {
@@ -534,8 +539,22 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
             m_verts.push_back(v4);
             m_norms.push_back(getNormal(i, j + 1));
             m_uvs.push_back(QVector2D(0, 0.5f));
+
+            terrainMiddle += ((v1 + v2 + v3 + v4) / 4.0f);
+            terrainMiddle /= 2.0f;
         }
     }
+
+    //Update the camera position so that is centred (pretty much) on the middle
+    //of the terrain an always has the terrain visible
+    terrainMiddle.setY(((m_terrainMax - m_terrainMin) * 0.75f) + m_terrainMin);
+
+    m_cameraPos += terrainMiddle;
+
+    m_view.lookAt(m_cameraPos,
+                            terrainMiddle,
+                            QVector3D(0,1,0));
+
 }
 
 void GLWidget::drawTerrain()
