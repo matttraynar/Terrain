@@ -109,8 +109,20 @@ void main()
 
 			if(out_norm.y < 0.7f)
 			{
-//				colour *= 0.7f;
-				colour = texture2D(rockTexture, out_uv);//  * (out_norm.y);
+				colour = texture2D(rockTexture, out_uv);
+			}
+			else if(out_norm.y < 0.75f)
+			{
+				float start = 0.7f;
+
+				float colourRange = 0.05f;
+
+				float colourScale = (out_norm.y - start) / colourRange;
+
+				vec4 colourCopy = colour;
+
+				colour = texture2D(rockTexture, out_uv) * (1.0f - colourScale);
+				colour += colourCopy * ( colourScale);
 			}
 
 			vec3 v_pos = vec4(M * vec4(out_pos,1.0)).xyz;
