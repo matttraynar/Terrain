@@ -841,13 +841,9 @@ void GLWidget::prepareTrees()
         QVector3D faceNorm = m_norms[i] + m_norms[i + 1] + m_norms[i + 2] + m_norms[i + 3];
         faceNorm /= 4.0f;
 
-        //Calculate the angle between the Y axis and the face normal
-        float angle = (acos(QVector3D::dotProduct(faceNorm.normalized(), QVector3D(0,1,0)) / (faceNorm.length())) * 180.0) / PI;
-
-        //If the angle is less than 45deg and the vertex at this position is heigher than 110% of the water level
-        //we can add a new tree
-
-        //CHANGE TO JUST USE Y VALUE (angle < 45)
+        //We can now just see what the y value of the face normal is. If it is large we know
+        //the face points mostly upward, making it relatively flat. A check is also done to see
+        //if the current vert is above the water level or not
         if((faceNorm.y() > 0.75f) && (m_verts[i].y() > (m_waterLevel + ((m_terrainMax - m_terrainMin) * 0.1f))))
         {
             //Create a variable for storing the middle of the face
