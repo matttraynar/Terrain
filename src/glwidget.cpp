@@ -48,12 +48,31 @@ void GLWidget::initializeGL()
 
     startTimer(1);
 
-    generateHeightMap(6, 15.0f);
+    generateHeightMap(6, 7.0f);
 
     prepareTerrain();
     prepareWater();
     prepareTrees();
     qInfo()<<"Terrain prepared";
+
+    m_fieldGenerator = EnglishFields(m_heights, m_normalMap);
+
+    vao_fields.create();
+    vao_fields.bind();
+
+    vbo_fields.create();
+//    vbo_fields.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    vbo_fields.bind();
+//    vbo_fields.allocate(&m_fieldGenerator.getBoundaryVerts()[0], (int)m_fieldGenerator.getBoundaryVerts().size() * sizeof(GLfloat) * 3);
+
+//    //Make sure the vertices will be passed to the right place
+//    //in the shader
+//    m_pgm.enableAttributeArray("vertexPos");
+//    m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
+
+    vbo_fields.release();
+
+    vao_fields.release();
 
     QOpenGLTexture* sand = addNewTexture(QString("textures/sand.png"));
     sand->bind(0);
@@ -113,6 +132,12 @@ void GLWidget::paintGL()
     }
 
     vao_trees.release();
+
+//    vao_fields.bind();
+
+//    glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.getBoundaryVerts().size());
+
+//    vao_fields.release();
 
     m_pgm.release();
 }
@@ -487,8 +512,13 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
     //Iterate through the height map
     for(int i = 0; i < m_divisions; ++i)
     {
+        std::vector<QVector3D> tmpNormals;
+
         for(int j = 0; j < m_divisions; ++j)
         {
+            //Add the normal at the current vertex to the container
+            tmpNormals.push_back(getNormal(i, j));
+
             //Create four vertices. Whilst some will be repeated this is just easier
             //to do than trying to create an index list
 
@@ -549,6 +579,8 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
             terrainMiddle += ((v1 + v2 + v3 + v4) / 4.0f);
             terrainMiddle /= 2.0f;
         }
+
+        m_normalMap.push_back(tmpNormals);
     }
 
 

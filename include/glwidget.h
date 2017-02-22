@@ -19,6 +19,7 @@
 #include <random>
 
 #include "perlinnoise.h"
+#include "englishfields.h"
 
 #define PI 3.14159265
 
@@ -64,6 +65,8 @@ private:
 
     QOpenGLShaderProgram m_pgm;
 
+    EnglishFields m_fieldGenerator;
+
      //-------------------------------------------------------
     //Terrain generation functions
     void generateHeightMap(int iterations, float roughness);
@@ -87,6 +90,9 @@ private:
     float m_terrainMin;
     float m_terrainMax;
 
+    QOpenGLVertexArrayObject vao_fields;
+    QOpenGLBuffer vbo_fields;
+
     QOpenGLVertexArrayObject vao_terrain;
     QOpenGLBuffer vbo_terrain;
     QOpenGLBuffer nbo_terrain;
@@ -95,7 +101,9 @@ private:
     std::vector<QVector3D> m_verts;
     std::vector<QVector3D> m_norms;
     std::vector<QVector2D> m_uvs;
+
     std::vector< std::vector<float> > m_heights;
+    std::vector< std::vector<QVector3D> > m_normalMap;
 
     QOpenGLVertexArrayObject vao_water;
     QOpenGLBuffer vbo_water;
