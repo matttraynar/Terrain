@@ -508,7 +508,7 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
 
             m_verts.push_back(v1);
 
-            //Also ensure the norma for that vertex has been calculated
+            //Also ensure the normal for that vertex has been calculated
             m_norms.push_back(getNormal(i, j));
 
             //And then the UV coordinates;
@@ -519,7 +519,9 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
                                 (((float)(j)/m_divisions) * range) + start);
 
             m_verts.push_back(v2);
+
             m_norms.push_back(getNormal(i + 1, j));
+
             m_uvs.push_back(QVector2D(0.5f, 0));
 
 
@@ -528,7 +530,9 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
                                 (((float)(j + 1)/m_divisions) * range) + start);
 
             m_verts.push_back(v3);
+
             m_norms.push_back(getNormal(i + 1, j + 1));
+
             m_uvs.push_back(QVector2D(0.5f, 0.5f));
 
 
@@ -537,13 +541,16 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
                                 (((float)(j + 1)/m_divisions) * range) + start);
 
             m_verts.push_back(v4);
+
             m_norms.push_back(getNormal(i, j + 1));
+
             m_uvs.push_back(QVector2D(0, 0.5f));
 
             terrainMiddle += ((v1 + v2 + v3 + v4) / 4.0f);
             terrainMiddle /= 2.0f;
         }
     }
+
 
     //Update the camera position so that is centred (pretty much) on the middle
     //of the terrain an always has the terrain visible
@@ -587,12 +594,27 @@ float GLWidget::getHeight(int x, int y)
 
 QVector3D GLWidget::getNormal(int x, int y)
 {
-    float heightToLeft = getHeight(x - 1, y);
-    float heightToRight = getHeight(x + 1, y);
-    float heightToFront = getHeight(x, y + 1);
-    float heightToBack = getHeight(x, y - 1);
+    QVector3D normal(0,0,0);
 
-    QVector3D normal(heightToLeft - heightToRight, 2.0f, heightToBack - heightToFront);
+    //Do a quick check to see if we're on any of the edges of
+    //the terrain. If we are then just set the normal to the y axis
+    if((x == 0) || (x >= (m_divisions - 1)) ||
+            (y == 0) || (y >= (m_divisions - 1)))
+    {
+        normal = QVector3D(0,1,0);
+    }
+    //Otherwise take the average of the heights around the point
+    else
+    {
+        float heightToLeft = getHeight(x - 1, y);
+        float heightToRight = getHeight(x + 1, y);
+        float heightToFront = getHeight(x, y + 1);
+        float heightToBack = getHeight(x, y - 1);
+
+        normal = QVector3D(heightToLeft - heightToRight, 2.0f, heightToBack - heightToFront);
+    }
+
+    //Finally normalize
     return normal.normalized();
 }
 
