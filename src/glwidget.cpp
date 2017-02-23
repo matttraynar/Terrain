@@ -55,20 +55,25 @@ void GLWidget::initializeGL()
     prepareTrees();
     qInfo()<<"Terrain prepared";
 
-    m_fieldGenerator = EnglishFields(m_heights, m_normalMap);
+//    m_fieldGenerator = EnglishFields(m_heights, m_normalMap);
+
+    std::vector<QVector3D> lineTmp {
+        QVector3D(0,0,0), QVector3D(-1000,1000,-1000)
+    };
 
     vao_fields.create();
     vao_fields.bind();
 
     vbo_fields.create();
-//    vbo_fields.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    vbo_fields.setUsagePattern(QOpenGLBuffer::StaticDraw);
     vbo_fields.bind();
+    vbo_fields.allocate(&lineTmp[0], (int)lineTmp.size() * sizeof(GLfloat) * 3);
 //    vbo_fields.allocate(&m_fieldGenerator.getBoundaryVerts()[0], (int)m_fieldGenerator.getBoundaryVerts().size() * sizeof(GLfloat) * 3);
 
 //    //Make sure the vertices will be passed to the right place
 //    //in the shader
-//    m_pgm.enableAttributeArray("vertexPos");
-//    m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
+    m_pgm.enableAttributeArray("vertexPos");
+    m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
 
     vbo_fields.release();
 
@@ -133,11 +138,13 @@ void GLWidget::paintGL()
 
     vao_trees.release();
 
-//    vao_fields.bind();
+    m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f ,1.0f, 1.0f));
 
-//    glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.getBoundaryVerts().size());
+    vao_fields.bind();
 
-//    vao_fields.release();
+    glDrawArrays(GL_LINES, 0, 2);
+
+    vao_fields.release();
 
     m_pgm.release();
 }
