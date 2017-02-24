@@ -130,7 +130,93 @@ void Voronoi::insertParabola(sPoint _p)
 
         checkCircleEvent(p0);
         checkCircleEvent(p2);
+    }
+}
 
+void Voronoi::removeParabola(sEvent _e)
+{
+    sParab p1 = _e->m_arc;
+
+    sParab xLeft = VoronoiParabola::getLeftParent(p1);
+    sParab xRight = VoronoiParabola::getRightParent(p1);
+
+    sParab p0 = VoronoiParabola::getLeftChild(xLeft);
+    sParab p2 = VoronoiParabola::getRightChild(xRight);
+
+    if(p0 == p2)
+    {
+        qInfo()<<"Missing right and left parabolas";
     }
 
+    if(p0->m_circleEvent)
+    {
+        m_deleted.insert(p0->m_circleEvent);
+        p0->m_circleEvent = 0;
+    }
+
+    if(p2->m_circleEvent)
+    {
+        m_deleted.insert(p2->m_circleEvent);
+        p2->m_circleEvent = 0;
+    }
+
+    sPoint p = new VoronoiPoint(_e->m_point->x, getY(p1->m_site, _e->m_point->x));
+    m_voronoiPoints.push_back(p);
+
+    xLeft->m_edge->m_end.reset(p);
+    xRight->m_edge->m_end.reset(p);
+
+    sParab upperParabola;
+    sParab currentParabola = p1;
+
+    while(currentParabola != m_root)
+    {
+        currentParabola = currentParabola->m_parent;
+
+        if(currentParabola == xLeft)
+        {
+            upperParabola = xLeft;
+        }
+
+        if(currentParabola == xRight)
+        {
+            upperParabola = xRight;
+        }
+    }
+
+    upperParabola->m_edge = new VoronoiEdge(_p, p0->m_site, p2->m_site);
+    m_edges->push_back(upperParabola->m_edge);
+
+    sParab grandParent = p1->m_parent->m_parent;
+
+    if(p1->m_parent->left() == p1)
+    {
+        if(grandParent->left() == p1->m_parent)
+        {
+            grandParent->setLeft(p1->m_parent->right().get());
+        }
+
+        if(grandParent->right() == p1->m_parent)
+        {
+            grandParent->setRight(p1->m_parent->right().get());
+        }
+    }
+    else
+    {
+        if(grandParent->left() == p1->m_parent)
+        {
+            grandParent->setLeft(p1->m_parent->left().get());
+        }
+
+        if(grandParent->right() == p1->m_parent)
+        {
+            grandParent->setRight(p1->m_parent->left().get());
+        }
+    }
+
+    delete p1->m_parent;
+    delete p1;
+
+    checkCircleEvent(p0);
+    checkCircleEvent(p2);
 }
