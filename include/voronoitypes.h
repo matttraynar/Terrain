@@ -46,8 +46,6 @@ public:
 
 //---------------------------------- VORONOI PARABOLA -------------------------//
 
-
-//ADD EVENT
 class VoronoiParabola
 {
 public:
