@@ -2,6 +2,10 @@
 #define VORONOITYPES_H
 
 #include <memory>
+
+//Predeclare the event class
+class VoronoiEvent;
+
 //-------------------------------------- VORONOI POINT -----------------------------//
 
 class VoronoiPoint
@@ -52,8 +56,8 @@ public:
     VoronoiParabola();
     VoronoiParabola(VoronoiPoint* _site);
 
-    inline void setLeft(VoronoiParabola* _left) {m_left.reset(_left); _left->m_parent = this;}
-    inline void setRight(VoronoiParabola* _right) {m_left.reset(_right); _right->m_parent = this;}
+    inline void setLeft(VoronoiParabola* _left) {m_left.reset(_left); _left->m_parent.reset(this);}
+    inline void setRight(VoronoiParabola* _right) {m_left.reset(_right); _right->m_parent.reset(this);}
 
     inline std::shared_ptr<VoronoiParabola> left() const {return m_left;}
     inline std::shared_ptr<VoronoiParabola> right() const {return m_right;}
@@ -96,7 +100,7 @@ public:
 
     struct CompareEvent : public std::binary_function<VoronoiEvent*, VoronoiEvent*, bool>
     {
-        inline bool operator() (const VoronoiEvent* _left, const VoronoiEvent* _right) const
+        inline bool operator() (const std::shared_ptr<VoronoiEvent> _left, const std::shared_ptr<VoronoiEvent> _right) const
         {
             return (_left->m_y < _right->m_y);
         }

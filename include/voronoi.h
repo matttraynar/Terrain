@@ -4,6 +4,7 @@
 #include "voronoitypes.h"
 
 #include <vector>
+#include <set>
 #include <queue>
 
 typedef std::shared_ptr<VoronoiPoint> sPoint;
@@ -13,9 +14,10 @@ typedef std::shared_ptr<VoronoiEvent> sEvent;
 
 class Voronoi
 {
+public:
     Voronoi();
 
-    std::vector<sEdge> makeVoronoiEdges(std::shared_ptr< std::vector<sPoint> > _verts, int _width, int _height);
+    std::shared_ptr<std::vector<sEdge>> makeVoronoiEdges(std::shared_ptr< std::vector<sPoint> > _verts, int _width, int _height);
 
 private:
     void insertParabola(sPoint _p);
@@ -40,7 +42,7 @@ private:
     sParab m_root;
     double m_sweepPosition;
 
-    std::vector<sEvent> m_deleted;
+    std::set<sEvent> m_deleted;
     std::vector<sPoint> m_voronoiPoints;
     std::priority_queue< sEvent, std::vector<sEvent>, VoronoiEvent::CompareEvent> m_queue;
 };

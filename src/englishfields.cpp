@@ -1,5 +1,8 @@
 #include "englishfields.h"
 
+#include "voronoi.h"
+#include <time.h>
+
 #include <QDebug>
 
 EnglishFields::EnglishFields()
@@ -14,7 +17,28 @@ EnglishFields::EnglishFields(std::vector< std::vector<float> > &_terrainHeightMa
 {
     m_maxSteepness = 0.95f;
 
-    checkAvailableSpace();
+    double width = 1000;
+
+    std::shared_ptr<Voronoi> voronoiGenerator(new Voronoi());
+
+    std::shared_ptr<std::vector<sPoint>> verts(new std::vector<sPoint>);
+    std::shared_ptr<std::vector<sPoint>> dirs(new std::vector<sPoint>);
+
+    srand(time(NULL));
+
+    for(int i = 0; i < 10; ++i)
+    {
+        sPoint newPoint(new VoronoiPoint(width * (double)rand()/(double)RAND_MAX, width * (double)rand()/(double)RAND_MAX));
+        verts->push_back(newPoint);
+
+        sPoint newDirection(new VoronoiPoint((double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
+        dirs->push_back(newDirection);
+    }
+
+    std::unique_ptr<std::vector<sEdge>> edges(voronoiGenerator->makeVoronoiEdges(verts, width, width).get());
+
+
+//    checkAvailableSpace();
 }
 
 EnglishFields::~EnglishFields()

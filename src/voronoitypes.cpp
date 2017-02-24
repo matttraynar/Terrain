@@ -55,8 +55,8 @@ std::shared_ptr<VoronoiParabola> VoronoiParabola::getLeftParent(std::shared_ptr<
         //Otherwise move "up" a level
         // - Previous parent becomes current parent
         // - New parent becomes parent of current parent
-        prevP.reset(parent);
-        parent.reset(parent->m_parent);
+        prevP.reset(parent.get());
+        parent.reset(parent->m_parent.get());
     }
 
     return parent;
@@ -73,8 +73,8 @@ std::shared_ptr<VoronoiParabola> VoronoiParabola::getRightParent(std::shared_ptr
     {
         if(!parent->m_parent) { return 0; }
 
-        prevP.reset(parent);
-        parent.reset(parent->m_parent);
+        prevP.reset(parent.get());
+        parent.reset(parent->m_parent.get());
     }
 
     return parent;
@@ -105,7 +105,7 @@ std::shared_ptr<VoronoiParabola> VoronoiParabola::getLeftChild(std::shared_ptr<V
     while(!parent->m_isLeaf)
     {
         //Keep going right through the tree (until we find a parent)
-        parent.reset(parent->right());
+        parent.reset(parent->right().get());
     }
 
     return parent;
@@ -121,7 +121,7 @@ std::shared_ptr<VoronoiParabola> VoronoiParabola::getRightChild(std::shared_ptr<
 
     while(!parent->m_isLeaf)
     {
-        parent.reset(parent->left());
+        parent.reset(parent->left().get());
     }
 
     return parent;
