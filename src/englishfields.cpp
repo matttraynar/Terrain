@@ -42,31 +42,71 @@ void EnglishFields::checkAvailableSpace()
 
     int count = 0;
 
-    //First we need to find a starting point for the boundary.
-    for(int i = 0; i < m_normalMapCopy.size(); ++i)
+    voronoi(5);
+
+//    //First we need to find a starting point for the boundary.
+//    for(int i = 0; i < m_normalMapCopy.size(); ++i)
+//    {
+//        for(int j = 0; j < m_normalMapCopy[i].size(); ++j)
+//        {
+//            if(m_normalMapCopy[i][j].y() > m_maxSteepness)
+//            {
+//                iStart = i;
+//                jStart = j;
+//            }
+//            count++;
+//        }
+//    }
+
+//    if(count == 0)
+//    {
+//        qInfo()<<"Terrain not suitable for fields";
+//        return;
+//    }
+//    else
+//    {
+//        qInfo()<<"Creating fields";
+//        exploreTerrain(iStart, jStart, Middle);
+//    }
+
+}
+
+void EnglishFields::voronoi(int numPoints)
+{
+    std::vector<QVector3D> initialPoints;
+
+    for(uint i = 0; i < numPoints; ++i)
     {
-        for(int j = 0; j < m_normalMapCopy[i].size(); ++j)
+        initialPoints.push_back(QVector3D(rand() % m_normalMapCopy.size() + 10, 0, rand() % m_normalMapCopy[0].size() + 10));
+    }
+
+    int width = m_normalMapCopy.size();
+    int depth = m_normalMapCopy[0].size();
+
+    for(int i = 0; i < width; ++i)
+    {
+        for(int j = 0; j < depth; ++j)
         {
-            if(m_normalMapCopy[i][j].y() > m_maxSteepness)
+            int index = -1;
+            float dist = INT_MAX;
+
+            for(uint point = 0; point < initialPoints.size(); ++point)
             {
-                iStart = i;
-                jStart = j;
+                const QVector3D& p = initialPoints[point];
+
+                float xd = i - p.x();
+                float yd = j - p.z();
+
+//                d = (xd * xd) + (yd * yd);
+
+//                if(d < dist)
+//                {
+//                    dist = d;
+//                    index = point;
+//                }
             }
-            count++;
         }
     }
-
-    if(count == 0)
-    {
-        qInfo()<<"Terrain not suitable for fields";
-        return;
-    }
-    else
-    {
-        qInfo()<<"Creating fields";
-        exploreTerrain(iStart, jStart, Middle);
-    }
-
 }
 
 void EnglishFields::exploreTerrain(int x, int y, RelativePosition _rel)

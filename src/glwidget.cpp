@@ -57,17 +57,13 @@ void GLWidget::initializeGL()
 
 //    m_fieldGenerator = EnglishFields(m_heights, m_normalMap);
 
-    std::vector<QVector3D> lineTmp {
-        QVector3D(0,0,0), QVector3D(-1000,1000,-1000)
-    };
-
     vao_fields.create();
     vao_fields.bind();
 
     vbo_fields.create();
     vbo_fields.setUsagePattern(QOpenGLBuffer::StaticDraw);
     vbo_fields.bind();
-    vbo_fields.allocate(&lineTmp[0], (int)lineTmp.size() * sizeof(GLfloat) * 3);
+//    vbo_fields.allocate(&lineTmp[0], (int)lineTmp.size() * sizeof(GLfloat) * 3);
 //    vbo_fields.allocate(&m_fieldGenerator.getBoundaryVerts()[0], (int)m_fieldGenerator.getBoundaryVerts().size() * sizeof(GLfloat) * 3);
 
 //    //Make sure the vertices will be passed to the right place

@@ -51,6 +51,7 @@ public:
     void operator = (EnglishFields &toCopy);
 
     void checkAvailableSpace();
+    void voronoi(int numPoints);
     void exploreTerrain(int x, int y, RelativePosition _rel);
     void threeFieldModel();
 
