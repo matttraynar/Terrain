@@ -21,7 +21,7 @@ private:
     void insertParabola(sPoint _p);
     void removeParabola(sEvent _e);
 
-    double getXOfEdge(sParab _par, double y);
+    double getXOfEdge(sParab _par, double _y);
     sParab getParabFromX(double _x);
 
     double getY(sPoint _p, double _x);
