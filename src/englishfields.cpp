@@ -37,6 +37,7 @@ EnglishFields::EnglishFields(std::vector< std::vector<float> > &_terrainHeightMa
 
     std::unique_ptr<std::vector<sEdge>> edges(voronoiGenerator->makeVoronoiEdges(verts, width, width).get());
 
+    qInfo()<<edges->size();
 
 //    checkAvailableSpace();
 }

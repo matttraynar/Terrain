@@ -20,7 +20,7 @@ public:
     std::shared_ptr<std::vector<sEdge>> makeVoronoiEdges(std::shared_ptr< std::vector<sPoint> > _verts, int _width, int _height);
 
 private:
-    void insertParabola(sPoint _p);
+    void insertParabola(VoronoiPoint* _p);
     void removeParabola(sEvent _e);
 
     double getXOfEdge(sParab _par, double _y);

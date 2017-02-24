@@ -55,7 +55,7 @@ void GLWidget::initializeGL()
     prepareTrees();
     qInfo()<<"Terrain prepared";
 
-//    m_fieldGenerator = EnglishFields(m_heights, m_normalMap);
+    m_fieldGenerator = EnglishFields(m_heights, m_normalMap);
 
     vao_fields.create();
     vao_fields.bind();
@@ -136,11 +136,11 @@ void GLWidget::paintGL()
 
     m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f ,1.0f, 1.0f));
 
-    vao_fields.bind();
+//    vao_fields.bind();
 
-    glDrawArrays(GL_LINES, 0, 2);
+//    glDrawArrays(GL_LINES, 0, 2);
 
-    vao_fields.release();
+//    vao_fields.release();
 
     m_pgm.release();
 }

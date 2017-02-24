@@ -98,6 +98,8 @@ public:
         m_arc = 0;
     }
 
+    inline ~VoronoiEvent(){ };
+
     struct CompareEvent : public std::binary_function<VoronoiEvent*, VoronoiEvent*, bool>
     {
         inline bool operator() (const std::shared_ptr<VoronoiEvent> _left, const std::shared_ptr<VoronoiEvent> _right) const

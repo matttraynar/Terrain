@@ -9,7 +9,7 @@ Voronoi::Voronoi()
 
 std::shared_ptr<std::vector<sEdge>> Voronoi::makeVoronoiEdges(std::shared_ptr<std::vector<sPoint> > _verts, int _width, int _height)
 {
-    m_sites = _verts;
+    m_sites.reset(_verts.get());
     m_width = (float)_width;
     m_height = (float)_height;
     m_root = 0;
@@ -26,14 +26,20 @@ std::shared_ptr<std::vector<sEdge>> Voronoi::makeVoronoiEdges(std::shared_ptr<st
 
     for(int i = 0; i < m_sites->size(); ++i)
     {
-        sEvent newEvent(new VoronoiEvent(m_sites->data()[i].get(), true));
+        sEvent newEvent(new VoronoiEvent((*m_sites)[i].get(), true));
         m_queue.push(newEvent);
     }
 
     sEvent currentEvent;
 
+    int count = 0;
+
+    qInfo()<<m_queue.size();
+
     while(!m_queue.empty())
     {
+        count++;
+
         currentEvent.reset(m_queue.top().get());
         m_queue.pop();
 
@@ -44,10 +50,9 @@ std::shared_ptr<std::vector<sEdge>> Voronoi::makeVoronoiEdges(std::shared_ptr<st
             m_deleted.erase(currentEvent);
             continue;
         }
-
-        if(currentEvent->m_isSiteEvent)
+        else if(currentEvent->m_isSiteEvent)
         {
-            insertParabola(currentEvent->m_point);
+            insertParabola(currentEvent->m_point.get());
         }
         else
         {
@@ -68,11 +73,11 @@ std::shared_ptr<std::vector<sEdge>> Voronoi::makeVoronoiEdges(std::shared_ptr<st
     return m_edges;
 }
 
-void Voronoi::insertParabola(sPoint _p)
+void Voronoi::insertParabola(VoronoiPoint *_p)
 {
     if(!m_root)
     {
-        m_root.reset(new VoronoiParabola(_p.get()));
+        m_root.reset(new VoronoiParabola(_p));
         return;
     }
 
@@ -82,7 +87,7 @@ void Voronoi::insertParabola(sPoint _p)
 
         m_root->m_isLeaf = false;
         m_root->setLeft(new VoronoiParabola(focus.get()));
-        m_root->setRight(new VoronoiParabola(_p.get()));
+        m_root->setRight(new VoronoiParabola(_p));
 
         sPoint voronoiPoint(new VoronoiPoint((_p->x + focus->x)/2, m_height));
 
@@ -90,7 +95,7 @@ void Voronoi::insertParabola(sPoint _p)
 
         if(_p->x > focus->x)
         {
-            m_root->m_edge.reset(new VoronoiEdge(voronoiPoint.get(), _p.get(), focus.get()));
+            m_root->m_edge.reset(new VoronoiEdge(voronoiPoint.get(), _p, focus.get()));
         }
         else
         {
@@ -110,8 +115,8 @@ void Voronoi::insertParabola(sPoint _p)
         sPoint start(new VoronoiPoint(_p->x, getY(newParabola->m_site, _p->x)));
         m_voronoiPoints.push_back(start);
 
-        sEdge eLeft(new VoronoiEdge(start.get(), newParabola->m_site.get(), _p.get()));
-        sEdge eRight(new VoronoiEdge(start.get(), _p.get(), newParabola->m_site.get()));
+        sEdge eLeft(new VoronoiEdge(start.get(), newParabola->m_site.get(), _p));
+        sEdge eRight(new VoronoiEdge(start.get(), _p, newParabola->m_site.get()));
 
         eLeft->m_neighbour.reset(eRight.get());
         m_edges->push_back(eLeft);
@@ -120,7 +125,7 @@ void Voronoi::insertParabola(sPoint _p)
         newParabola->m_isLeaf = false;
 
         sParab p0(new VoronoiParabola(newParabola->m_site.get()));
-        sParab p1(new VoronoiParabola(_p.get()));
+        sParab p1(new VoronoiParabola(_p));
         sParab p2(new VoronoiParabola(newParabola->m_site.get()));
 
         newParabola->setRight(p2.get());
