@@ -28,10 +28,12 @@ EnglishFields::EnglishFields(std::vector< std::vector<float> > &_terrainHeightMa
 
     for(int i = 0; i < 10; ++i)
     {
-        sPoint newPoint(new VoronoiPoint(width * (double)rand()/(double)RAND_MAX, width * (double)rand()/(double)RAND_MAX));
+//        sPoint newPoint(new VoronoiPoint(width * (double)rand()/(double)RAND_MAX, width * (double)rand()/(double)RAND_MAX));
+        sPoint newPoint(new VoronoiPoint(i, i));
         verts->push_back(newPoint);
 
-        sPoint newDirection(new VoronoiPoint((double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
+//        sPoint newDirection(new VoronoiPoint((double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
+        sPoint newDirection(new VoronoiPoint(i, i));
         dirs->push_back(newDirection);
     }
 

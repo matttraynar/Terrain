@@ -1,11 +1,15 @@
 #include "voronoitypes.h"
 
 //-------------------------------------- VORONOI EDGE -----------------------------//
-VoronoiEdge::VoronoiEdge(VoronoiPoint *_start, VoronoiPoint *_leftRegion, VoronoiPoint *_rightRegion)
+VoronoiEdge::VoronoiEdge(sPoint _start, sPoint _leftRegion, sPoint _rightRegion)
 {
-    m_start.reset(_start);
-    m_left.reset(_leftRegion);
-    m_right.reset(_rightRegion);
+//    m_start.reset(_start);
+//    m_left.reset(_leftRegion);
+//    m_right.reset(_rightRegion);
+
+    m_start = _start;
+    m_left = _leftRegion;
+    m_right = _rightRegion;
 }
 
 //---------------------------------- VORONOI PARABOLA -------------------------//
@@ -18,9 +22,10 @@ VoronoiParabola::VoronoiParabola()
     m_parent = 0;
 }
 
-VoronoiParabola::VoronoiParabola(VoronoiPoint *_site)
+VoronoiParabola::VoronoiParabola(sPoint _site)
 {
-    m_site.reset(_site);
+//    m_site.reset(_site);
+    m_site = _site;
     m_isLeaf = true;
     m_circleEvent = 0;
     m_edge = 0;
@@ -37,32 +42,35 @@ std::shared_ptr<VoronoiParabola> VoronoiParabola::getRight(std::shared_ptr<Voron
     return getRightChild(getRightParent(_p));
 }
 
-std::shared_ptr<VoronoiParabola> VoronoiParabola::getLeftParent(std::shared_ptr<VoronoiParabola> _p)
+std::shared_ptr<VoronoiParabola> VoronoiParabola::getLeftParent(std::shared_ptr<VoronoiParabola> &_p)
 {
     //Get the parent of the current parabola
-    std::shared_ptr<VoronoiParabola> parent = _p->m_parent;
+    VoronoiParabola* parent = _p->m_parent.get();
 
     //And store the current parabola
-    std::shared_ptr<VoronoiParabola> prevP = _p;
+    VoronoiParabola* prevP = _p.get();
 
     //Keep going left through our tree
-    while(parent->left() == prevP)
+    while(parent->left().get() == prevP)
     {
         //If the current parent branch has no parent we've
         //reached an edge
-        if(!parent->m_parent) { return 0; }
+        if(parent->m_parent == NULL)
+        {
+            return 0;
+        }
 
         //Otherwise move "up" a level
         // - Previous parent becomes current parent
         // - New parent becomes parent of current parent
-        prevP.reset(parent.get());
-        parent.reset(parent->m_parent.get());
+        prevP = parent;//.reset(parent);
+        parent = parent->m_parent.get();
     }
 
-    return parent;
+    return sParab(parent);
 }
 
-std::shared_ptr<VoronoiParabola> VoronoiParabola::getRightParent(std::shared_ptr<VoronoiParabola> _p)
+std::shared_ptr<VoronoiParabola> VoronoiParabola::getRightParent(std::shared_ptr<VoronoiParabola> &_p)
 {
     //Same as with getLeftParent() only going right in
     //the while loop
@@ -80,7 +88,7 @@ std::shared_ptr<VoronoiParabola> VoronoiParabola::getRightParent(std::shared_ptr
     return parent;
 }
 
-std::shared_ptr<VoronoiParabola> VoronoiParabola::getLeftChild(std::shared_ptr<VoronoiParabola> _p)
+std::shared_ptr<VoronoiParabola> VoronoiParabola::getLeftChild(std::shared_ptr<VoronoiParabola> &_p)
 {
     //Get the parabola that is closest to the current one on the left.
     //This is done by looking at the parabola to the left and traversing
@@ -95,7 +103,8 @@ std::shared_ptr<VoronoiParabola> VoronoiParabola::getLeftChild(std::shared_ptr<V
     //                             x
     //Etc.
 
-    //If the given parabola is empty, return (recursion stop)
+    //If the given parabola is empty, return
+    qInfo()<<"Done left child";
     if(!_p) { return 0; }
 
     //Get the parabola to the left of this on the beach line
@@ -108,23 +117,27 @@ std::shared_ptr<VoronoiParabola> VoronoiParabola::getLeftChild(std::shared_ptr<V
         parent.reset(parent->right().get());
     }
 
+
     return parent;
 }
 
-std::shared_ptr<VoronoiParabola> VoronoiParabola::getRightChild(std::shared_ptr<VoronoiParabola> _p)
+std::shared_ptr<VoronoiParabola> VoronoiParabola::getRightChild(std::shared_ptr<VoronoiParabola> &_p)
 {
     //Similar to the getLeftChild() function, only traversing
     //to the left this time
     if(!_p) { return 0; }
 
-    std::shared_ptr<VoronoiParabola> parent = _p->right();
+    VoronoiParabola* parent = _p->right().get();
 
     while(!parent->m_isLeaf)
     {
-        parent.reset(parent->left().get());
+        parent = parent->left().get();
     }
 
-    return parent;
+    sParab tmp(parent);
+
+    return tmp;
 }
 
 //------------------------------------- VORONOI EVENT ----------------------------//
+

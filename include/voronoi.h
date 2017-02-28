@@ -7,11 +7,6 @@
 #include <set>
 #include <queue>
 
-typedef std::shared_ptr<VoronoiPoint> sPoint;
-typedef std::shared_ptr<VoronoiEdge> sEdge;
-typedef std::shared_ptr<VoronoiParabola> sParab;
-typedef std::shared_ptr<VoronoiEvent> sEvent;
-
 class Voronoi
 {
 public:
@@ -20,7 +15,7 @@ public:
     std::shared_ptr<std::vector<sEdge>> makeVoronoiEdges(std::shared_ptr< std::vector<sPoint> > _verts, int _width, int _height);
 
 private:
-    void insertParabola(VoronoiPoint* _p);
+    void insertParabola(sPoint _p);
     void removeParabola(sEvent _e);
 
     double getXOfEdge(sParab _par, double _y);
