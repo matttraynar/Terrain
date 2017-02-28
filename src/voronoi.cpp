@@ -7,19 +7,29 @@ Voronoi::Voronoi()
     m_edges = 0;
 }
 
-std::shared_ptr<std::vector<sEdge>> Voronoi::makeVoronoiEdges(std::shared_ptr<std::vector<sPoint> > _verts, int _width, int _height)
+std::vector<sEdge>* Voronoi::makeVoronoiEdges(std::vector<sPoint> * _verts, int _width, int _height)
 {
-    m_sites.reset(_verts.get());
+    m_sites = _verts;
     m_width = (float)_width;
     m_height = (float)_height;
     m_root = 0;
 
     if(!m_edges)
     {
-        m_edges.reset(new std::vector<sEdge>);
+        m_edges = new std::vector<sEdge>;
     }
     else
     {
+        for(auto i = m_voronoiPoints.begin(); i != m_voronoiPoints.end(); ++i)
+        {
+            delete(*i);
+        }
+
+        for(auto i = m_edges->begin(); i != m_edges->end(); ++i)
+        {
+            delete(*i);
+        }
+
         m_voronoiPoints.clear();
         m_edges->clear();
     }
@@ -36,60 +46,43 @@ std::shared_ptr<std::vector<sEdge>> Voronoi::makeVoronoiEdges(std::shared_ptr<st
 
     sEvent currentEvent;
 
-//    VoronoiEvent* currentEvent;
-
-
-
-
     while(!m_queue.empty())
     {
         qInfo()<<"                    ";
         count++;
 
-//        VoronoiEvent  tmp = *m_queue.top().get();
-
         currentEvent = m_queue.top();
-//        sEvent currentEvent(&tmp);
-
-        currentEvent->print();
-
-        qInfo()<<m_queue.size();
-
-//        currentEvent = m_queue.top().get();
 
         m_queue.pop();
-
-//        sEvent currentEvent(m_queue.top().get());
 
         m_sweepPosition = currentEvent->m_y;
 
          if(m_deleted.find(currentEvent) != m_deleted.end())
         {
+             delete currentEvent;
             m_deleted.erase(currentEvent);
             continue;
         }
         else if(currentEvent->m_isSiteEvent)
         {
-             if(currentEvent->m_point.get() == NULL)
-             {
-                 qInfo()<<"NULL";
-             }
-
             insertParabola(currentEvent->m_point);
         }
         else
         {
             removeParabola(sEvent(currentEvent));
         }
+
+         delete currentEvent;
     }
 
     finishEdge(m_root);
 
-    for(int i = 0; i < m_edges->size(); ++i)
+    for(auto i = m_edges->begin(); i != m_edges->end(); ++i)
     {
-        if(m_edges->data()[i].get()->m_neighbour)
+        if((*i)->m_neighbour)
         {
-            m_edges->data()[i].get()->m_start = m_edges->data()[i].get()->m_neighbour->m_end;
+            (*i)->m_start = (*i)->m_neighbour->m_end;
+            delete (*i)->m_neighbour;
         }
     }
 
@@ -100,8 +93,7 @@ void Voronoi::insertParabola(sPoint _p)
 {
     if(!m_root)
     {
-//        m_root.reset(new VoronoiParabola(_p.get()));
-        m_root.reset(new VoronoiParabola(_p));
+        m_root = new VoronoiParabola(_p);
         return;
     }
 
@@ -110,20 +102,17 @@ void Voronoi::insertParabola(sPoint _p)
         sPoint focus = m_root->m_site;
 
         m_root->m_isLeaf = false;
-//        m_root->setLeft(new VoronoiParabola(focus.get()));
-//        m_root->setRight(new VoronoiParabola(_p.get()));
 
-        m_root->setLeft(sParab(new VoronoiParabola(focus)));
-        m_root->setRight(sParab(new VoronoiParabola(_p)));
+        m_root->setLeft(new VoronoiParabola(focus));
+        m_root->setRight(new VoronoiParabola(_p));
 
-        sPoint voronoiPoint(new VoronoiPoint((_p->x + focus->x)/2, m_height));
+        sPoint voronoiPoint = new VoronoiPoint((_p->x + focus->x)/2, m_height);
 
         m_voronoiPoints.push_back(voronoiPoint);
 
         if(_p->x > focus->x)
         {
-//            m_root->m_edge.reset(new VoronoiEdge(voronoiPoint.get(), _p.get(), focus.get()));
-            m_root->m_edge.reset(new VoronoiEdge(voronoiPoint, _p, focus));
+            m_root->m_edge = new VoronoiEdge(voronoiPoint, _p, focus);
         }
         else
         {
@@ -140,38 +129,25 @@ void Voronoi::insertParabola(sPoint _p)
             newParabola->m_circleEvent = 0;
         }
 
-        sPoint start(new VoronoiPoint(_p->x, getY(newParabola->m_site, _p->x)));
+        sPoint start = new VoronoiPoint(_p->x, getY(newParabola->m_site, _p->x));
         m_voronoiPoints.push_back(start);
 
-//        sEdge eLeft(new VoronoiEdge(start.get(), newParabola->m_site.get(), _p.get()));
-//        sEdge eRight(new VoronoiEdge(start.get(), _p.get(), newParabola->m_site.get()));
+        sEdge eLeft = new VoronoiEdge(start, newParabola->m_site, _p);
+        sEdge eRight = new VoronoiEdge(start, _p, newParabola->m_site);
 
-        sEdge eLeft(new VoronoiEdge(start, newParabola->m_site, _p));
-        sEdge eRight(new VoronoiEdge(start, _p, newParabola->m_site));
-
-        eLeft->m_neighbour.reset(eRight.get());
+        eLeft->m_neighbour = eRight;
         m_edges->push_back(eLeft);
 
-        newParabola->m_edge.reset(eRight.get());
+        newParabola->m_edge = eRight;
         newParabola->m_isLeaf = false;
 
-//        sParab p0(new VoronoiParabola(newParabola->m_site.get()));
-//        sParab p1(new VoronoiParabola(_p.get()));
-//        sParab p2(new VoronoiParabola(newParabola->m_site.get()));
-
-        sParab p0(new VoronoiParabola(newParabola->m_site));
-        sParab p1(new VoronoiParabola(_p));
-        sParab p2(new VoronoiParabola(newParabola->m_site));
-
-//        newParabola->setRight(p2.get());
-//        newParabola->setLeft(new VoronoiParabola());
+        sParab p0 = new VoronoiParabola(newParabola->m_site);
+        sParab p1 = new VoronoiParabola(_p);
+        sParab p2 = new VoronoiParabola(newParabola->m_site);
 
         newParabola->setRight(p2);
-        newParabola->setLeft(sParab(new VoronoiParabola()));
+        newParabola->setLeft(new VoronoiParabola());
         newParabola->left()->m_edge = eLeft;
-
-//        newParabola->left()->setLeft(p0.get());
-//        newParabola->left()->setRight(p1.get());
 
         newParabola->left()->setLeft(p0);
         newParabola->left()->setRight(p1);
@@ -185,11 +161,11 @@ void Voronoi::removeParabola(sEvent _e)
 {
     sParab p1 = _e->m_arc;
 
-    sParab xLeft(VoronoiParabola::getLeftParent(p1));
-    sParab xRight(VoronoiParabola::getRightParent(p1));
+    sParab xLeft = VoronoiParabola::getLeftParent(p1);
+    sParab xRight = VoronoiParabola::getRightParent(p1);
 
-    sParab p0(VoronoiParabola::getLeftChild(xLeft));
-    sParab p2(VoronoiParabola::getRightChild(xRight));
+    sParab p0 = VoronoiParabola::getLeftChild(xLeft);
+    sParab p2 = VoronoiParabola::getRightChild(xRight);
 
     if(p0 == p2)
     {
@@ -208,11 +184,11 @@ void Voronoi::removeParabola(sEvent _e)
         p2->m_circleEvent = 0;
     }
 
-    sPoint p(new VoronoiPoint(_e->m_point->x, getY(p1->m_site, _e->m_point->x)));
+    sPoint p = new VoronoiPoint(_e->m_point->x, getY(p1->m_site, _e->m_point->x));
     m_voronoiPoints.push_back(p);
 
-    xLeft->m_edge->m_end.reset(p.get());
-    xRight->m_edge->m_end.reset(p.get());
+    xLeft->m_edge->m_end = p;
+    xRight->m_edge->m_end = p;
 
     sParab upperParabola;
     sParab currentParabola = p1;
@@ -232,8 +208,7 @@ void Voronoi::removeParabola(sEvent _e)
         }
     }
 
-//    upperParabola->m_edge.reset(new VoronoiEdge(p.get(), p0->m_site.get(), p2->m_site.get()));
-    upperParabola->m_edge.reset(new VoronoiEdge(p, p0->m_site, p2->m_site));
+    upperParabola->m_edge = new VoronoiEdge(p, p0->m_site, p2->m_site);
 
     m_edges->push_back(upperParabola->m_edge);
 
@@ -243,13 +218,11 @@ void Voronoi::removeParabola(sEvent _e)
     {
         if(grandParent->left() == p1->m_parent)
         {
-//            grandParent->setLeft(p1->m_parent->right().get());
             grandParent->setLeft(p1->m_parent->right());
         }
 
         if(grandParent->right() == p1->m_parent)
         {
-//            grandParent->setRight(p1->m_parent->right().get());
             grandParent->setRight(p1->m_parent->right());
         }
     }
@@ -257,16 +230,17 @@ void Voronoi::removeParabola(sEvent _e)
     {
         if(grandParent->left() == p1->m_parent)
         {
-//            grandParent->setLeft(p1->m_parent->left().get());
             grandParent->setLeft(p1->m_parent->left());
         }
 
         if(grandParent->right() == p1->m_parent)
         {
-//            grandParent->setRight(p1->m_parent->left().get());
             grandParent->setRight(p1->m_parent->left());
         }
     }
+
+    delete p1->m_parent;
+    delete p1;
 
     checkCircleEvent(p0);
     checkCircleEvent(p2);
@@ -282,8 +256,8 @@ double Voronoi::getXOfEdge(sParab _par, double _y)
     //Because of that the new parabola is basically a line
     //perpendicular to the sweep line (so left and right are just the
     //parabolas either side of the perpendicular line)
-    sParab left(VoronoiParabola::getLeftChild(_par));
-    sParab right(VoronoiParabola::getRightChild(_par));
+    sParab left = VoronoiParabola::getLeftChild(_par);
+    sParab right = VoronoiParabola::getRightChild(_par);
 
     //Get the points which dictate the two regions
     sPoint pLeft = left->m_site;
@@ -331,7 +305,7 @@ sParab Voronoi::getParabFromX(double _x)
     {
         x = getXOfEdge(par, m_sweepPosition);
 
-        (x > _x) ? par.reset(par->left().get()) : par.reset(par->right().get());
+        (x > _x) ? par = par->left() : par = par->right();
     }
 
     return par;
@@ -352,6 +326,7 @@ void Voronoi::finishEdge(sParab _par)
 {
     if(_par->m_isLeaf)
     {
+        delete _par;
         return;
     }
 
@@ -368,20 +343,22 @@ void Voronoi::finishEdge(sParab _par)
         mx = std::min(0.0, _par->m_edge->m_start->x - 10);
     }
 
-    sPoint end(new VoronoiPoint(mx, mx * _par->m_edge->f + _par->m_edge->g));
+    sPoint end = new VoronoiPoint(mx, mx * _par->m_edge->f + _par->m_edge->g);
     _par->m_edge->m_end = end;
+    m_voronoiPoints.push_back(end);
 
     finishEdge(_par->left());
     finishEdge(_par->right());
+    delete _par;
 }
 
 void Voronoi::checkCircleEvent(sParab _par)
 {
-    VoronoiParabola* pLeft = VoronoiParabola::getLeftParent(_par).get();
-    VoronoiParabola* pRight = VoronoiParabola::getRightParent(_par).get();
+    VoronoiParabola* pLeft = VoronoiParabola::getLeftParent(_par);
+    VoronoiParabola* pRight = VoronoiParabola::getRightParent(_par);
 
-    VoronoiParabola* a = VoronoiParabola::getLeftChild(sParab(pLeft)).get();
-    VoronoiParabola* b = VoronoiParabola::getRightChild(sParab(pRight)).get();
+    VoronoiParabola* a = VoronoiParabola::getLeftChild(sParab(pLeft));
+    VoronoiParabola* b = VoronoiParabola::getRightChild(sParab(pRight));
 
     if(!a || !b || a->m_site == b->m_site)
     {
@@ -439,7 +416,8 @@ sPoint Voronoi::getEdgeIntersection(sEdge _a, sEdge _b)
         return 0;
     }
 
-    sPoint p(new VoronoiPoint(x, y));
+    sPoint p = new VoronoiPoint(x, y);
+
     m_voronoiPoints.push_back(p);
 
     return p;

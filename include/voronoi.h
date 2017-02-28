@@ -12,7 +12,7 @@ class Voronoi
 public:
     Voronoi();
 
-    std::shared_ptr<std::vector<sEdge>> makeVoronoiEdges(std::shared_ptr< std::vector<sPoint> > _verts, int _width, int _height);
+    std::vector<sEdge>* makeVoronoiEdges( std::vector<sPoint>* _verts, int _width, int _height);
 
 private:
     void insertParabola(sPoint _p);
@@ -28,8 +28,8 @@ private:
 
     sPoint getEdgeIntersection(sEdge _a, sEdge _b);
 
-    std::shared_ptr< std::vector< sPoint > > m_sites;
-    std::shared_ptr< std::vector< sEdge > > m_edges;
+    std::vector< sPoint >* m_sites;
+    std::vector< sEdge >* m_edges;
 
     float m_width;
     float m_height;

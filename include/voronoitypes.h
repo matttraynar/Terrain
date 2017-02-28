@@ -12,10 +12,15 @@ class VoronoiEdge;
 class VoronoiParabola;
 class VoronoiEvent;
 
-typedef std::shared_ptr<VoronoiPoint> sPoint;
-typedef std::shared_ptr<VoronoiEdge> sEdge;
-typedef std::shared_ptr<VoronoiParabola> sParab;
-typedef std::shared_ptr<VoronoiEvent> sEvent;
+//typedef std::shared_ptr<VoronoiPoint> sPoint;
+//typedef std::shared_ptr<VoronoiEdge> sEdge;
+//typedef std::shared_ptr<VoronoiParabola> sParab;
+//typedef std::shared_ptr<VoronoiEvent> sEvent;
+
+typedef VoronoiPoint* sPoint;
+typedef VoronoiEdge* sEdge;
+typedef VoronoiParabola* sParab;
+typedef VoronoiEvent* sEvent;
 
 
 //-------------------------------------- VORONOI POINT -----------------------------//
@@ -41,24 +46,29 @@ public:
 //    VoronoiEdge(VoronoiPoint* _start, VoronoiPoint* _leftRegion, VoronoiPoint* _rightRegion);
     VoronoiEdge(sPoint _start, sPoint _leftRegion, sPoint _rightRegion);
 
+    void printEdge()
+    {
+        qInfo()<<"Start: "<<m_start<<" End: "<<m_end;
+    }
+
     //Start and end of the edge
-    std::shared_ptr<VoronoiPoint> m_start;
-    std::shared_ptr<VoronoiPoint> m_end;
+    sPoint m_start;
+    sPoint m_end;
 
     //Direction vector
-    std::shared_ptr<VoronoiPoint> m_dir;
+    sPoint m_dir;
 
     //Points which dictate the regions to the left
     //and right of the edge
-    std::shared_ptr<VoronoiPoint> m_left;
-    std::shared_ptr<VoronoiPoint> m_right;
+    sPoint m_left;
+    sPoint m_right;
 
     //Variables of the line equation of the edge:
     //      y = fx + g;
     double f;
     double g;
 
-    std::shared_ptr<VoronoiEdge> m_neighbour;
+    sEdge m_neighbour;
 };
 
 //---------------------------------- VORONOI PARABOLA -------------------------//
@@ -73,33 +83,33 @@ public:
 //    inline void setLeft(VoronoiParabola* _left) {m_left.reset(_left); _left->m_parent.reset(this);}
 //    inline void setRight(VoronoiParabola* _right) {m_left.reset(_right); _right->m_parent.reset(this);}
 
-    inline void setLeft(sParab _left) {m_left = _left; _left->m_parent.reset(this);}
-    inline void setRight(sParab _right) {m_right = _right; _right->m_parent.reset(this);}
+    inline void setLeft(sParab _left) {m_left = _left; _left->m_parent = this;}
+    inline void setRight(sParab _right) {m_right = _right; _right->m_parent = this;}
 
-    inline std::shared_ptr<VoronoiParabola> left() const {return m_left;}
-    inline std::shared_ptr<VoronoiParabola> right() const {return m_right;}
+    inline sParab left() const {return m_left;}
+    inline sParab right() const {return m_right;}
 
     //Returns closest left/right leaf
-    static std::shared_ptr<VoronoiParabola> getLeft(std::shared_ptr<VoronoiParabola> _p);
-    static std::shared_ptr<VoronoiParabola> getRight(std::shared_ptr<VoronoiParabola> _p);
+    static sParab getLeft(sParab _p);
+    static sParab getRight(sParab _p);
 
     //Returns closest left/right parent
-    static std::shared_ptr<VoronoiParabola> getLeftParent(std::shared_ptr<VoronoiParabola> &_p);
-    static std::shared_ptr<VoronoiParabola> getRightParent(std::shared_ptr<VoronoiParabola>& _p);
+    static sParab getLeftParent(sParab _p);
+    static sParab getRightParent(sParab _p);
 
     //Returns closest leaf on the left/right of the current parabola
-    static std::shared_ptr<VoronoiParabola> getLeftChild(std::shared_ptr<VoronoiParabola>& _p);
-    static std::shared_ptr<VoronoiParabola> getRightChild(std::shared_ptr<VoronoiParabola>& _p);
+    static sParab getLeftChild(sParab _p);
+    static sParab getRightChild(sParab _p);
 
     bool m_isLeaf;
-    std::shared_ptr<VoronoiPoint> m_site;
-    std::shared_ptr<VoronoiEdge> m_edge;
-    std::shared_ptr<VoronoiEvent> m_circleEvent;
-    std::shared_ptr<VoronoiParabola> m_parent;
+    sPoint m_site;
+    sEdge m_edge;
+    sEvent m_circleEvent;
+    sParab m_parent;
 
 private:
-    std::shared_ptr<VoronoiParabola> m_left;
-    std::shared_ptr<VoronoiParabola> m_right;
+    sParab m_left;
+    sParab m_right;
 };
 
 //------------------------------------- VORONOI EVENT ----------------------------//
@@ -121,7 +131,7 @@ public:
 //    struct CompareEvent : public std::binary_function<VoronoiEvent*, VoronoiEvent*, bool>
     struct CompareEvent : public std::binary_function<sEvent, sEvent, bool>
     {
-        inline bool operator() (const std::shared_ptr<VoronoiEvent> _left, const std::shared_ptr<VoronoiEvent> _right) const
+        inline bool operator() (const sEvent _left, const sEvent _right) const
         {
             return (_left->m_y < _right->m_y);
         }
@@ -132,10 +142,10 @@ public:
         qInfo()<<m_point->x;
     }
 
-    std::shared_ptr<VoronoiPoint> m_point;
+    sPoint m_point;
     double m_y;
     bool m_isSiteEvent;
-    std::shared_ptr<VoronoiParabola> m_arc;
+    sParab m_arc;
 };
 
 #endif // VORONOITYPES_H
