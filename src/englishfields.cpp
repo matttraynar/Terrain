@@ -17,7 +17,7 @@ EnglishFields::EnglishFields(std::vector< std::vector<float> > &_terrainHeightMa
 {
     m_maxSteepness = 0.95f;
 
-    double width = 1000;
+    double width = 500;
 
     std::shared_ptr<Voronoi> voronoiGenerator(new Voronoi());
 

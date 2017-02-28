@@ -38,7 +38,6 @@ std::vector<sEdge>* Voronoi::makeVoronoiEdges(std::vector<sPoint> * _verts, int 
     {
         sEvent newEvent(new VoronoiEvent((*m_sites)[i], true));
         m_queue.push(newEvent);
-        m_queue.top()->print();
         qInfo()<<m_queue.size();
     }
 
@@ -74,6 +73,13 @@ std::vector<sEdge>* Voronoi::makeVoronoiEdges(std::vector<sPoint> * _verts, int 
 
          delete currentEvent;
     }
+
+    for(auto i = m_edges->begin(); i != m_edges->end(); ++i)
+    {
+        (*i)->printEdge();
+    }
+
+    qInfo()<<m_edges->size();
 
     finishEdge(m_root);
 

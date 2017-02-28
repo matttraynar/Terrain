@@ -36,6 +36,11 @@ public:
         x = _x;
         y = _y;
     }
+
+    void printPoint()
+    {
+        qInfo()<<"Point: ("<<x<<","<<y<<")";
+    }
 };
 
 //-------------------------------------- VORONOI EDGE -----------------------------//
@@ -139,7 +144,7 @@ public:
 
     inline void print()
     {
-        qInfo()<<m_point->x;
+        qInfo()<<m_point->y;
     }
 
     sPoint m_point;
