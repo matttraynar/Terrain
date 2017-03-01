@@ -6,6 +6,14 @@
 #include <vector>
 #include <memory>
 
+#include "borrowed/voronoi/Voronoi.h"
+
+#include "VPoint.h"
+#include "VEdge.h"
+
+typedef std::list<VPoint *>		Vertices	;
+typedef std::list<VEdge *>		Edges;
+
 //Relative Postion layout
 // TL ------ T ------ TR       yMax
 //  ||         ||         ||           | |
@@ -45,10 +53,13 @@ class EnglishFields
 {
 public:
     EnglishFields();
-    EnglishFields(std::vector<std::vector<float> >& _terrainHeightMap, std::vector<std::vector<QVector3D> > &_terrainNormalMap);
+    EnglishFields(std::vector<std::vector<float> >& _terrainHeightMap, std::vector<std::vector<QVector3D> > &_terrainNormalMap, double _width);
     ~EnglishFields();
 
     void operator = (EnglishFields &toCopy);
+
+    void makeDiagram(double _width);
+    void makePoints();
 
     void checkAvailableSpace();
     void voronoi(int numPoints);
@@ -58,6 +69,9 @@ public:
     inline std::vector<Line> getFieldBoundary() const { return m_fieldBoundary; }
     inline std::vector< std::vector<Line> > getFields() const { return m_fields; }
     std::vector<QVector3D> getBoundaryVerts() const;
+    inline std::vector<QVector3D> getLineVerts() const { qInfo()<<m_linePoints.size(); return m_linePoints; }
+
+    std::vector<QVector3D> m_linePoints;
 
 
 private:
@@ -68,7 +82,11 @@ private:
     std::vector< std::vector<float> > m_heightMapCopy;
     std::vector< std::vector<QVector3D> > m_normalMapCopy;
     std::vector<Line> m_fieldBoundary;
-    std::vector< std::vector<Line> > m_fields;
+    std::vector< std::vector<Line> > m_fields;    
+
+    Edges m_vEdges;
+    Voronoi *v;
+
 
 
 };

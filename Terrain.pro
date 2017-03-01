@@ -10,15 +10,20 @@ SOURCES += src/main.cpp \
 					src/glwidget.cpp \
 					src/perlinnoise.cpp \
 					src/englishfields.cpp \
-	src/voronoi.cpp \
-	src/voronoitypes.cpp
+	borrowed/voronoi/*.cpp
+#	src/voronoi.cpp \
+#	src/voronoitypes.cpp
+
 
 HEADERS  += include/MainWindow.h \
 					include/glwidget.h \
 					include/perlinnoise.h \
 					include/englishfields.h \
-	include/voronoi.h \
-	include/voronoitypes.h
+	borrowed/voronoi/*.h
+
+#	include/voronoi.h \
+#	include/voronoitypes.h
+
 
 FORMS    += MainWindow.ui
 
@@ -28,3 +33,4 @@ DISTFILES += shaders/vert.glsl \
 win32::LIBS += -lopengl32
 
 INCLUDEPATH += include/
+INCLUDEPATH += borrowed/voronoi/

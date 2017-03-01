@@ -1,6 +1,7 @@
 #include "englishfields.h"
 
-#include "voronoi.h"
+//#include "voronoi.h"
+
 #include <time.h>
 
 #include <QDebug>
@@ -11,46 +12,16 @@ EnglishFields::EnglishFields()
 }
 
 EnglishFields::EnglishFields(std::vector< std::vector<float> > &_terrainHeightMap,
-                                           std::vector< std::vector<QVector3D> > &_terrainNormalMap) :
+                                           std::vector< std::vector<QVector3D> > &_terrainNormalMap,
+                                            double _width) :
     m_heightMapCopy(_terrainHeightMap),
     m_normalMapCopy(_terrainNormalMap)
 {
     m_maxSteepness = 0.95f;
 
-    double width = 500;
+    makeDiagram(_width);
 
-    std::shared_ptr<Voronoi> voronoiGenerator(new Voronoi());
-
-    std::shared_ptr<std::vector<sPoint>> verts(new std::vector<sPoint>);
-    std::shared_ptr<std::vector<sPoint>> dirs(new std::vector<sPoint>);
-
-    srand(time(NULL));
-
-    for(int i = 0; i < 10; ++i)
-    {
-        sPoint newPoint(new VoronoiPoint(width * (double)rand()/(double)RAND_MAX, width * (double)rand()/(double)RAND_MAX));
-//        sPoint newPoint(new VoronoiPoint(i, i));
-        verts->push_back(newPoint);
-
-        sPoint newDirection(new VoronoiPoint((double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
-//        sPoint newDirection(new VoronoiPoint(i, i));
-        dirs->push_back(newDirection);
-    }
-
-    std::vector<sEdge>* edges = voronoiGenerator->makeVoronoiEdges(verts.get(), width, width);
-
-    qInfo()<<edges->size();
-
-    for(auto i = edges->begin(); i != edges->end(); ++i)
-    {
-        (*i)->printEdge();
-    }
-
-    qInfo()<<"-----------";
-
-    delete edges;
-
-//    checkAvailableSpace();
+    makePoints();
 }
 
 EnglishFields::~EnglishFields()
@@ -68,6 +39,53 @@ void EnglishFields::operator =(EnglishFields &toCopy)
 
     m_fieldBoundary = toCopy.m_fieldBoundary;
     m_fields = toCopy.m_fields;
+
+    m_linePoints = toCopy.m_linePoints;
+}
+
+void EnglishFields::makeDiagram(double _width)
+{
+    v = new Voronoi();
+    Vertices *ver = new Vertices();
+    Vertices *dir = new Vertices();
+
+    srand ( time(NULL) );
+
+    for(int i=0; i<10; i++)
+    {
+
+        ver->push_back(new VPoint( _width * (double)rand()/(double)RAND_MAX , _width * (double)rand()/(double)RAND_MAX ));
+        dir->push_back(new VPoint( (double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
+    }
+
+    m_vEdges = (*(v->GetEdges(ver, _width, _width)));
+    qInfo()<<m_vEdges.size();
+}
+
+void EnglishFields::makePoints()
+{
+    std::vector< std::pair< QVector3D, QVector3D > > edgeList;
+
+    for(auto i = m_vEdges.begin(); i != m_vEdges.end(); ++i)
+    {
+        (*i)->print();
+        QVector3D start((*i)->start->x - 25.0, 0.0, (*i)->start->y- 25.0);
+        QVector3D end((*i)->end->x- 25.0, 0.0, (*i)->end->y- 25.0);
+
+        edgeList.push_back(std::make_pair(start, end));
+    }
+
+
+    edgeList.push_back(std::make_pair(QVector3D(-50, 0, -50), QVector3D(-50, 0, 50)));
+    edgeList.push_back(std::make_pair(QVector3D(-50, 0, 50), QVector3D(50, 0, 50)));
+    edgeList.push_back(std::make_pair(QVector3D(50, 0, 50), QVector3D(50, 0, -50)));
+    edgeList.push_back(std::make_pair(QVector3D(50, 0, -50), QVector3D(-50, 0, -50)));
+
+    for(int i = 0; i < edgeList.size(); ++i)
+    {
+        m_linePoints.push_back(edgeList[i].first);
+        m_linePoints.push_back(edgeList[i].second);
+    }
 }
 
 void EnglishFields::checkAvailableSpace()

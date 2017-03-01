@@ -55,7 +55,10 @@ void GLWidget::initializeGL()
     prepareTrees();
     qInfo()<<"Terrain prepared";
 
-    m_fieldGenerator = EnglishFields(m_heights, m_normalMap);
+    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, 50.0);
+
+    std::vector<QVector3D> lineVerts = m_fieldGenerator.m_linePoints;
+    qInfo()<<m_fieldGenerator.m_linePoints.size();
 
     vao_fields.create();
     vao_fields.bind();
@@ -63,8 +66,7 @@ void GLWidget::initializeGL()
     vbo_fields.create();
     vbo_fields.setUsagePattern(QOpenGLBuffer::StaticDraw);
     vbo_fields.bind();
-//    vbo_fields.allocate(&lineTmp[0], (int)lineTmp.size() * sizeof(GLfloat) * 3);
-//    vbo_fields.allocate(&m_fieldGenerator.getBoundaryVerts()[0], (int)m_fieldGenerator.getBoundaryVerts().size() * sizeof(GLfloat) * 3);
+    vbo_fields.allocate(&lineVerts[0], (int)lineVerts.size() * sizeof(GLfloat) * 3);
 
 //    //Make sure the vertices will be passed to the right place
 //    //in the shader
@@ -112,12 +114,12 @@ void GLWidget::paintGL()
 
     loadMatricesToShader(QVector3D(0,0,0));
 
-    drawTerrain();
+//    drawTerrain();
 
     vao_water.bind();
     m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,1.0f,0.5f));
 
-    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
+//    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
 
     vao_water.release();
 
@@ -129,18 +131,18 @@ void GLWidget::paintGL()
     {
         loadMatricesToShader(m_treePositions[i]);
 
-        glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
+//        glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
     }
 
     vao_trees.release();
 
     m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f ,1.0f, 1.0f));
 
-//    vao_fields.bind();
+    vao_fields.bind();
 
-//    glDrawArrays(GL_LINES, 0, 2);
+    glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.m_linePoints.size());
 
-//    vao_fields.release();
+    vao_fields.release();
 
     m_pgm.release();
 }
