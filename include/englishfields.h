@@ -58,8 +58,9 @@ public:
 
     void operator = (EnglishFields &toCopy);
 
-    void makeDiagram(double _width);
+    void makeDiagram();
     void makePoints();
+    QVector3D limitPoint(QVector3D _p);
 
     void checkAvailableSpace();
     void voronoi(int numPoints);
@@ -82,10 +83,14 @@ private:
     std::vector< std::vector<float> > m_heightMapCopy;
     std::vector< std::vector<QVector3D> > m_normalMapCopy;
     std::vector<Line> m_fieldBoundary;
-    std::vector< std::vector<Line> > m_fields;    
+    std::vector< std::vector<Line> > m_fields;
+
+    double m_width;
 
     Edges m_vEdges;
     Voronoi *v;
+    Vertices *ver;
+    Vertices *dir;
 
 
 

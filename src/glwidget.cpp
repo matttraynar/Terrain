@@ -55,7 +55,9 @@ void GLWidget::initializeGL()
     prepareTrees();
     qInfo()<<"Terrain prepared";
 
-    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, 50.0);
+    double width = 10.0;
+
+    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width);
 
     std::vector<QVector3D> lineVerts = m_fieldGenerator.m_linePoints;
     qInfo()<<m_fieldGenerator.m_linePoints.size();

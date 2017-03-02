@@ -29,9 +29,9 @@ Edges * Voronoi::GetEdges(Vertices * v, int w, int h)
 		queue.push(new VEvent( *i, true));
 	}
 
-	VEvent * e;
+    VEvent * e;
 	while(!queue.empty())
-	{
+    {
 		e = queue.top();
 		queue.pop();
 		ly = e->point->y;
@@ -41,7 +41,7 @@ Edges * Voronoi::GetEdges(Vertices * v, int w, int h)
 		delete(e);
 	}
 	
-	FinishEdge(root);
+    FinishEdge(root);
 
 	for(Edges::iterator i = edges->begin(); i != edges->end(); ++i)
 	{
@@ -162,15 +162,79 @@ void	Voronoi::RemoveParabola(VEvent * e)
 
 void	Voronoi::FinishEdge(VParabola * n)
 {
-	if(n->isLeaf) {delete n; return;}
-	double mx;
-	if(n->edge->direction->x > 0.0)	mx = std::max(width,	n->edge->start->x + 10 );
-	else							mx = std::min(0.0,		n->edge->start->x - 10);
-	
-	VPoint * end = new VPoint(mx, mx * n->edge->f + n->edge->g); 
-	n->edge->end = end;
-	points.push_back(end);
-			
+    if(n->isLeaf) {delete n; return;}
+
+    if(n != root)
+    {
+        double mx;
+
+        if(n->edge->direction->x > 0.0)	 mx = std::max(width / 2.0,	n->edge->start->x + 10);
+        else                                       mx = std::min(0.0,		n->edge->start->x - 10);
+
+        VPoint * end = new VPoint(mx, mx * n->edge->f + n->edge->g);
+        n->edge->end = end;
+
+        if((n->edge->end->x > width || n->edge->end->x < 0) &&
+                (n->edge->end->y > width || n->edge->end->y < 0) &&
+                (n->edge->start->x > width || n->edge->start->x < 0) &&
+                (n->edge->start->y > width || n->edge->start->y < 0))
+        {
+           n->edge->end = n->edge->start;
+        }
+        else
+        {
+            if(n->edge->end->y > width)
+            {
+                n->edge->end = new VPoint((width - n->edge->g) / n->edge->f, width);
+            }
+
+            if(n->edge->end->x > width)
+            {
+                n->edge->end = new VPoint(width, (width * n->edge->f) + n->edge->g);
+            }
+
+            if(n->edge->end->y < 0)
+            {
+                n->edge->end = new VPoint((0 - n->edge->g) / n->edge->f, 0);
+            }
+
+            if(n->edge->end->x < 0)
+            {
+                n->edge->end = new VPoint(0, n->edge->g);
+            }
+
+            //Start verts ----------------
+
+            if(n->edge->start->y > width)
+            {
+                n->edge->start = new VPoint((width - n->edge->g) / n->edge->f, width);
+            }
+
+            if(n->edge->start->x > width)
+            {
+                n->edge->start = new VPoint(width, (width * n->edge->f) + n->edge->g);
+            }
+
+            if(n->edge->start->y < 0)
+            {
+                n->edge->start = new VPoint((0 - n->edge->g) / n->edge->f, 0);
+            }
+
+            if(n->edge->start->x < 0)
+            {
+                n->edge->start = new VPoint(0, n->edge->g);
+            }
+
+
+        }
+
+        points.push_back(n->edge->end);
+    }
+    else
+    {
+        n->edge->end = n->edge->start;
+    }
+
 	FinishEdge(n->Left() );
 	FinishEdge(n->Right());
 	delete n;

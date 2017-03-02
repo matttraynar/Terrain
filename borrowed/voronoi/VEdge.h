@@ -50,9 +50,13 @@ public:
 		neighbour	= 0;
 		end			= 0;
 
-		f = (b->x - a->x) / (a->y - b->y) ;
-		g = s->y - f * s->x ;
-		direction = new VPoint(b->y - a->y, -(b->x - a->x));
+        f = (b->x - a->x) / (a->y - b->y) ;
+
+//        f = -1.0 / ((b->y - a->y) / (b->x - a->x));
+
+        g = s->y - (f * s->x) ;
+
+        direction = new VPoint(b->y - a->y, -(b->x - a->x));
 	}
 
 	/*

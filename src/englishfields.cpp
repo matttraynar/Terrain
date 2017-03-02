@@ -19,7 +19,9 @@ EnglishFields::EnglishFields(std::vector< std::vector<float> > &_terrainHeightMa
 {
     m_maxSteepness = 0.95f;
 
-    makeDiagram(_width);
+    m_width = _width;
+
+    makeDiagram();
 
     makePoints();
 }
@@ -43,22 +45,22 @@ void EnglishFields::operator =(EnglishFields &toCopy)
     m_linePoints = toCopy.m_linePoints;
 }
 
-void EnglishFields::makeDiagram(double _width)
+void EnglishFields::makeDiagram()
 {
     v = new Voronoi();
-    Vertices *ver = new Vertices();
-    Vertices *dir = new Vertices();
+    ver = new Vertices();
+    dir = new Vertices();
 
-    srand ( time(NULL) );
+    srand (123);
 
-    for(int i=0; i<10; i++)
+    for(int i=0; i < 500; i++)
     {
 
-        ver->push_back(new VPoint( _width * (double)rand()/(double)RAND_MAX , _width * (double)rand()/(double)RAND_MAX ));
+        ver->push_back(new VPoint( m_width * (double)rand()/(double)RAND_MAX , m_width * (double)rand()/(double)RAND_MAX ));
         dir->push_back(new VPoint( (double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
     }
 
-    m_vEdges = (*(v->GetEdges(ver, _width, _width)));
+    m_vEdges = (*(v->GetEdges(ver, m_width, m_width)));
     qInfo()<<m_vEdges.size();
 }
 
@@ -69,23 +71,41 @@ void EnglishFields::makePoints()
     for(auto i = m_vEdges.begin(); i != m_vEdges.end(); ++i)
     {
         (*i)->print();
-        QVector3D start((*i)->start->x - 25.0, 0.0, (*i)->start->y- 25.0);
-        QVector3D end((*i)->end->x- 25.0, 0.0, (*i)->end->y- 25.0);
+        QVector3D start((*i)->start->x - (m_width/2.0), 0.0, (*i)->start->y - (m_width/2.0));
+        QVector3D end((*i)->end->x - (m_width/2.0), 0.0, (*i)->end->y - (m_width/2.0));
+
+//        QVector3D start((*i)->start->x, 0.0, (*i)->start->y);
+//        QVector3D end((*i)->end->x, 0.0, (*i)->end->y);
 
         edgeList.push_back(std::make_pair(start, end));
     }
 
 
-    edgeList.push_back(std::make_pair(QVector3D(-50, 0, -50), QVector3D(-50, 0, 50)));
-    edgeList.push_back(std::make_pair(QVector3D(-50, 0, 50), QVector3D(50, 0, 50)));
-    edgeList.push_back(std::make_pair(QVector3D(50, 0, 50), QVector3D(50, 0, -50)));
-    edgeList.push_back(std::make_pair(QVector3D(50, 0, -50), QVector3D(-50, 0, -50)));
+    edgeList.push_back(std::make_pair(QVector3D(- (m_width/2.0), 0, - (m_width/2.0)), QVector3D(- (m_width/2.0), 0,  (m_width/2.0))));
+    edgeList.push_back(std::make_pair(QVector3D(- (m_width/2.0), 0,  (m_width/2.0)), QVector3D( (m_width/2.0), 0,  (m_width/2.0))));
+    edgeList.push_back(std::make_pair(QVector3D( (m_width/2.0), 0,  (m_width/2.0)), QVector3D( (m_width/2.0), 0, - (m_width/2.0))));
+    edgeList.push_back(std::make_pair(QVector3D( (m_width/2.0), 0, - (m_width/2.0)), QVector3D(- (m_width/2.0), 0, - (m_width/2.0))));
 
     for(int i = 0; i < edgeList.size(); ++i)
     {
+//        m_linePoints.push_back(limitPoint(edgeList[i].first));
+//        m_linePoints.push_back(limitPoint(edgeList[i].second));
         m_linePoints.push_back(edgeList[i].first);
         m_linePoints.push_back(edgeList[i].second);
     }
+}
+
+QVector3D EnglishFields::limitPoint(QVector3D _p)
+{
+    if(_p.x() < -(m_width/2.0)) { _p.setX(-(m_width/2.0)); }
+
+    if( _p.z() < -(m_width/2.0)) { _p.setZ(-(m_width/2.0)); }
+
+    if(_p.x() > (m_width/2.0)) { _p.setX((m_width/2.0)); }
+
+    if(_p.z() > (m_width/2.0)) { _p.setZ((m_width/2.0)); }
+
+    return _p;
 }
 
 void EnglishFields::checkAvailableSpace()
