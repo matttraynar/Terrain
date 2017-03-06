@@ -54,13 +54,14 @@ class EnglishFields
 public:
     EnglishFields();
     EnglishFields(std::vector<std::vector<float> >& _terrainHeightMap, std::vector<std::vector<QVector3D> > &_terrainNormalMap, double _width);
+
+    EnglishFields(std::vector<std::vector<float> >& _terrainHeightMap, std::vector<std::vector<QVector3D> > &_terrainNormalMap, double _width, std::vector<QVector3D> _sites);
     ~EnglishFields();
 
     void operator = (EnglishFields &toCopy);
 
     void makeDiagram();
     void makePoints();
-    QVector3D limitPoint(QVector3D _p);
 
     void checkAvailableSpace();
     void voronoi(int numPoints);
@@ -92,8 +93,7 @@ private:
     Vertices *ver;
     Vertices *dir;
 
-
-
+    bool m_hasSites;
 };
 
 #endif // ENGLISHFIELDS_H
