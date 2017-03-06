@@ -62,6 +62,10 @@ void GLWidget::initializeGL()
     std::vector<QVector3D> lineVerts = m_fieldGenerator.m_linePoints;
     qInfo()<<m_fieldGenerator.m_linePoints.size();
 
+    m_view.lookAt(m_cameraPos,
+                            QVector3D(width, 0, width),
+                            QVector3D(0, 1, 0));
+
     vao_fields.create();
     vao_fields.bind();
 
@@ -342,7 +346,7 @@ bool GLWidget::prepareShaderProgram( const QString& vertexShaderPath, const QStr
 void GLWidget::loadMatricesToShader(QVector3D position)
 {
     //Get vector from camera to the origin
-    QVector3D o(0,0,0);
+    QVector3D o(10,0,10);
     QVector3D camToOrig = o - m_cameraPos;
 
     //Normalize and calculate a new position somewhere along this vector
