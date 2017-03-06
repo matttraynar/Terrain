@@ -51,9 +51,9 @@ void EnglishFields::makeDiagram()
     ver = new Vertices();
     dir = new Vertices();
 
-    srand (123);
+    srand (time(NULL));
 
-    for(int i=0; i < 500; i++)
+    for(int i=0; i < 10; i++)
     {
 
         ver->push_back(new VPoint( m_width * (double)rand()/(double)RAND_MAX , m_width * (double)rand()/(double)RAND_MAX ));
@@ -71,6 +71,7 @@ void EnglishFields::makePoints()
     for(auto i = m_vEdges.begin(); i != m_vEdges.end(); ++i)
     {
         (*i)->print();
+
         QVector3D start((*i)->start->x - (m_width/2.0), 0.0, (*i)->start->y - (m_width/2.0));
         QVector3D end((*i)->end->x - (m_width/2.0), 0.0, (*i)->end->y - (m_width/2.0));
 

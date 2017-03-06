@@ -92,6 +92,8 @@ private:
     double		GetY(VPoint * p, double x);
     void		CheckCircle(VParabola * b);
     VPoint *	GetEdgeIntersection(VEdge * a, VEdge * b);
+
+    void checkEdge(VEdge * e);
 };
 
 
