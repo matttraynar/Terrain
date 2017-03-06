@@ -55,12 +55,29 @@ void GLWidget::initializeGL()
     prepareTrees();
     qInfo()<<"Terrain prepared";
 
-    double width = 10.0;
+    double width = 50.0;
 
     m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width);
 
     std::vector<QVector3D> lineVerts = m_fieldGenerator.m_linePoints;
     qInfo()<<m_fieldGenerator.m_linePoints.size();
+
+    for(int i = 0; i < lineVerts.size(); ++i)
+    {
+        float minDistance = 1000000;
+        float yValue = 0;
+
+        for(int j = 0; j < m_verts.size(); ++j)
+        {
+            if((m_verts[j] - lineVerts[i]).length() < minDistance)
+            {
+                minDistance = (m_verts[j] - lineVerts[i]).length();
+                yValue = m_verts[j].y();
+            }
+        }
+
+        lineVerts[i].setY(yValue - fabs(yValue / 2.0f));
+    }
 
     m_view.lookAt(m_cameraPos,
                             QVector3D(width, 0, width),
@@ -113,6 +130,11 @@ void GLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+//    if(m_wireframe)
+//    {
+//        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+//    }
+
     m_pgm.bind();
 
     m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
@@ -120,12 +142,12 @@ void GLWidget::paintGL()
 
     loadMatricesToShader(QVector3D(0,0,0));
 
-//    drawTerrain();
+    drawTerrain();
 
     vao_water.bind();
     m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,1.0f,0.5f));
 
-//    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
+    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
 
     vao_water.release();
 
@@ -137,7 +159,8 @@ void GLWidget::paintGL()
     {
         loadMatricesToShader(m_treePositions[i]);
 
-//        glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
+        (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
     }
 
     vao_trees.release();
@@ -146,11 +169,14 @@ void GLWidget::paintGL()
 
     vao_fields.bind();
 
+    (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.m_linePoints.size());
 
     vao_fields.release();
 
     m_pgm.release();
+
+
 }
 
 void GLWidget::timerEvent(QTimerEvent *e)
@@ -183,8 +209,6 @@ void GLWidget::timerEvent(QTimerEvent *e)
         moveDown = false;
     }
 
-//    (moveDown) ? m_x -= 0.05f : m_x += 0.05f;
-
     update();
 }
 
@@ -204,6 +228,7 @@ void GLWidget::mousePressEvent(QMouseEvent *e)
 {
     //Store the position the mouse was pressed in
     m_lastPos = e->pos();
+    m_wireframe = true;
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *e)
@@ -223,6 +248,11 @@ void GLWidget::mouseMoveEvent(QMouseEvent *e)
     m_lastPos = e->pos();
 
     update();
+}
+
+void GLWidget::mouseReleaseEvent(QMouseEvent *e)
+{
+    m_wireframe = false;
 }
 
 void GLWidget::qNormalizeAngle(int &angle)
@@ -520,7 +550,7 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
     //This will be used to update the camera position
     QVector3D terrainMiddle(0,0,0);
 
-    //Iterate through the height map
+    //Iterate through the height map and make the terrain verts
     for(int i = 0; i < m_divisions; ++i)
     {
         std::vector<QVector3D> tmpNormals;
@@ -891,6 +921,8 @@ void GLWidget::prepareTrees()
         {
             //Create a variable for storing the middle of the face
             QVector3D midFace;
+
+
 
             //To introduce some pseudo-random placement (to ensure the trees aren't all added in a uniform
             //grid) use various methods to calulate the new position.

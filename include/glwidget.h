@@ -6,6 +6,7 @@
 #include <QTimerEvent>
 #include <QWheelEvent>
 #include <QMouseEvent>
+#include <QKeyEvent>
 
 #include <QOpenGLShaderProgram>
 
@@ -22,6 +23,14 @@
 #include "englishfields.h"
 
 #define PI 3.14159265
+
+struct SortVector
+{
+    bool operator() (const QVector3D &a, const QVector3D &b)
+    {
+        return(a.y() < b.y());
+    }
+};
 
 class GLWidget : public QGLWidget
 {
@@ -45,6 +54,7 @@ protected:
     void wheelEvent(QWheelEvent* e);
     void mousePressEvent(QMouseEvent* e);
     void mouseMoveEvent(QMouseEvent* e);
+    void mouseReleaseEvent(QMouseEvent* e);
 
     static void qNormalizeAngle(int &angle);
 
@@ -119,6 +129,8 @@ private:
     std::vector<QVector3D> m_treeVerts;
     std::vector<uint> m_treeIndices;
     std::vector<QVector3D> m_treePositions;
+
+    std::vector<QVector3D> m_sitePoints;
 
      //-------------------------------------------------------
     //Camera movement members
