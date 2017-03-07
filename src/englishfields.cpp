@@ -82,9 +82,9 @@ void EnglishFields::makeDiagram()
         ver = new Vertices();
         dir = new Vertices();
 
-        srand (time(NULL));
+        srand (51);
 
-        for(int i=0; i < 10; i++)
+        for(int i=0; i < 50; i++)
         {
 
             ver->push_back(new VPoint( m_width * (double)rand()/(double)RAND_MAX , m_width * (double)rand()/(double)RAND_MAX ));
@@ -95,7 +95,6 @@ void EnglishFields::makeDiagram()
     v = new Voronoi();
 
     m_vEdges = (*(v->GetEdges(ver, m_width, m_width)));
-    qInfo()<<m_vEdges.size();
 }
 
 void EnglishFields::makePoints()
@@ -104,25 +103,59 @@ void EnglishFields::makePoints()
 
     for(auto i = m_vEdges.begin(); i != m_vEdges.end(); ++i)
     {
-        (*i)->print();
+        QVector3D start((*i)->start->x - (m_width / 2.0), 0.0, (*i)->start->y - (m_width / 2.0));
+        QVector3D end((*i)->end->x - (m_width / 2.0), 0.0, (*i)->end->y - (m_width / 2.0));
 
-        QVector3D start((*i)->start->x - (m_width), 0.0, (*i)->start->y - (m_width));
-        QVector3D end((*i)->end->x - (m_width), 0.0, (*i)->end->y - (m_width));
+        subdivideEdge(start, end, edgeList);
 
-        edgeList.push_back(std::make_pair(start, end));
+//        edgeList.push_back(std::make_pair(start, end));
     }
 
+    QVector3D v1( - (m_width / 2.0),    0, - (m_width / 2.0));
+    QVector3D v2( - (m_width / 2.0),    0,   (m_width / 2.0));
+    QVector3D v3(   (m_width / 2.0),    0,   (m_width / 2.0));
+    QVector3D v4(   (m_width / 2.0),    0, - (m_width / 2.0));
 
-    edgeList.push_back(std::make_pair(QVector3D(- (m_width), 0, - (m_width)), QVector3D(- (m_width),   0,              (0))));
-    edgeList.push_back(std::make_pair(QVector3D(- (m_width), 0,             (0)), QVector3D(             (0),   0,              (0))));
-    edgeList.push_back(std::make_pair(QVector3D(            (0), 0,             (0)), QVector3D(             (0),    0, - (m_width))));
-    edgeList.push_back(std::make_pair(QVector3D(            (0), 0, - (m_width)), QVector3D(- (m_width),    0, - (m_width))));
+    subdivideEdge(v1, v2, edgeList);
+    subdivideEdge(v2, v3, edgeList);
+    subdivideEdge(v3, v4, edgeList);
+    subdivideEdge(v4, v1, edgeList);
+
+//    edgeList.push_back(std::make_pair(v1, v2));
+//    edgeList.push_back(std::make_pair(v2, v3));
+//    edgeList.push_back(std::make_pair(v3, v4));
+//    edgeList.push_back(std::make_pair(v4, v1));
+
 
     for(int i = 0; i < edgeList.size(); ++i)
     {
         m_linePoints.push_back(edgeList[i].first);
         m_linePoints.push_back(edgeList[i].second);
     }
+}
+
+void EnglishFields::subdivideEdge(QVector3D _start, QVector3D _end, std::vector< std::pair< QVector3D, QVector3D > > & edgeList)
+{
+    float length = (_end - _start).length();
+
+    QVector3D newStart = _start;
+    QVector3D newEnd = ((_end - _start) / (int)length * 2) + _start;
+
+    for(int j = 0; j < (int)(length * 2) - 2; ++j)
+    {
+        if((newEnd - _start).length() > (_end - _start).length())
+        {
+            break;
+        }
+
+        edgeList.push_back(std::make_pair(newStart, newEnd));
+
+        newStart = newEnd;
+        newEnd += ((_end - _start) / (int)(length * 2));
+
+    }
+
+    edgeList.push_back(std::make_pair(newStart, _end));
 }
 
 void EnglishFields::checkAvailableSpace()

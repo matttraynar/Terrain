@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <memory>
+#include <math.h>
 
 #include "borrowed/voronoi/Voronoi.h"
 
@@ -62,6 +63,8 @@ public:
 
     void makeDiagram();
     void makePoints();
+
+    void subdivideEdge(QVector3D _start, QVector3D _end, std::vector< std::pair< QVector3D, QVector3D > > & edgeLis);
 
     void checkAvailableSpace();
     void voronoi(int numPoints);

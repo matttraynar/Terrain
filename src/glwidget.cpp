@@ -30,7 +30,7 @@ GLWidget::~GLWidget()
 
 void GLWidget::initializeGL()
 {
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -48,20 +48,23 @@ void GLWidget::initializeGL()
 
     startTimer(1);
 
+
+    qInfo()<<"Generating terrain";
     generateHeightMap(6, 7.0f);
 
+    qInfo()<<"Preparing VAOs";
     prepareTerrain();
     prepareWater();
     prepareTrees();
-    qInfo()<<"Terrain prepared";
 
     double width = 50.0;
 
+    qInfo()<<"Creating Voronoi";
     m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width);
 
     std::vector<QVector3D> lineVerts = m_fieldGenerator.m_linePoints;
-    qInfo()<<m_fieldGenerator.m_linePoints.size();
 
+    qInfo()<<"Adjusting Voronoi heights";
     for(int i = 0; i < lineVerts.size(); ++i)
     {
         float minDistance = 1000000;
@@ -69,16 +72,32 @@ void GLWidget::initializeGL()
 
         for(int j = 0; j < m_verts.size(); ++j)
         {
-            if((m_verts[j] - lineVerts[i]).length() < minDistance)
+            QVector3D flatVector1(m_verts[j].x(), 0, m_verts[j].z());
+            QVector3D flatVector2(lineVerts[i].x(), 0, lineVerts[i].z());
+
+            if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
             {
-                minDistance = (m_verts[j] - lineVerts[i]).length();
-                yValue = m_verts[j].y();
+                if((flatVector1 - flatVector2).length() < minDistance)
+                {
+                    minDistance = (flatVector1 - flatVector2).length();
+                    yValue = m_verts[j].y();
+                }
             }
         }
 
-        lineVerts[i].setY(yValue - fabs(yValue / 2.0f));
+        if(yValue < m_waterLevel)
+        {
+            yValue = m_waterLevel - 0.25;
+        }
+        else
+        {
+            yValue += 0.3f;
+        }
+
+        lineVerts[i].setY(yValue);
     }
 
+    qInfo()<<"Creating Voronoi VAO";
     m_view.lookAt(m_cameraPos,
                             QVector3D(width, 0, width),
                             QVector3D(0, 1, 0));
@@ -130,11 +149,6 @@ void GLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//    if(m_wireframe)
-//    {
-//        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//    }
-
     m_pgm.bind();
 
     m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
@@ -147,7 +161,7 @@ void GLWidget::paintGL()
     vao_water.bind();
     m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,1.0f,0.5f));
 
-    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
+//    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
 
     vao_water.release();
 
@@ -169,6 +183,8 @@ void GLWidget::paintGL()
 
     vao_fields.bind();
 
+    loadMatricesToShader(QVector3D(0,0,0));
+
     (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.m_linePoints.size());
 
@@ -183,31 +199,32 @@ void GLWidget::timerEvent(QTimerEvent *e)
 {
     e;
 
-    static float colour = 0.0f;
+    //Pulse background
+//    static float colour = 0.0f;
 
-    if(colour <= 0.25f)
-    {
-        glClearColor(0.0f, 0.0f, colour, 1.0f);
-        colour += 0.0001f;
-    }
-    else if(colour <= 0.5f)
-    {
-        glClearColor(0.0f, 0.0f, 0.5f - colour, 1.0f);
-        colour += 0.0001f;
-    }
-    else
-    {
-        colour = 0.0f;
-    }
+//    if(colour <= 0.25f)
+//    {
+//        glClearColor(0.0f, 0.0f, colour, 1.0f);
+//        colour += 0.0001f;
+//    }
+//    else if(colour <= 0.5f)
+//    {
+//        glClearColor(0.0f, 0.0f, 0.5f - colour, 1.0f);
+//        colour += 0.0001f;
+//    }
+//    else
+//    {
+//        colour = 0.0f;
+//    }
 
-    if(m_x > 20)
-    {
-        moveDown = true;
-    }
-    else if(m_x < -20)
-    {
-        moveDown = false;
-    }
+//    if(m_x > 20)
+//    {
+//        moveDown = true;
+//    }
+//    else if(m_x < -20)
+//    {
+//        moveDown = false;
+//    }
 
     update();
 }
@@ -252,6 +269,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *e)
 
 void GLWidget::mouseReleaseEvent(QMouseEvent *e)
 {
+    e;
     m_wireframe = false;
 }
 
