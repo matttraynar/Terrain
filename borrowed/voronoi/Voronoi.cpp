@@ -172,8 +172,6 @@ void Voronoi::checkEdge(VEdge *e)
            (e->end->x >= 0 && e->end->x <= width) &&
            (e->end->y >= 0 && e->end->y <= width))
     {
-        e->print();
-        qInfo()<<"Not changed";
         return;
     }
     else
