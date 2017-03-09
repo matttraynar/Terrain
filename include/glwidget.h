@@ -131,7 +131,7 @@ private:
     std::vector<QVector3D> m_treePositions;
 
     std::vector<QVector3D> m_sitePoints;
-
+    std::vector<QVector3D> lineVerts;
      //-------------------------------------------------------
     //Camera movement members
     QMatrix4x4 m_model;

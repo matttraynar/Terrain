@@ -60,10 +60,10 @@ void GLWidget::initializeGL()
     double width = 50.0;
 
     qInfo()<<"Creating Voronoi";
-//    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width, m_sitePoints);
-    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width);
+    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width, m_sitePoints);
+//    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width);
 
-    std::vector<QVector3D> lineVerts = m_fieldGenerator.m_linePoints;
+    lineVerts = m_fieldGenerator.m_linePoints;
 
     qInfo()<<"Adjusting Voronoi heights";
     for(int i = 0; i < lineVerts.size(); ++i)
@@ -96,6 +96,12 @@ void GLWidget::initializeGL()
         }
 
         lineVerts[i].setY(yValue);
+    }
+
+    for(uint i = 0; i < m_sitePoints.size(); ++i)
+    {
+        lineVerts.push_back(QVector3D(0,m_waterLevel + 25,0));
+        lineVerts.push_back(m_sitePoints[i]);
     }
 
     qInfo()<<"Creating Voronoi VAO";
@@ -187,7 +193,8 @@ void GLWidget::paintGL()
     loadMatricesToShader(QVector3D(0,0,0));
 
     (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.m_linePoints.size());
+//    glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.m_linePoints.size() + m_sitePoints.size());
+     glDrawArrays(GL_LINES, 0, (int)lineVerts.size());
 
     vao_fields.release();
 
@@ -932,24 +939,31 @@ void GLWidget::prepareTrees()
         QVector3D faceNorm = m_norms[i] + m_norms[i + 1] + m_norms[i + 2] + m_norms[i + 3];
         faceNorm /= 4.0f;
 
-        if(faceNorm.y() > 0.75f)
+        if(faceNorm.y() > 0.5f)
         {
             QVector3D middle = (m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3]) / 4.0f;
 
             bool addSite = true;
 
-            for(uint j = 0; j < m_sitePoints.size(); ++j)
+            if(middle.y() < m_waterLevel * 1.25)
             {
-                if((m_sitePoints[j] - middle).length() < 5.0)
+                addSite = false;
+            }
+            else
+            {
+                for(uint j = 0; j < m_sitePoints.size(); ++j)
                 {
-                    addSite = false;
-                    break;
+                    if((m_sitePoints[j] - middle).length() < 10.0)
+                    {
+                        addSite = false;
+                        break;
+                    }
                 }
             }
 
             if(addSite)
             {
-                if(m_sitePoints.size() > 99)
+                if(m_sitePoints.size() > 14)
                 {
                     m_sitePoints.push_back(middle);
 

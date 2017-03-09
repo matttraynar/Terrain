@@ -52,6 +52,12 @@ EnglishFields::EnglishFields(std::vector<std::vector<float> >& _terrainHeightMap
         }
 
         ver->push_back(new VPoint((double)(_sites[i].x() + m_width/2.0), (double)(_sites[i].z() + m_width/2.0)));
+        if(_sites[i].x() + m_width/2.0 > m_width ||
+            _sites[i].z() + m_width/2.0  > m_width)
+        {
+            qInfo()<<"ERROR";
+        }
+
         dir->push_back(new VPoint( (double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
     }
 
