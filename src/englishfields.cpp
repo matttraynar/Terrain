@@ -46,7 +46,12 @@ EnglishFields::EnglishFields(std::vector<std::vector<float> >& _terrainHeightMap
 
     for(int i = 0; i < _sites.size(); ++i)
     {
-        ver->push_back(new VPoint(_sites[i].x(), _sites[i].z()));
+        if(_sites[i].x() == _sites[i].z())
+        {
+//            _sites[i].setZ(_sites[i].z() - 0.5);
+        }
+
+        ver->push_back(new VPoint((double)(_sites[i].x() + m_width/2.0), (double)(_sites[i].z() + m_width/2.0)));
         dir->push_back(new VPoint( (double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
     }
 
@@ -82,15 +87,18 @@ void EnglishFields::makeDiagram()
         ver = new Vertices();
         dir = new Vertices();
 
-        srand (51);
+        srand (time(NULL));
 
-        for(int i=0; i < 50; i++)
+
+        for(int i=0; i < 250; i++)
         {
-
             ver->push_back(new VPoint( m_width * (double)rand()/(double)RAND_MAX , m_width * (double)rand()/(double)RAND_MAX ));
+
             dir->push_back(new VPoint( (double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
         }
     }
+
+    qInfo()<<"Size: "<<ver->size();
 
     v = new Voronoi();
 
@@ -138,10 +146,12 @@ void EnglishFields::subdivideEdge(QVector3D _start, QVector3D _end, std::vector<
 {
     float length = (_end - _start).length();
 
-    QVector3D newStart = _start;
-    QVector3D newEnd = ((_end - _start) / (int)length * 2) + _start;
+    int resolution = 1;
 
-    for(int j = 0; j < (int)(length * 2) - 2; ++j)
+    QVector3D newStart = _start;
+    QVector3D newEnd = ((_end - _start) / (int)length * resolution) + _start;
+
+    for(int j = 0; j < (int)(length * resolution) - resolution; ++j)
     {
         if((newEnd - _start).length() > (_end - _start).length())
         {
@@ -151,7 +161,7 @@ void EnglishFields::subdivideEdge(QVector3D _start, QVector3D _end, std::vector<
         edgeList.push_back(std::make_pair(newStart, newEnd));
 
         newStart = newEnd;
-        newEnd += ((_end - _start) / (int)(length * 2));
+        newEnd += ((_end - _start) / (int)(length * resolution));
 
     }
 

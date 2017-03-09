@@ -60,6 +60,7 @@ void GLWidget::initializeGL()
     double width = 50.0;
 
     qInfo()<<"Creating Voronoi";
+//    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width, m_sitePoints);
     m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width);
 
     std::vector<QVector3D> lineVerts = m_fieldGenerator.m_linePoints;
@@ -563,7 +564,7 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
     float range = 50.0f;
 
     //Centering around the origin. E.G. a range of 20 starts at -10
-    float start = 0 - (range/2.0f);
+    float start = - (range/2.0f);
 
     //This will be used to update the camera position
     QVector3D terrainMiddle(0,0,0);
@@ -641,7 +642,6 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
 
         m_normalMap.push_back(tmpNormals);
     }
-
 
     //Update the camera position so that is centred (pretty much) on the middle
     //of the terrain an always has the terrain visible
@@ -931,6 +931,38 @@ void GLWidget::prepareTrees()
         //Get the normal of the current face
         QVector3D faceNorm = m_norms[i] + m_norms[i + 1] + m_norms[i + 2] + m_norms[i + 3];
         faceNorm /= 4.0f;
+
+        if(faceNorm.y() > 0.75f)
+        {
+            QVector3D middle = (m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3]) / 4.0f;
+
+            bool addSite = true;
+
+            for(uint j = 0; j < m_sitePoints.size(); ++j)
+            {
+                if((m_sitePoints[j] - middle).length() < 5.0)
+                {
+                    addSite = false;
+                    break;
+                }
+            }
+
+            if(addSite)
+            {
+                if(m_sitePoints.size() > 99)
+                {
+                    m_sitePoints.push_back(middle);
+
+                    std::sort(m_sitePoints.begin(), m_sitePoints.end(), SortVector());
+
+                    m_sitePoints.pop_back();
+                }
+                else
+                {
+                    m_sitePoints.push_back(middle);
+                }
+            }
+        }
 
         //We can now just see what the y value of the face normal is. If it is large we know
         //the face points mostly upward, making it relatively flat. A check is also done to see
