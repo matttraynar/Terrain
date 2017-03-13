@@ -1,7 +1,5 @@
 #include "englishfields.h"
 
-//#include "voronoi.h"
-
 #include <time.h>
 
 #include <QDebug>
@@ -23,9 +21,11 @@ EnglishFields::EnglishFields(std::vector< std::vector<float> > &_terrainHeightMa
 
     m_hasSites = false;
 
-    makeDiagram();
+//    makeDiagram();
 
-    makePoints();
+//    makePoints();
+
+    makeVoronoiDiagram();
 }
 
 EnglishFields::EnglishFields(std::vector<std::vector<float> >& _terrainHeightMap,
@@ -41,25 +41,26 @@ EnglishFields::EnglishFields(std::vector<std::vector<float> >& _terrainHeightMap
 
     m_hasSites = true;
 
-    ver = new Vertices();
-    dir = new Vertices();
+//    ver = new Vertices();
+//    dir = new Vertices();
 
-    for(int i = 0; i < _sites.size(); ++i)
-    {
-        if(_sites[i].x() == _sites[i].z())
-        {
-//            _sites[i].setZ(_sites[i].z() - 0.5);
-        }
+//    for(int i = 0; i < _sites.size(); ++i)
+//    {
+//        if(_sites[i].x() == _sites[i].z())
+//        {
+////            _sites[i].setZ(_sites[i].z() - 0.5);
+//        }
+//    }
 
-        ver->push_back(new VPoint((double)(_sites[i].x() + m_width/2.0), (double)(_sites[i].z() + m_width/2.0)));
-        if(_sites[i].x() + m_width/2.0 > m_width ||
-            _sites[i].z() + m_width/2.0  > m_width)
-        {
-            qInfo()<<"ERROR";
-        }
+//        ver->push_back(new VPoint((double)(_sites[i].x() + m_width/2.0), (double)(_sites[i].z() + m_width/2.0)));
+//        if(_sites[i].x() + m_width/2.0 > m_width ||
+//            _sites[i].z() + m_width/2.0  > m_width)
+//        {
+//            qInfo()<<"ERROR";
+//        }
 
-        dir->push_back(new VPoint( (double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
-    }
+//        dir->push_back(new VPoint( (double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
+//    }
 
     makeDiagram();
 
@@ -70,6 +71,43 @@ EnglishFields::EnglishFields(std::vector<std::vector<float> >& _terrainHeightMap
 EnglishFields::~EnglishFields()
 {
 
+}
+
+void EnglishFields::makeVoronoiDiagram()
+{
+    //consider some points
+    std::vector<Point_2> points;
+
+    srand(25);
+
+    for(uint i = 0; i < 100; ++i)
+    {
+        points.push_back(Point_2((50.0 * (double)rand()/(double)RAND_MAX) - 25.0, (50.0 * (double)rand()/(double)RAND_MAX) - 25.0));
+    }
+
+    Delaunay_triangulation_2 dt2;
+    //insert points into the triangulation
+    dt2.insert(points.begin(),points.end());
+    //construct a rectangle
+    Iso_rectangle_2 bbox(-25,-25,25,25);
+    Cropped_voronoi_from_delaunay vor(bbox);
+
+    //extract the cropped Voronoi diagram
+    dt2.draw_dual(vor);
+    //print the cropped Voronoi diagram as segments
+
+    float x = 0.0;
+
+    //Changed from line below
+    for (auto i = vor.m_cropped_vd.begin(); i != vor.m_cropped_vd.end(); ++i)
+    {
+        std::cout << "Next Segment: " << (*i) << "\n";
+
+        m_linePoints.push_back(QVector3D((*i).source().x(), 0.0, (*i).source().y()));
+        m_linePoints.push_back(QVector3D((*i).target().x(), 0.0, (*i).target().y()));
+    }
+
+    std::cout << "Finished" << std::endl;
 }
 
 void EnglishFields::operator =(EnglishFields &toCopy)
@@ -88,64 +126,64 @@ void EnglishFields::operator =(EnglishFields &toCopy)
 
 void EnglishFields::makeDiagram()
 {
-    if(!m_hasSites)
-    {
-        ver = new Vertices();
-        dir = new Vertices();
+//    if(!m_hasSites)
+//    {
+//        ver = new Vertices();
+//        dir = new Vertices();
 
-        srand (time(NULL));
+//        srand (time(NULL));
 
 
-        for(int i=0; i < 250; i++)
-        {
-            ver->push_back(new VPoint( m_width * (double)rand()/(double)RAND_MAX , m_width * (double)rand()/(double)RAND_MAX ));
+//        for(int i=0; i < 250; i++)
+//        {
+//            ver->push_back(new VPoint( m_width * (double)rand()/(double)RAND_MAX , m_width * (double)rand()/(double)RAND_MAX ));
 
-            dir->push_back(new VPoint( (double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
-        }
-    }
+//            dir->push_back(new VPoint( (double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
+//        }
+//    }
 
-    qInfo()<<"Size: "<<ver->size();
+//    qInfo()<<"Size: "<<ver->size();
 
-    v = new Voronoi();
+//    v = new Voronoi();
 
-    m_vEdges = (*(v->GetEdges(ver, m_width, m_width)));
+//    m_vEdges = (*(v->GetEdges(ver, m_width, m_width)));
 }
 
 void EnglishFields::makePoints()
 {
-    std::vector< std::pair< QVector3D, QVector3D > > edgeList;
+//    std::vector< std::pair< QVector3D, QVector3D > > edgeList;
 
-    for(auto i = m_vEdges.begin(); i != m_vEdges.end(); ++i)
-    {
-        QVector3D start((*i)->start->x - (m_width / 2.0), 0.0, (*i)->start->y - (m_width / 2.0));
-        QVector3D end((*i)->end->x - (m_width / 2.0), 0.0, (*i)->end->y - (m_width / 2.0));
+//    for(auto i = m_vEdges.begin(); i != m_vEdges.end(); ++i)
+//    {
+//        QVector3D start((*i)->start->x - (m_width / 2.0), 0.0, (*i)->start->y - (m_width / 2.0));
+//        QVector3D end((*i)->end->x - (m_width / 2.0), 0.0, (*i)->end->y - (m_width / 2.0));
 
-        subdivideEdge(start, end, edgeList);
+//        subdivideEdge(start, end, edgeList);
 
-//        edgeList.push_back(std::make_pair(start, end));
-    }
+////        edgeList.push_back(std::make_pair(start, end));
+//    }
 
-    QVector3D v1( - (m_width / 2.0),    0, - (m_width / 2.0));
-    QVector3D v2( - (m_width / 2.0),    0,   (m_width / 2.0));
-    QVector3D v3(   (m_width / 2.0),    0,   (m_width / 2.0));
-    QVector3D v4(   (m_width / 2.0),    0, - (m_width / 2.0));
+//    QVector3D v1( - (m_width / 2.0),    0, - (m_width / 2.0));
+//    QVector3D v2( - (m_width / 2.0),    0,   (m_width / 2.0));
+//    QVector3D v3(   (m_width / 2.0),    0,   (m_width / 2.0));
+//    QVector3D v4(   (m_width / 2.0),    0, - (m_width / 2.0));
 
-    subdivideEdge(v1, v2, edgeList);
-    subdivideEdge(v2, v3, edgeList);
-    subdivideEdge(v3, v4, edgeList);
-    subdivideEdge(v4, v1, edgeList);
+//    subdivideEdge(v1, v2, edgeList);
+//    subdivideEdge(v2, v3, edgeList);
+//    subdivideEdge(v3, v4, edgeList);
+//    subdivideEdge(v4, v1, edgeList);
 
-//    edgeList.push_back(std::make_pair(v1, v2));
-//    edgeList.push_back(std::make_pair(v2, v3));
-//    edgeList.push_back(std::make_pair(v3, v4));
-//    edgeList.push_back(std::make_pair(v4, v1));
+////    edgeList.push_back(std::make_pair(v1, v2));
+////    edgeList.push_back(std::make_pair(v2, v3));
+////    edgeList.push_back(std::make_pair(v3, v4));
+////    edgeList.push_back(std::make_pair(v4, v1));
 
 
-    for(int i = 0; i < edgeList.size(); ++i)
-    {
-        m_linePoints.push_back(edgeList[i].first);
-        m_linePoints.push_back(edgeList[i].second);
-    }
+//    for(int i = 0; i < edgeList.size(); ++i)
+//    {
+//        m_linePoints.push_back(edgeList[i].first);
+//        m_linePoints.push_back(edgeList[i].second);
+//    }
 }
 
 void EnglishFields::subdivideEdge(QVector3D _start, QVector3D _end, std::vector< std::pair< QVector3D, QVector3D > > & edgeList)
@@ -234,8 +272,8 @@ void EnglishFields::voronoi(int numPoints)
             {
                 const QVector3D& p = initialPoints[point];
 
-                float xd = i - p.x();
-                float yd = j - p.z();
+//                float xd = i - p.x();
+//                float yd = j - p.z();
 
 //                d = (xd * xd) + (yd * yd);
 
@@ -259,124 +297,124 @@ void EnglishFields::exploreTerrain(int x, int y, RelativePosition _rel)
     if(x > 0 && x < m_normalMapCopy.size() &&
             y > 0)
     {
-        if(y < m_normalMapCopy[x].size())
-        {
-            QVector3D testNorm(0,0,0);
-            Line tmp;
-            tmp.p0 = QVector3D(x, m_heightMapCopy[x][y], y);
+//        if(y < m_normalMapCopy[x].size())
+//        {
+//            QVector3D testNorm(0,0,0);
+//            Line tmp;
+//            tmp.p0 = QVector3D(x, m_heightMapCopy[x][y], y);
 
-            if(_rel != BottomLeft)
-            {
-                testNorm = m_normalMapCopy[x - 1][y - 1];
+//            if(_rel != BottomLeft)
+//            {
+//                testNorm = m_normalMapCopy[x - 1][y - 1];
 
-                if(testNorm.y() > m_maxSteepness)
-                {
-                    tmp.p1 = QVector3D(x - 1, m_heightMapCopy[x - 1][y - 1], y -1);
+//                if(testNorm.y() > m_maxSteepness)
+//                {
+//                    tmp.p1 = QVector3D(x - 1, m_heightMapCopy[x - 1][y - 1], y -1);
 
-                    m_fieldBoundary.push_back(tmp);
+//                    m_fieldBoundary.push_back(tmp);
 
-                    exploreTerrain(x - 1, y - 1, BottomLeft);
-                }
-            }
+//                    exploreTerrain(x - 1, y - 1, BottomLeft);
+//                }
+//            }
 
-            if(_rel != Bottom)
-            {
-                testNorm = m_normalMapCopy[x][y - 1];
+//            if(_rel != Bottom)
+//            {
+//                testNorm = m_normalMapCopy[x][y - 1];
 
-                if(testNorm.y() > m_maxSteepness)
-                {
-                    tmp.p1 = QVector3D(x, m_heightMapCopy[x][y - 1], y - 1);
+//                if(testNorm.y() > m_maxSteepness)
+//                {
+//                    tmp.p1 = QVector3D(x, m_heightMapCopy[x][y - 1], y - 1);
 
-                    m_fieldBoundary.push_back(tmp);
+//                    m_fieldBoundary.push_back(tmp);
 
-                    exploreTerrain(x, y - 1, Bottom);
-                }
-            }
+//                    exploreTerrain(x, y - 1, Bottom);
+//                }
+//            }
 
-            if(_rel != BottomRight)
-            {
-                testNorm = m_normalMapCopy[x + 1][y - 1];
+//            if(_rel != BottomRight)
+//            {
+//                testNorm = m_normalMapCopy[x + 1][y - 1];
 
-                if(testNorm.y() > m_maxSteepness)
-                {
-                    tmp.p1 = QVector3D(x + 1, m_heightMapCopy[x + 1][y], y);
+//                if(testNorm.y() > m_maxSteepness)
+//                {
+//                    tmp.p1 = QVector3D(x + 1, m_heightMapCopy[x + 1][y], y);
 
-                    m_fieldBoundary.push_back(tmp);
+//                    m_fieldBoundary.push_back(tmp);
 
-                    exploreTerrain(x + 1, y - 1, BottomRight);
-                }
-            }
+//                    exploreTerrain(x + 1, y - 1, BottomRight);
+//                }
+//            }
 
-            if(_rel != Left)
-            {
-                testNorm = m_normalMapCopy[x - 1][y];
+//            if(_rel != Left)
+//            {
+//                testNorm = m_normalMapCopy[x - 1][y];
 
-                if(testNorm.y() > m_maxSteepness)
-                {
-                    tmp.p1 = QVector3D(x - 1, m_heightMapCopy[x - 1][y], y);
+//                if(testNorm.y() > m_maxSteepness)
+//                {
+//                    tmp.p1 = QVector3D(x - 1, m_heightMapCopy[x - 1][y], y);
 
-                    m_fieldBoundary.push_back(tmp);
+//                    m_fieldBoundary.push_back(tmp);
 
-                    exploreTerrain(x - 1, y, Left);
-                }
-            }
+//                    exploreTerrain(x - 1, y, Left);
+//                }
+//            }
 
-            if(_rel != Right)
-            {
-                testNorm = m_normalMapCopy[x + 1][y];
+//            if(_rel != Right)
+//            {
+//                testNorm = m_normalMapCopy[x + 1][y];
 
-                if(testNorm.y() > m_maxSteepness)
-                {
-                    tmp.p1 = QVector3D(x + 1, m_heightMapCopy[x + 1][y], y);
+//                if(testNorm.y() > m_maxSteepness)
+//                {
+//                    tmp.p1 = QVector3D(x + 1, m_heightMapCopy[x + 1][y], y);
 
-                    m_fieldBoundary.push_back(tmp);
+//                    m_fieldBoundary.push_back(tmp);
 
-                    exploreTerrain(x + 1, y, Right);
-                }
-            }
+//                    exploreTerrain(x + 1, y, Right);
+//                }
+//            }
 
-            if(_rel != TopLeft)
-            {
-                testNorm = m_normalMapCopy[x - 1][y + 1];
+//            if(_rel != TopLeft)
+//            {
+//                testNorm = m_normalMapCopy[x - 1][y + 1];
 
-                if(testNorm.y() > m_maxSteepness)
-                {
-                    tmp.p1 = QVector3D(x - 1, m_heightMapCopy[x - 1][y + 1], y + 1);
+//                if(testNorm.y() > m_maxSteepness)
+//                {
+//                    tmp.p1 = QVector3D(x - 1, m_heightMapCopy[x - 1][y + 1], y + 1);
 
-                    m_fieldBoundary.push_back(tmp);
+//                    m_fieldBoundary.push_back(tmp);
 
-                    exploreTerrain(x - 1, y + 1, TopLeft);
-                }
-            }
+//                    exploreTerrain(x - 1, y + 1, TopLeft);
+//                }
+//            }
 
-            if(_rel != Top)
-            {
-                testNorm = m_normalMapCopy[x][y + 1];
+//            if(_rel != Top)
+//            {
+//                testNorm = m_normalMapCopy[x][y + 1];
 
-                if(testNorm.y() > m_maxSteepness)
-                {
-                    tmp.p1 = QVector3D(x, m_heightMapCopy[x][y + 1], y + 1);
+//                if(testNorm.y() > m_maxSteepness)
+//                {
+//                    tmp.p1 = QVector3D(x, m_heightMapCopy[x][y + 1], y + 1);
 
-                    m_fieldBoundary.push_back(tmp);
+//                    m_fieldBoundary.push_back(tmp);
 
-                    exploreTerrain(x, y + 1, Top);
-                }
-            }
+//                    exploreTerrain(x, y + 1, Top);
+//                }
+//            }
 
-            if(_rel != TopRight)
-            {
-                testNorm = m_normalMapCopy[x + 1][y + 1];
+//            if(_rel != TopRight)
+//            {
+//                testNorm = m_normalMapCopy[x + 1][y + 1];
 
-                if(testNorm.y() > m_maxSteepness)
-                {
-                    tmp.p1 = QVector3D(x + 1, m_heightMapCopy[x + 1][y + 1], y + 1);
+//                if(testNorm.y() > m_maxSteepness)
+//                {
+//                    tmp.p1 = QVector3D(x + 1, m_heightMapCopy[x + 1][y + 1], y + 1);
 
-                    m_fieldBoundary.push_back(tmp);
+//                    m_fieldBoundary.push_back(tmp);
 
-                    exploreTerrain(x + 1, y + 1, TopRight);
-                }
-            }
-        }
+//                    exploreTerrain(x + 1, y + 1, TopRight);
+//                }
+//            }
+//        }
     }
 
     m_count++;

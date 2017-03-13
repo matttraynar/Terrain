@@ -60,8 +60,8 @@ void GLWidget::initializeGL()
     double width = 50.0;
 
     qInfo()<<"Creating Voronoi";
-    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width, m_sitePoints);
-//    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width);
+//    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width, m_sitePoints);
+    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width);
 
     lineVerts = m_fieldGenerator.m_linePoints;
 
@@ -98,33 +98,36 @@ void GLWidget::initializeGL()
         lineVerts[i].setY(yValue);
     }
 
-    for(uint i = 0; i < m_sitePoints.size(); ++i)
+//    for(uint i = 0; i < m_sitePoints.size(); ++i)
+//    {
+//        lineVerts.push_back(QVector3D(0,m_waterLevel + 25,0));
+//        lineVerts.push_back(m_sitePoints[i]);
+//    }
+
+    if(lineVerts.size() != 0)
     {
-        lineVerts.push_back(QVector3D(0,m_waterLevel + 25,0));
-        lineVerts.push_back(m_sitePoints[i]);
+        qInfo()<<"Creating Voronoi VAO";
+        m_view.lookAt(m_cameraPos,
+                      QVector3D(width, 0, width),
+                      QVector3D(0, 1, 0));
+
+        vao_fields.create();
+        vao_fields.bind();
+
+        vbo_fields.create();
+        vbo_fields.setUsagePattern(QOpenGLBuffer::StaticDraw);
+        vbo_fields.bind();
+        vbo_fields.allocate(&lineVerts[0], (int)lineVerts.size() * sizeof(GLfloat) * 3);
+
+        //    //Make sure the vertices will be passed to the right place
+        //    //in the shader
+        m_pgm.enableAttributeArray("vertexPos");
+        m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
+
+        vbo_fields.release();
+
+        vao_fields.release();
     }
-
-    qInfo()<<"Creating Voronoi VAO";
-    m_view.lookAt(m_cameraPos,
-                            QVector3D(width, 0, width),
-                            QVector3D(0, 1, 0));
-
-    vao_fields.create();
-    vao_fields.bind();
-
-    vbo_fields.create();
-    vbo_fields.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    vbo_fields.bind();
-    vbo_fields.allocate(&lineVerts[0], (int)lineVerts.size() * sizeof(GLfloat) * 3);
-
-//    //Make sure the vertices will be passed to the right place
-//    //in the shader
-    m_pgm.enableAttributeArray("vertexPos");
-    m_pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
-
-    vbo_fields.release();
-
-    vao_fields.release();
 
     QOpenGLTexture* sand = addNewTexture(QString("textures/sand.png"));
     sand->bind(0);
@@ -188,15 +191,18 @@ void GLWidget::paintGL()
 
     m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f ,1.0f, 1.0f));
 
-    vao_fields.bind();
+    if(vao_fields.isCreated())
+    {
+        vao_fields.bind();
 
-    loadMatricesToShader(QVector3D(0,0,0));
+        loadMatricesToShader(QVector3D(0,0,0));
 
-    (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//    glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.m_linePoints.size() + m_sitePoints.size());
-     glDrawArrays(GL_LINES, 0, (int)lineVerts.size());
+        (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        //    glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.m_linePoints.size() + m_sitePoints.size());
+        glDrawArrays(GL_LINES, 0, (int)lineVerts.size());
 
-    vao_fields.release();
+        vao_fields.release();
+    }
 
     m_pgm.release();
 
@@ -963,7 +969,7 @@ void GLWidget::prepareTrees()
 
             if(addSite)
             {
-                if(m_sitePoints.size() > 14)
+                if(m_sitePoints.size() > 3)
                 {
                     m_sitePoints.push_back(middle);
 
