@@ -78,9 +78,9 @@ void EnglishFields::makeVoronoiDiagram()
     //consider some points
     std::vector<Point_2> points;
 
-    srand(25);
+    srand(time(NULL));
 
-    for(uint i = 0; i < 100; ++i)
+    for(uint i = 0; i < 50; ++i)
     {
         points.push_back(Point_2((50.0 * (double)rand()/(double)RAND_MAX) - 25.0, (50.0 * (double)rand()/(double)RAND_MAX) - 25.0));
     }
