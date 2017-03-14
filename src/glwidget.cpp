@@ -60,10 +60,10 @@ void GLWidget::initializeGL()
     double width = 50.0;
 
     qInfo()<<"Creating Voronoi";
-//    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width, m_sitePoints);
-    m_fieldGenerator = EnglishFields(m_heights, m_normalMap, width);
+//    m_fieldGenerator = EnglishFields(width, m_sitePoints);
+    m_fieldGenerator = EnglishFields(width);
 
-    lineVerts = m_fieldGenerator.m_linePoints;
+    lineVerts = m_fieldGenerator.getLineVerts();
 
     qInfo()<<"Adjusting Voronoi heights";
     for(int i = 0; i < lineVerts.size(); ++i)
