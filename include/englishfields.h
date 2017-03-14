@@ -126,6 +126,8 @@ private:
 
     double m_width;
 
+    std::vector<QVector3D> m_sites;
+
 //    Edges m_vEdges;
 //    Voronoi *v;
 //    Vertices *ver;

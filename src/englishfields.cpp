@@ -62,9 +62,13 @@ EnglishFields::EnglishFields(std::vector<std::vector<float> >& _terrainHeightMap
 //        dir->push_back(new VPoint( (double)rand()/(double)RAND_MAX - 0.5, (double)rand()/(double)RAND_MAX - 0.5));
 //    }
 
-    makeDiagram();
+//    makeDiagram();
 
-    makePoints();
+//    makePoints();
+
+    m_sites = _sites;
+
+    makeVoronoiDiagram();
 
 }
 
@@ -78,11 +82,21 @@ void EnglishFields::makeVoronoiDiagram()
     //consider some points
     std::vector<Point_2> points;
 
-    srand(time(NULL));
-
-    for(uint i = 0; i < 50; ++i)
+    if(m_sites.size() != 0)
     {
-        points.push_back(Point_2((50.0 * (double)rand()/(double)RAND_MAX) - 25.0, (50.0 * (double)rand()/(double)RAND_MAX) - 25.0));
+        for(uint i = 0; i < m_sites.size(); ++i)
+        {
+            points.push_back(Point_2(m_sites[i].x(), m_sites[i].y()));
+        }
+    }
+    else
+    {
+        srand(time(NULL));
+
+        for(uint i = 0; i < 50; ++i)
+        {
+            points.push_back(Point_2((50.0 * (double)rand()/(double)RAND_MAX) - 25.0, (50.0 * (double)rand()/(double)RAND_MAX) - 25.0));
+        }
     }
 
     Delaunay_triangulation_2 dt2;
@@ -99,12 +113,33 @@ void EnglishFields::makeVoronoiDiagram()
     float x = 0.0;
 
     //Changed from line below
+
+    std::vector< std::pair< QVector3D, QVector3D > > edgeList;
+
     for (auto i = vor.m_cropped_vd.begin(); i != vor.m_cropped_vd.end(); ++i)
     {
         std::cout << "Next Segment: " << (*i) << "\n";
 
-        m_linePoints.push_back(QVector3D((*i).source().x(), 0.0, (*i).source().y()));
-        m_linePoints.push_back(QVector3D((*i).target().x(), 0.0, (*i).target().y()));
+        QVector3D start((*i).source().x(), 0.0, (*i).source().y());
+        QVector3D end((*i).target().x(), 0.0, (*i).target().y());
+
+        subdivideEdge(start, end, edgeList);
+    }
+
+    QVector3D v1( - (m_width / 2.0),    0, - (m_width / 2.0));
+    QVector3D v2( - (m_width / 2.0),    0,   (m_width / 2.0));
+    QVector3D v3(   (m_width / 2.0),    0,   (m_width / 2.0));
+    QVector3D v4(   (m_width / 2.0),    0, - (m_width / 2.0));
+
+    subdivideEdge(v1, v2, edgeList);
+    subdivideEdge(v2, v3, edgeList);
+    subdivideEdge(v3, v4, edgeList);
+    subdivideEdge(v4, v1, edgeList);
+
+    for(int i = 0; i < edgeList.size(); ++i)
+    {
+        m_linePoints.push_back(edgeList[i].first);
+        m_linePoints.push_back(edgeList[i].second);
     }
 
     std::cout << "Finished" << std::endl;
@@ -190,7 +225,7 @@ void EnglishFields::subdivideEdge(QVector3D _start, QVector3D _end, std::vector<
 {
     float length = (_end - _start).length();
 
-    int resolution = 1;
+    int resolution = 2;
 
     QVector3D newStart = _start;
     QVector3D newEnd = ((_end - _start) / (int)length * resolution) + _start;

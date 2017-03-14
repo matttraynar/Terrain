@@ -50,7 +50,7 @@ void GLWidget::initializeGL()
 
 
     qInfo()<<"Generating terrain";
-    generateHeightMap(6, 7.0f);
+    generateHeightMap(6, 8.f);
 
     qInfo()<<"Preparing VAOs";
     prepareTerrain();
@@ -945,7 +945,7 @@ void GLWidget::prepareTrees()
         QVector3D faceNorm = m_norms[i] + m_norms[i + 1] + m_norms[i + 2] + m_norms[i + 3];
         faceNorm /= 4.0f;
 
-        if(faceNorm.y() > 0.5f)
+        if(faceNorm.y() > 0.8f)
         {
             QVector3D middle = (m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3]) / 4.0f;
 
@@ -969,7 +969,7 @@ void GLWidget::prepareTrees()
 
             if(addSite)
             {
-                if(m_sitePoints.size() > 3)
+                if(m_sitePoints.size() > 19)
                 {
                     m_sitePoints.push_back(middle);
 
