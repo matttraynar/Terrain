@@ -1,5 +1,7 @@
 #include "englishfields.h"
 
+#include <QDebug>
+
 EnglishFields::EnglishFields()
 {
     //Blank constructor, does nothing
@@ -114,7 +116,71 @@ void EnglishFields::makeVoronoiDiagram()
     }
 }
 
+//void EnglishFields::makeVoronoiDiagram2()
+//{
+//    //Create a container for 2D points
+//    std::vector<Point_2> points;
 
+//    //Check if we've been given any initial sites
+//    if(m_sites.size() != 0)
+//    {
+//        //If we have then add them to the vector
+//        for(uint i = 0; i < m_sites.size(); ++i)
+//        {
+//            points.push_back(Point_2(m_sites[i].x(), m_sites[i].y()));
+//        }
+//    }
+//    else
+//    {
+//        //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
+//        srand(time(NULL));
+
+//        for(uint i = 0; i < m_width; ++i)
+//        {
+//            points.push_back(Point_2((m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0), (m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0)));
+//        }
+//    }
+
+//    VD voronoi;
+//    voronoi.insert(points.begin(), points.end());
+
+//    //Faces
+////    for(auto i = voronoi.faces_begin(); i != voronoi.faces_end(); ++i)
+////    {
+////        Ccb_halfedge_circulator faceStart = i->ccb();
+////        Ccb_halfedge_circulator currentPoint = faceStart;
+
+////        do
+////        {
+////            if(currentPoint->has_source())
+////            {
+////                QVector3D start(((Halfedge_handle)currentPoint)->source()->point().x(), 0.0f, ((Halfedge_handle)currentPoint)->source()->point().y());
+////                m_linePoints.push_back(start);
+////            }
+////        }while(++currentPoint != faceStart);
+
+////    }
+
+//    //Edges
+//    for(auto i = voronoi.edges_begin(); i != voronoi.edges_end(); ++i)
+//    {
+//        if(i->has_source())
+//        {
+//            QVector3D start(((Halfedge_handle)i)->source()->point().x(), 0.0f, ((Halfedge_handle)i)->source()->point().y());
+//            m_linePoints.push_back(start);
+//        }
+//    }
+
+//    //Verts
+////    for(auto i = voronoi.vertices_begin(); i != voronoi.vertices_end(); ++i)
+////    {
+////        QVector3D start(i->point().x(), 0.0f, i->point().y());
+
+////        m_linePoints.push_back(start);
+////    }
+//    qInfo()<<"----------------";
+
+//}
 
 void EnglishFields::subdivideEdge(QVector3D _start, QVector3D _end, std::vector< std::pair< QVector3D, QVector3D > > & edgeList)
 {
