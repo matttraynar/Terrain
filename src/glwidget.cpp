@@ -50,7 +50,7 @@ void GLWidget::initializeGL()
 
 
     qInfo()<<"Generating terrain";
-    generateHeightMap(6, 8.f);
+    generateHeightMap(6, 7.f);
 
     qInfo()<<"Preparing VAOs";
     prepareTerrain();

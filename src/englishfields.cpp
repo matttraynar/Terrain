@@ -13,7 +13,7 @@ EnglishFields::EnglishFields(double _width)
     //Set up and create the voronoi diagram.
     m_width = _width;
 
-    makeVoronoiDiagram();
+    makeVoronoiDiagram2();
 }
 
 EnglishFields::EnglishFields(double _width,
@@ -114,6 +114,37 @@ void EnglishFields::makeVoronoiDiagram()
         m_linePoints.push_back(edgeList[i].first);
         m_linePoints.push_back(edgeList[i].second);
     }
+}
+
+void EnglishFields::makeVoronoiDiagram2()
+{
+    VD voronoi;
+
+    std::vector<Point_2> points;
+
+    for(uint i = 0; i < m_width; ++i)
+    {
+        points.push_back(Point_2((m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0), (m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0)));
+    }
+
+    voronoi.insert(points.begin(), points.end());
+
+    for(auto i = points.begin(); i != points.end(); ++i)
+    {
+        Locate_result lr = voronoi.locate(*i);
+
+        if(Face_handle* face = boost::get<Face_handle>(&lr))
+        {
+            Ccb_halfedge_circulator ec_start = (*face)->ccb();
+            Ccb_halfedge_circulator ec_current = ec_start;
+
+            do
+            {
+                //USE/STORE EDGE
+            } while(++ec_current != ec_start);
+        }
+    }
+
 }
 
 //void EnglishFields::makeVoronoiDiagram2()
