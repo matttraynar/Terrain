@@ -22,6 +22,10 @@ public:
 
     void print();
 
+    void adjustHeight(int index, float newHeight);
+
+    std::vector<QVector3D> getEdges() const { return m_edgeVerts; }
+
 private:
     std::vector<QVector3D> m_edgeVerts;
 

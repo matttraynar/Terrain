@@ -65,3 +65,8 @@ void VoronoiFace::print()
         qInfo()<<"Point "<<i<<": ("<<m_edgeVerts[i].x()<<", 0, "<<m_edgeVerts[i].z()<<") \n";
     }
 }
+
+void VoronoiFace::adjustHeight(int index, float newHeight)
+{
+    m_edgeVerts[index].setY(newHeight);
+}

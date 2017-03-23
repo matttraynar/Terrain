@@ -131,7 +131,6 @@ private:
     std::vector<QVector3D> m_treePositions;
 
     std::vector<QVector3D> m_sitePoints;
-    std::vector<QVector3D> lineVerts;
 
     std::vector<VoronoiFace> m_vRegions;
 

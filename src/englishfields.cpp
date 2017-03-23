@@ -66,9 +66,11 @@ void EnglishFields::makeVoronoiDiagram()
         //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
         srand(time(NULL));
 
-        points.reserve(m_width);
+        uint numPoints = 5;
 
-        for(uint i = 0; i < m_width; ++i)
+        points.reserve(numPoints);
+
+        for(uint i = 0; i < numPoints; ++i)
         {
             points.push_back(K::Point_2((m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0), (m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0)));
         }
@@ -93,6 +95,7 @@ void EnglishFields::makeVoronoiDiagram()
         HDS::Halfedge_const_handle currentEdge = face->halfedge();
         HDS::Halfedge_const_handle end = currentEdge;
 
+        //A container for storing edge vertices in
         std::vector<QVector3D> edgeVerts;
 
         do{
