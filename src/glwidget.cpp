@@ -63,40 +63,49 @@ void GLWidget::initializeGL()
 //    m_fieldGenerator = EnglishFields(width, m_sitePoints);
     m_fieldGenerator = EnglishFields(width);
 
-    lineVerts = m_fieldGenerator.getLineVerts();
+//    lineVerts = m_fieldGenerator.getLineVerts();
+
+    m_vRegions = m_fieldGenerator.getRegions();
+
+    for(uint i = 0; i < m_vRegions.size(); ++i)
+    {
+//        qInfo()<<"Face "<< i <<":\n";
+//        m_vRegions[i].print();
+        m_vRegions[i].passVBOToShader(m_pgm);
+    }
 
     qInfo()<<"Adjusting Voronoi heights";
-    for(int i = 0; i < lineVerts.size(); ++i)
-    {
-        float minDistance = 1000000;
-        float yValue = 0;
+//    for(int i = 0; i < lineVerts.size(); ++i)
+//    {
+//        float minDistance = 1000000;
+//        float yValue = 0;
 
-        for(int j = 0; j < m_verts.size(); ++j)
-        {
-            QVector3D flatVector1(m_verts[j].x(), 0, m_verts[j].z());
-            QVector3D flatVector2(lineVerts[i].x(), 0, lineVerts[i].z());
+//        for(int j = 0; j < m_verts.size(); ++j)
+//        {
+//            QVector3D flatVector1(m_verts[j].x(), 0, m_verts[j].z());
+//            QVector3D flatVector2(lineVerts[i].x(), 0, lineVerts[i].z());
 
-            if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
-            {
-                if((flatVector1 - flatVector2).length() < minDistance)
-                {
-                    minDistance = (flatVector1 - flatVector2).length();
-                    yValue = m_verts[j].y();
-                }
-            }
-        }
+//            if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+//            {
+//                if((flatVector1 - flatVector2).length() < minDistance)
+//                {
+//                    minDistance = (flatVector1 - flatVector2).length();
+//                    yValue = m_verts[j].y();
+//                }
+//            }
+//        }
 
-        if(yValue < m_waterLevel)
-        {
-            yValue = m_waterLevel - 0.25;
-        }
-        else
-        {
-            yValue += 0.3f;
-        }
+//        if(yValue < m_waterLevel)
+//        {
+//            yValue = m_waterLevel - 0.25;
+//        }
+//        else
+//        {
+//            yValue += 0.3f;
+//        }
 
-        lineVerts[i].setY(yValue);
-    }
+//        lineVerts[i].setY(yValue);
+//    }
 
 //    for(uint i = 0; i < m_sitePoints.size(); ++i)
 //    {
@@ -191,17 +200,24 @@ void GLWidget::paintGL()
 
     m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f ,1.0f, 1.0f));
 
+    loadMatricesToShader(QVector3D(0,0,0));
+
     if(vao_fields.isCreated())
     {
         vao_fields.bind();
 
-        loadMatricesToShader(QVector3D(0,0,0));
 
         (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         //    glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.m_linePoints.size() + m_sitePoints.size());
         glDrawArrays(GL_LINES, 0, (int)lineVerts.size());
 
         vao_fields.release();
+    }
+
+
+    for(uint i = 0; i < m_vRegions.size(); ++i)
+    {
+        m_vRegions[i].draw();
     }
 
     m_pgm.release();

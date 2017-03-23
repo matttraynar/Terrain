@@ -132,6 +132,9 @@ private:
 
     std::vector<QVector3D> m_sitePoints;
     std::vector<QVector3D> lineVerts;
+
+    std::vector<VoronoiFace> m_vRegions;
+
      //-------------------------------------------------------
     //Camera movement members
     QMatrix4x4 m_model;
