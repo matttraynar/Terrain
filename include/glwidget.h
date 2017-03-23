@@ -160,6 +160,8 @@ private:
      //-------------------------------------------------------
 
     bool m_wireframe;
+
+    int index;
 };
 
 #endif // GLWIDGET_H

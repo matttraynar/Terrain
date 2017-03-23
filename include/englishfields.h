@@ -102,7 +102,6 @@ public:
     void operator = (EnglishFields &toCopy);
 
     void makeVoronoiDiagram();
-    void makeVoronoiDiagram2();
 
     void subdivideEdge(QVector3D _start, QVector3D _end, std::vector< std::pair< QVector3D, QVector3D > > & edgeLis);
 

@@ -13,7 +13,7 @@ EnglishFields::EnglishFields(double _width)
     //Set up and create the voronoi diagram.
     m_width = _width;
 
-    makeVoronoiDiagram2();
+    makeVoronoiDiagram();
 
 }
 
@@ -25,7 +25,7 @@ EnglishFields::EnglishFields(double _width,
     m_width = _width;
     m_sites = _sites;
 
-    makeVoronoiDiagram2();
+    makeVoronoiDiagram();
 }
 
 EnglishFields::~EnglishFields()
@@ -44,124 +44,84 @@ void EnglishFields::operator =(EnglishFields &toCopy)
 
 void EnglishFields::makeVoronoiDiagram()
 {
-//    //Create a container for 2D points
-//    std::vector<Point_2> points;
+    //Using slightly modified code from Sebatien Loriot
+    //             github.com/sloriot/cgal-voronoi-cropping
+    //Comment added by me for clarity
 
-//    //Check if we've been given any initial sites
-//    if(m_sites.size() != 0)
-//    {
-//        //If we have then add them to the vector
-//        for(uint i = 0; i < m_sites.size(); ++i)
-//        {
-//            points.push_back(Point_2(m_sites[i].x(), m_sites[i].y()));
-//        }
-//    }
-//    else
-//    {
-//        //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
-//        srand(time(NULL));
-
-//        for(uint i = 0; i < m_width; ++i)
-//        {
-//            points.push_back(Point_2((m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0), (m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0)));
-//        }
-//    }
-
-//    //Create a new triangulation
-//    Delaunay_triangulation_2 dt2;
-
-//    //Insert points into the triangulation
-//    dt2.insert(points.begin(),points.end());
-
-//    //Construct a rectangle to use as a boundary
-//    Iso_rectangle_2 bbox(-m_width / 2.0, -m_width / 2.0, m_width / 2.0, m_width / 2.0);
-
-//    //Create a new cropped voronoi
-//    Cropped_voronoi_from_delaunay vor(bbox);
-
-//    //extract the cropped Voronoi diagram
-//    dt2.draw_dual(vor);
-
-//    //Create a container for storing edges in the form std::pair(start, end)
-//    std::vector< std::pair< QVector3D, QVector3D > > edgeList;
-
-//    //Iterate throught the segments of the cropped voronoi diagram
-//    for (auto i = vor.m_cropped_vd.begin(); i != vor.m_cropped_vd.end(); ++i)
-//    {
-//        //Create variables for the source and target (end and start)
-//        QVector3D start((*i).source().x(), 0.0, (*i).source().y());
-//        QVector3D end((*i).target().x(), 0.0, (*i).target().y());
-
-//        //Subdivide between source and target so the edge will
-//        //fit the landscape better later. This step also adds the edges
-//        //to the given container
-//        subdivideEdge(start, end, edgeList);
-//    }
-
-//    //Add in the boundary edges
-//    QVector3D v1( - (m_width / 2.0),    0, - (m_width / 2.0));
-//    QVector3D v2( - (m_width / 2.0),    0,   (m_width / 2.0));
-//    QVector3D v3(   (m_width / 2.0),    0,   (m_width / 2.0));
-//    QVector3D v4(   (m_width / 2.0),    0, - (m_width / 2.0));
-
-//    //Subdivide them
-//    subdivideEdge(v1, v2, edgeList);
-//    subdivideEdge(v2, v3, edgeList);
-//    subdivideEdge(v3, v4, edgeList);
-//    subdivideEdge(v4, v1, edgeList);
-
-//    //Finally convert the edges into points for drawing
-//    for(int i = 0; i < edgeList.size(); ++i)
-//    {
-//        m_linePoints.push_back(edgeList[i].first);
-//        m_linePoints.push_back(edgeList[i].second);
-//    }
-}
-
-void EnglishFields::makeVoronoiDiagram2()
-{
-    int n = 6;
-
-    HDS hds;
-
+    //A container to keep the initial sites in
     std::vector< K::Point_2 > points;
 
-    points.reserve(n);
-
-    srand(123);
-
-    for(int i = 0; i < n; ++i)
+    if(m_sites.size() != 0)
     {
-        points.push_back(K::Point_2((m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0), (m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0)));
+        //We know the number of points so set the container size
+        points.reserve(m_sites.size());
+
+        //If we have then add them to the vector
+        for(uint i = 0; i < m_sites.size(); ++i)
+        {
+            points.push_back(K::Point_2(m_sites[i].x(), m_sites[i].y()));
+        }
+    }
+    else
+    {
+        //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
+        srand(time(NULL));
+
+        points.reserve(m_width);
+
+        for(uint i = 0; i < m_width; ++i)
+        {
+            points.push_back(K::Point_2((m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0), (m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0)));
+        }
     }
 
+    //A new half-edge data structure to store the Voronoi
+    //edges in
+    HDS hds;
+
+    //Create a boundary rectangle we'll intersect the diagram with
     K::Iso_rectangle_2 bbox(-(m_width / 2.0), -(m_width / 2.0), (m_width / 2.0), (m_width / 2.0));
 
+    //Create the cropped voronoi (uses Lorien's code)
     create_hds_for_cropped_voronoi_diagram<K, Exact_kernel>(points.begin(), points.end(), bbox, hds);
 
+    //Now we need to process the faces
     for(auto face = hds.faces_begin(); face != hds.faces_end(); ++face)
     {
+        //Get two edge handles, one we'll use to iterate and one which stores
+        //the first edge of the face (this way we'll be able to check when the
+        //cycle around the face has completed
         HDS::Halfedge_const_handle currentEdge = face->halfedge();
         HDS::Halfedge_const_handle end = currentEdge;
 
         do{
+            //Do some assertions before we start using the data
             CGAL_assertion(currentEdge != HDS::Halfedge_const_handle() );
             CGAL_assertion(currentEdge->face() != HDS::Face_handle() );
             CGAL_assertion(currentEdge->face() == face);
 
-            m_linePoints.push_back(QVector3D(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y()));
+            //Add the edge to our container
+            QVector3D newPoint(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y());
+            m_linePoints.push_back(newPoint);
 
+            //Move on to the next edge
             currentEdge = currentEdge->next();
+
+            //And add a new point (edges have two verts)
+            newPoint = QVector3D(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y());
+            m_linePoints.push_back(newPoint);
+
         }while(currentEdge != end);
 
+        //Finally duplicate the last edge vertex
         m_linePoints.push_back(QVector3D(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y()));
 
+        //Add a new voronoi region and store it
         m_regions.push_back(VoronoiFace(m_linePoints));
 
+        //Clear the points vertex for the next loop
         m_linePoints.clear();
     }
-
-    qInfo()<<m_regions.size();
 }
 
 void EnglishFields::subdivideEdge(QVector3D _start, QVector3D _end, std::vector< std::pair< QVector3D, QVector3D > > & edgeList)

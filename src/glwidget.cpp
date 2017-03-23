@@ -65,6 +65,7 @@ void GLWidget::initializeGL()
 
 //    lineVerts = m_fieldGenerator.getLineVerts();
 
+    qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
 
     for(uint i = 0; i < m_vRegions.size(); ++i)
@@ -73,6 +74,8 @@ void GLWidget::initializeGL()
 //        m_vRegions[i].print();
         m_vRegions[i].passVBOToShader(m_pgm);
     }
+
+    index = 0;
 
     qInfo()<<"Adjusting Voronoi heights";
 //    for(int i = 0; i < lineVerts.size(); ++i)
@@ -208,12 +211,10 @@ void GLWidget::paintGL()
 
 
         (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        //    glDrawArrays(GL_LINES, 0, (int)m_fieldGenerator.m_linePoints.size() + m_sitePoints.size());
         glDrawArrays(GL_LINES, 0, (int)lineVerts.size());
 
         vao_fields.release();
     }
-
 
     for(uint i = 0; i < m_vRegions.size(); ++i)
     {
@@ -221,8 +222,6 @@ void GLWidget::paintGL()
     }
 
     m_pgm.release();
-
-
 }
 
 void GLWidget::timerEvent(QTimerEvent *e)
@@ -267,6 +266,14 @@ void GLWidget::wheelEvent(QWheelEvent *e)
 
     //Add the steps to a member variable used in paintGL
     m_mouseDelta += numSteps;
+
+
+    index++;
+
+    if(index > m_vRegions.size() - 1)
+    {
+        index = 0;
+    }
 
     update();
 }
