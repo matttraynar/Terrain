@@ -3,6 +3,7 @@
 VoronoiFace::VoronoiFace(std::vector<QVector3D> _edgeVerts)
 {
     m_edgeVerts = _edgeVerts;
+    m_midPointIsCalculated = false;
 
     m_vao.create();
     m_vao.bind();
@@ -23,11 +24,24 @@ VoronoiFace::~VoronoiFace()
 VoronoiFace::VoronoiFace(const VoronoiFace &_toCopy)
 {
     m_edgeVerts = _toCopy.m_edgeVerts;
+    m_midPointIsCalculated = _toCopy.m_midPointIsCalculated;
+
+    if(!m_midPointIsCalculated)
+    {
+        m_midPoint = _toCopy.m_midPoint;
+    }
 }
 
 void VoronoiFace::operator =(const VoronoiFace &_toCopy)
 {
     m_edgeVerts = _toCopy.m_edgeVerts;
+
+    m_midPointIsCalculated = _toCopy.m_midPointIsCalculated;
+
+    if(!m_midPointIsCalculated)
+    {
+        m_midPoint = _toCopy.m_midPoint;
+    }
 }
 
 void VoronoiFace::passVBOToShader(QOpenGLShaderProgram &_pgm)
@@ -69,4 +83,39 @@ void VoronoiFace::print()
 void VoronoiFace::adjustHeight(int index, float newHeight)
 {
     m_edgeVerts[index].setY(newHeight);
+}
+
+QVector3D VoronoiFace::getMiddle()
+{
+    if(!m_midPointIsCalculated)
+    {
+        for(uint i = 0; i < m_edgeVerts.size(); ++i)
+        {
+            m_midPoint += m_edgeVerts[i];
+        }
+
+        m_midPoint /= m_edgeVerts.size();
+
+        m_midPointIsCalculated = true;
+    }
+
+    return m_midPoint;
+}
+
+QVector3D VoronoiFace::getWeightedMiddle(int vert, float weight)
+{
+    int actualIndex = vert * 2;
+
+    if(actualIndex == m_edgeVerts.size() * 2)
+    {
+        actualIndex = 0;
+    }
+
+    QVector3D wMiddle = getMiddle();
+
+    QVector3D wVector = m_edgeVerts[actualIndex] - wMiddle;
+
+    wMiddle += wVector * weight;
+
+    return wMiddle;
 }

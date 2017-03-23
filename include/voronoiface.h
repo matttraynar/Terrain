@@ -25,9 +25,17 @@ public:
     void adjustHeight(int index, float newHeight);
 
     std::vector<QVector3D> getEdges() const { return m_edgeVerts; }
+    QVector3D getVertex(int index) const { return m_edgeVerts[index]; }
+    QVector3D getMiddle();
+    QVector3D getWeightedMiddle(int vert, float weight);
+
+    int getNumEdges() const  { return m_edgeVerts.size(); }
+    float getNumVerts() const { return m_edgeVerts.size() / 2.0f; }
 
 private:
     std::vector<QVector3D> m_edgeVerts;
+    QVector3D m_midPoint;
+    bool m_midPointIsCalculated;
 
     QOpenGLVertexArrayObject m_vao;
     QOpenGLBuffer m_verts;

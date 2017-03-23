@@ -65,38 +65,43 @@ void GLWidget::initializeGL()
     qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
 
+    bool adjustHeights = false;
+
     for(uint i = 0; i < m_vRegions.size(); ++i)
     {
-        for(int j = 0; j < m_vRegions[i].getEdges().size(); ++j)
+        if(adjustHeights)
         {
-            float minDistance = 1000000;
-            float yValue = 0;
-
-            for(int k = 0; k < m_verts.size(); ++k)
+            for(int j = 0; j < m_vRegions[i].getEdges().size(); ++j)
             {
-                QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
-                QVector3D flatVector2(m_vRegions[i].getEdges()[j].x(), 0, m_vRegions[i].getEdges()[j].z());
+                float minDistance = 1000000;
+                float yValue = 0;
 
-                if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+                for(int k = 0; k < m_verts.size(); ++k)
                 {
-                    if((flatVector1 - flatVector2).length() < minDistance)
+                    QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
+                    QVector3D flatVector2(m_vRegions[i].getEdges()[j].x(), 0, m_vRegions[i].getEdges()[j].z());
+
+                    if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
                     {
-                        minDistance = (flatVector1 - flatVector2).length();
-                        yValue = m_verts[k].y();
+                        if((flatVector1 - flatVector2).length() < minDistance)
+                        {
+                            minDistance = (flatVector1 - flatVector2).length();
+                            yValue = m_verts[k].y();
+                        }
                     }
                 }
-            }
 
-            if(yValue < m_waterLevel)
-            {
-                yValue = m_waterLevel - 0.25;
-            }
-            else
-            {
-                yValue += 0.3f;
-            }
+                if(yValue < m_waterLevel)
+                {
+                    yValue = m_waterLevel - 0.25;
+                }
+                else
+                {
+                    yValue += 0.3f;
+                }
 
-            m_vRegions[i].adjustHeight(j, yValue);
+                m_vRegions[i].adjustHeight(j, yValue);
+            }
         }
 
         m_vRegions[i].passVBOToShader(m_pgm);

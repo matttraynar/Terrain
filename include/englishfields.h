@@ -44,6 +44,8 @@ public:
 
 
 private:
+    void subdivideRegions();
+
     double m_width;
 
     std::vector<QVector3D> m_sites;

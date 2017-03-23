@@ -15,6 +15,7 @@ EnglishFields::EnglishFields(double _width)
 
     makeVoronoiDiagram();
 
+    subdivideRegions();
 }
 
 EnglishFields::EnglishFields(double _width,
@@ -64,7 +65,7 @@ void EnglishFields::makeVoronoiDiagram()
     else
     {
         //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
-        srand(time(NULL));
+        srand(123);
 
         uint numPoints = 5;
 
@@ -117,9 +118,6 @@ void EnglishFields::makeVoronoiDiagram()
 
         }while(currentEdge != end);
 
-        //Finally duplicate the last edge vertex
-        edgeVerts.push_back(QVector3D(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y()));
-
         //Add a new voronoi region and store it
         m_regions.push_back(VoronoiFace(edgeVerts));
     }
@@ -159,4 +157,58 @@ void EnglishFields::subdivideEdge(QVector3D _start, QVector3D _end, std::vector<
 
     //Finally add on the last piece of the edge
     edgeList.push_back(std::make_pair(newStart, _end));
+}
+
+void EnglishFields::subdivideRegions()
+{
+    //Container for storing our edited faces in
+    std::vector<VoronoiFace> newFaces;
+
+    for(uint i = 0; i < m_regions.size(); ++i)
+    {
+        //Randomly generate a vertex index and weight
+        int vert = m_regions[i].getNumVerts() * (float)rand() / (float)RAND_MAX;
+        float weight = 7.5f * (float)rand() / (float)RAND_MAX;
+
+        //Adjust the weight to lie within the range (-3.75f, 3.75f)
+        weight -= 3.75f;
+
+        //And then change it to a percentage
+        weight /= 10.0f;
+
+        //Now get the weighted middle of the current voronoi face
+        QVector3D regionMiddle = m_regions[i].getWeightedMiddle(vert, weight);
+
+        for(int j = 0; j < m_regions[i].getNumVerts() * 2; j += 2)
+        {
+            //Iterate through the current face's verts
+            std::vector<QVector3D> edgeList;
+
+            //Create the index separately so we can
+            //check to ensure it is within the range
+            int v2 = j + 2;
+
+            if(v2 == m_regions[i].getNumVerts() * 2)
+            {
+                v2 = 0;
+            }
+
+            //Now create a triangle
+            edgeList.push_back(m_regions[i].getVertex(j));
+            edgeList.push_back(m_regions[i].getVertex(v2));
+
+            edgeList.push_back(m_regions[i].getVertex(v2));
+            edgeList.push_back(regionMiddle);
+
+            edgeList.push_back(regionMiddle);
+            edgeList.push_back(m_regions[i].getVertex(j));
+
+            //Create a new voronoi face with these edges and
+            //add it to our container
+            newFaces.push_back(VoronoiFace(edgeList));
+        }
+    }
+
+    //Finally update the region container
+    m_regions = newFaces;
 }
