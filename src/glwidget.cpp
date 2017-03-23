@@ -63,15 +63,11 @@ void GLWidget::initializeGL()
 //    m_fieldGenerator = EnglishFields(width, m_sitePoints);
     m_fieldGenerator = EnglishFields(width);
 
-//    lineVerts = m_fieldGenerator.getLineVerts();
-
     qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
 
     for(uint i = 0; i < m_vRegions.size(); ++i)
     {
-//        qInfo()<<"Face "<< i <<":\n";
-//        m_vRegions[i].print();
         m_vRegions[i].passVBOToShader(m_pgm);
     }
 

@@ -37,7 +37,6 @@ void EnglishFields::operator =(EnglishFields &toCopy)
 {
     //Copy the data
     m_width =        toCopy.m_width;
-    m_linePoints = toCopy.m_linePoints;
     m_sites =        toCopy.m_sites;
     m_regions =     toCopy.m_regions;
 }
@@ -94,6 +93,8 @@ void EnglishFields::makeVoronoiDiagram()
         HDS::Halfedge_const_handle currentEdge = face->halfedge();
         HDS::Halfedge_const_handle end = currentEdge;
 
+        std::vector<QVector3D> edgeVerts;
+
         do{
             //Do some assertions before we start using the data
             CGAL_assertion(currentEdge != HDS::Halfedge_const_handle() );
@@ -102,25 +103,22 @@ void EnglishFields::makeVoronoiDiagram()
 
             //Add the edge to our container
             QVector3D newPoint(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y());
-            m_linePoints.push_back(newPoint);
+            edgeVerts.push_back(newPoint);
 
             //Move on to the next edge
             currentEdge = currentEdge->next();
 
             //And add a new point (edges have two verts)
             newPoint = QVector3D(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y());
-            m_linePoints.push_back(newPoint);
+            edgeVerts.push_back(newPoint);
 
         }while(currentEdge != end);
 
         //Finally duplicate the last edge vertex
-        m_linePoints.push_back(QVector3D(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y()));
+        edgeVerts.push_back(QVector3D(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y()));
 
         //Add a new voronoi region and store it
-        m_regions.push_back(VoronoiFace(m_linePoints));
-
-        //Clear the points vertex for the next loop
-        m_linePoints.clear();
+        m_regions.push_back(VoronoiFace(edgeVerts));
     }
 }
 
