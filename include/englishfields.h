@@ -46,6 +46,8 @@ public:
 private:
     void subdivideRegions();
 
+    int clampIndex(int index, int numVertices);
+
     double m_width;
 
     std::vector<QVector3D> m_sites;

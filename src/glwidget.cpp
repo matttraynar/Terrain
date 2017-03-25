@@ -65,7 +65,11 @@ void GLWidget::initializeGL()
     qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
 
-    bool adjustHeights = false;
+    bool adjustHeights = true;
+    if(adjustHeights)
+    {
+        qInfo()<<"Adjusting heights";
+    }
 
     for(uint i = 0; i < m_vRegions.size(); ++i)
     {
@@ -106,48 +110,6 @@ void GLWidget::initializeGL()
 
         m_vRegions[i].passVBOToShader(m_pgm);
     }
-
-    index = 0;
-
-    qInfo()<<"Adjusting Voronoi heights";
-
-    //    for(int i = 0; i < lineVerts.size(); ++i)
-//    {
-//        float minDistance = 1000000;
-//        float yValue = 0;
-
-//        for(int j = 0; j < m_verts.size(); ++j)
-//        {
-//            QVector3D flatVector1(m_verts[j].x(), 0, m_verts[j].z());
-//            QVector3D flatVector2(lineVerts[i].x(), 0, lineVerts[i].z());
-
-//            if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
-//            {
-//                if((flatVector1 - flatVector2).length() < minDistance)
-//                {
-//                    minDistance = (flatVector1 - flatVector2).length();
-//                    yValue = m_verts[j].y();
-//                }
-//            }
-//        }
-
-//        if(yValue < m_waterLevel)
-//        {
-//            yValue = m_waterLevel - 0.25;
-//        }
-//        else
-//        {
-//            yValue += 0.3f;
-//        }
-
-//        lineVerts[i].setY(yValue);
-//    }
-
-//    for(uint i = 0; i < m_sitePoints.size(); ++i)
-//    {
-//        lineVerts.push_back(QVector3D(0,m_waterLevel + 25,0));
-//        lineVerts.push_back(m_sitePoints[i]);
-//    }
 
     m_pgm.bind();
 

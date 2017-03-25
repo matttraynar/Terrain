@@ -65,9 +65,10 @@ void EnglishFields::makeVoronoiDiagram()
     else
     {
         //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
-        srand(123);
+        srand(time(NULL));
+//        srand(451);
 
-        uint numPoints = 5;
+        uint numPoints = 20;
 
         points.reserve(numPoints);
 
@@ -170,8 +171,8 @@ void EnglishFields::subdivideRegions()
 
         if(m_regions[i].getNumVerts() > 3)
         {
-//            if(m_regions[i].getNumVerts() == 4)
-//            {
+            if((int)m_regions[i].getNumVerts() % 2 == 0)
+            {
                 //Randomly generate a vertex index and weight
                 int vert = m_regions[i].getNumVerts() * (float)rand() / (float)RAND_MAX;
                 float weight = 7.5f * (float)rand() / (float)RAND_MAX;
@@ -182,213 +183,236 @@ void EnglishFields::subdivideRegions()
                 //And then change it to a percentage
                 weight /= 10.0f;
 
-                int vertToSkip = 4 * (float)rand()/(float)RAND_MAX;
-
-                qInfo()<<vertToSkip;
-
                 //Now get the weighted middle of the current voronoi face
                 QVector3D regionMiddle = m_regions[i].getWeightedMiddle(vert, weight);
 
-                for(int j = 0; j < m_regions[i].getNumVerts() * 2; j += 2)
+                for(int j = 0; j < m_regions[i].getNumVerts() * 2; j += 4)
                 {
-                    if(vertToSkip == (m_regions[i].getNumVerts() - 1))
-                    {
-                        if(j == (vertToSkip * 2))
-                        {
-                            //Iterate through the current face's verts
-                            std::vector<QVector3D> edgeList;
+                        //Iterate through the current face's verts
+                        std::vector<QVector3D> edgeList;
 
-                            //Create the index separately so we can
-                            //check to ensure it is within the range
-                            int v2 = j + 2;
-                            int v3 = j + 4;
+                        //Create the index separately so we can
+                        //check to ensure it is within the range
+                        int v2 = clampIndex(j + 2, m_regions[i].getNumVerts());
+                        int v3 = clampIndex(j + 4, m_regions[i].getNumVerts());
 
-                            if(v2 == m_regions[i].getNumVerts() * 2)
-                            {
-                                v2 = 0;
-                            }
+                        //Now create a triangle
+                        edgeList.push_back(m_regions[i].getVertex(j));
+                        edgeList.push_back(m_regions[i].getVertex(v2));
 
-                            if(v3 == m_regions[i].getNumVerts() * 2)
-                            {
-                                v3 = 0;
-                            }
-                            else if(v3 == m_regions[i].getNumVerts() * 2 + 2)
-                            {
-                                v3 = 2;
-                            }
+                        edgeList.push_back(m_regions[i].getVertex(v2));
+                        edgeList.push_back(m_regions[i].getVertex(v3));
 
-                            //Now create a triangle
-                            edgeList.push_back(m_regions[i].getVertex(j));
-                            edgeList.push_back(m_regions[i].getVertex(v2));
+                        edgeList.push_back(m_regions[i].getVertex(v3));
+                        edgeList.push_back(regionMiddle);
 
-                            edgeList.push_back(m_regions[i].getVertex(v2));
-                            edgeList.push_back(m_regions[i].getVertex(v3));
+                        edgeList.push_back(regionMiddle);
+                        edgeList.push_back(m_regions[i].getVertex(j));
 
-                            edgeList.push_back(m_regions[i].getVertex(v3));
-                            edgeList.push_back(regionMiddle);
-
-                            edgeList.push_back(regionMiddle);
-                            edgeList.push_back(m_regions[i].getVertex(j));
-
-                            //Create a new voronoi face with these edges and
-                            //add it to our container
-                            newFaces.push_back(VoronoiFace(edgeList));
-                        }
-                        else if(j == 0)
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            //Iterate through the current face's verts
-                            std::vector<QVector3D> edgeList;
-
-                            //Create the index separately so we can
-                            //check to ensure it is within the range
-                            int v2 = j + 2;
-
-                            if(v2 == m_regions[i].getNumVerts() * 2)
-                            {
-                                v2 = 0;
-                            }
-
-                            //Now create a triangle
-                            edgeList.push_back(m_regions[i].getVertex(j));
-                            edgeList.push_back(m_regions[i].getVertex(v2));
-
-                            edgeList.push_back(m_regions[i].getVertex(v2));
-                            edgeList.push_back(regionMiddle);
-
-                            edgeList.push_back(regionMiddle);
-                            edgeList.push_back(m_regions[i].getVertex(j));
-
-                            //Create a new voronoi face with these edges and
-                            //add it to our container
-                            newFaces.push_back(VoronoiFace(edgeList));
-                        }
-                    }
-                    else
-                    {
-                        if(j == (vertToSkip * 2))
-                        {
-                            //Iterate through the current face's verts
-                            std::vector<QVector3D> edgeList;
-
-                            //Create the index separately so we can
-                            //check to ensure it is within the range
-                            int v2 = j + 2;
-                            int v3 = j + 4;
-
-                            if(v2 == m_regions[i].getNumVerts() * 2)
-                            {
-                                v2 = 0;
-                            }
-
-                            if(v3 == m_regions[i].getNumVerts() * 2)
-                            {
-                                v3 = 0;
-                            }
-                            else if(v3 == m_regions[i].getNumVerts() * 2 + 2)
-                            {
-                                v3 = 2;
-                            }
-
-                            //Now create a triangle
-                            edgeList.push_back(m_regions[i].getVertex(j));
-                            edgeList.push_back(m_regions[i].getVertex(v2));
-
-                            edgeList.push_back(m_regions[i].getVertex(v2));
-                            edgeList.push_back(m_regions[i].getVertex(v3));
-
-                            edgeList.push_back(m_regions[i].getVertex(v3));
-                            edgeList.push_back(regionMiddle);
-
-                            edgeList.push_back(regionMiddle);
-                            edgeList.push_back(m_regions[i].getVertex(j));
-
-                            //Create a new voronoi face with these edges and
-                            //add it to our container
-                            newFaces.push_back(VoronoiFace(edgeList));
-
-                            j+=2;
-                        }
-                        else
-                        {
-                            //Iterate through the current face's verts
-                            std::vector<QVector3D> edgeList;
-
-                            //Create the index separately so we can
-                            //check to ensure it is within the range
-                            int v2 = j + 2;
-
-                            if(v2 == m_regions[i].getNumVerts() * 2)
-                            {
-                                v2 = 0;
-                            }
-
-                            //Now create a triangle
-                            edgeList.push_back(m_regions[i].getVertex(j));
-                            edgeList.push_back(m_regions[i].getVertex(v2));
-
-                            edgeList.push_back(m_regions[i].getVertex(v2));
-                            edgeList.push_back(regionMiddle);
-
-                            edgeList.push_back(regionMiddle);
-                            edgeList.push_back(m_regions[i].getVertex(j));
-
-                            //Create a new voronoi face with these edges and
-                            //add it to our container
-                            newFaces.push_back(VoronoiFace(edgeList));
-                        }
-                    }
+                        //Create a new voronoi face with these edges and
+                        //add it to our container
+                        newFaces.push_back(VoronoiFace(edgeList));
                 }
-//            }
-//            else
-//            {
-//                //Randomly generate a vertex index and weight
-//                int vert = m_regions[i].getNumVerts() * (float)rand() / (float)RAND_MAX;
-//                float weight = 7.5f * (float)rand() / (float)RAND_MAX;
+            }
+            else
+            {
+                int subdivideSwitch = 100 * (float)rand() / (float)RAND_MAX;
 
-//                //Adjust the weight to lie within the range (-3.75f, 3.75f)
-//                weight -= 3.75f;
+                if(subdivideSwitch > 49)
+                {
+                    newFaces.push_back(m_regions[i]);
+                }
+                else
+                {
+                    //Randomly generate a vertex index and weight
+                    int vert = m_regions[i].getNumVerts() * (float)rand() / (float)RAND_MAX;
+                    float weight = 7.5f * (float)rand() / (float)RAND_MAX;
 
-//                //And then change it to a percentage
-//                weight /= 10.0f;
+                    //Adjust the weight to lie within the range (-3.75f, 3.75f)
+                    weight -= 3.75f;
 
-//                int vertToSkip = 4 * (float)rand()/(float)RAND_MAX;
+                    //And then change it to a percentage
+                    weight /= 10.0f;
 
-//                //Now get the weighted middle of the current voronoi face
-//                QVector3D regionMiddle = m_regions[i].getWeightedMiddle(vert, weight);
+                    int vertToSkip = m_regions[i].getNumVerts() * (float)rand()/(float)RAND_MAX;
 
-//                for(int j = 0; j < m_regions[i].getNumVerts() * 2; j += 2)
-//                {
-//                    //Iterate through the current face's verts
-//                    std::vector<QVector3D> edgeList;
+                    //Now get the weighted middle of the current voronoi face
+                    QVector3D regionMiddle = m_regions[i].getWeightedMiddle(vert, weight);
 
-//                    //Create the index separately so we can
-//                    //check to ensure it is within the range
-//                    int v2 = j + 2;
+                    //Iterate through the current face's verts
+                    std::vector<QVector3D> evenSidedEdgeList;
+                    int middleVertID = 0;
 
-//                    if(v2 == m_regions[i].getNumVerts() * 2)
-//                    {
-//                        v2 = 0;
-//                    }
+                   for(int j = 0; j < m_regions[i].getNumVerts() * 2; j += 2)
+                   {
 
-//                    //Now create a triangle
-//                    edgeList.push_back(m_regions[i].getVertex(j));
-//                    edgeList.push_back(m_regions[i].getVertex(v2));
+                       if(j == (vertToSkip * 2) || j == (vertToSkip * 2) - 1 ||
+                               (vertToSkip == 0 && (j == vertToSkip || j == (m_regions[i].getNumVerts() * 2) - 1)))
+                       {
+                            //Iterate through the current face's verts
+                            std::vector<QVector3D> edgeList;
 
-//                    edgeList.push_back(m_regions[i].getVertex(v2));
-//                    edgeList.push_back(regionMiddle);
+                            //Create the index separately so we can
+                            //check to ensure it is within the range
+                            int v2 = j + 2;
 
-//                    edgeList.push_back(regionMiddle);
-//                    edgeList.push_back(m_regions[i].getVertex(j));
+                            if(v2 == m_regions[i].getNumVerts() * 2)
+                            {
+                               v2 = 0;
+                            }
 
-//                    //Create a new voronoi face with these edges and
-//                    //add it to our container
-//                    newFaces.push_back(VoronoiFace(edgeList));
-//                }
-//            }
+                            //Now create a triangle
+                            edgeList.push_back(m_regions[i].getVertex(j));
+                            edgeList.push_back(m_regions[i].getVertex(v2));
+
+                            edgeList.push_back(m_regions[i].getVertex(v2));
+                            edgeList.push_back(regionMiddle);
+
+                            edgeList.push_back(regionMiddle);
+                            edgeList.push_back(m_regions[i].getVertex(j));
+
+                            evenSidedEdgeList.push_back(m_regions[i].getVertex(j));
+                            evenSidedEdgeList.push_back(regionMiddle);
+
+                            middleVertID = evenSidedEdgeList.size();
+
+                            evenSidedEdgeList.push_back(regionMiddle);
+                            evenSidedEdgeList.push_back(m_regions[i].getVertex(v2));
+
+                            //Create a new voronoi face with these edges and
+                            //add it to our container
+                            newFaces.push_back(VoronoiFace(edgeList));
+                       }
+                       else
+                       {
+                           int v2 = j + 2;
+
+                           if(v2 == m_regions[i].getNumVerts() * 2)
+                           {
+                              v2 = 0;
+                           }
+
+                           evenSidedEdgeList.push_back(m_regions[i].getVertex(j));
+                           evenSidedEdgeList.push_back(m_regions[i].getVertex(v2));
+                       }
+                   }
+
+                   VoronoiFace evenSidedFace(evenSidedEdgeList);
+
+                   //Randomly generate a vertex index and weight
+                   vert = evenSidedFace.getNumVerts() * (float)rand() / (float)RAND_MAX;
+                   weight = 7.5f * (float)rand() / (float)RAND_MAX;
+
+                   //Adjust the weight to lie within the range (-3.75f, 3.75f)
+                   weight -= 3.75f;
+
+                   //And then change it to a percentage
+                   weight /= 10.0f;
+
+                   //Now get the weighted middle of the current voronoi face
+                   regionMiddle = evenSidedFace.getWeightedMiddle(vert, weight);
+
+                   for(int j = middleVertID; j < middleVertID + (evenSidedFace.getNumVerts() * 2); j += 4)
+                   {
+                       if(j == middleVertID)
+                       {
+                           //Iterate through the current face's verts
+                           std::vector<QVector3D> edgeList;
+
+                           //Create the index separately so we can
+                           //check to ensure it is within the range
+                           int j2 = clampIndex(j,       evenSidedFace.getNumVerts());
+                           int v2 = clampIndex(j + 2, evenSidedFace.getNumVerts());
+                           int v3 = clampIndex(j + 4, evenSidedFace.getNumVerts());
+                           int v4 = clampIndex(j + 6, evenSidedFace.getNumVerts());
+
+                           //Now create a triangle
+                           edgeList.push_back(evenSidedFace.getVertex(j2));
+                           edgeList.push_back(evenSidedFace.getVertex(v2));
+
+                           edgeList.push_back(evenSidedFace.getVertex(v2));
+                           edgeList.push_back(evenSidedFace.getVertex(v3));
+
+                           edgeList.push_back(evenSidedFace.getVertex(v3));
+                           edgeList.push_back(evenSidedFace.getVertex(v4));
+
+                           edgeList.push_back(evenSidedFace.getVertex(v4));
+                           edgeList.push_back(evenSidedFace.getVertex(middleVertID));
+
+                           edgeList.push_back(evenSidedFace.getVertex(middleVertID));
+                           edgeList.push_back(evenSidedFace.getVertex(j2));
+
+                           //Create a new voronoi face with these edges and
+                           //add it to our container
+                           newFaces.push_back(VoronoiFace(edgeList));
+
+                           j+= 2;
+                       }
+                       else if(j == middleVertID + (evenSidedFace.getNumVerts() * 2) - 6)
+                       {
+                           //Iterate through the current face's verts
+                           std::vector<QVector3D> edgeList;
+
+                           //Create the index separately so we can
+                           //check to ensure it is within the range
+                           int j2 = clampIndex(j,       evenSidedFace.getNumVerts());
+                           int v2 = clampIndex(j + 2, evenSidedFace.getNumVerts());
+                           int v3 = clampIndex(j + 4, evenSidedFace.getNumVerts());
+                           int v4 = clampIndex(j + 6, evenSidedFace.getNumVerts());
+
+                           //Now create a triangle
+                           edgeList.push_back(evenSidedFace.getVertex(j2));
+                           edgeList.push_back(evenSidedFace.getVertex(v2));
+
+                           edgeList.push_back(evenSidedFace.getVertex(v2));
+                           edgeList.push_back(evenSidedFace.getVertex(v3));
+
+                           edgeList.push_back(evenSidedFace.getVertex(v3));
+                           edgeList.push_back(evenSidedFace.getVertex(v4));
+
+                           edgeList.push_back(evenSidedFace.getVertex(v4));
+                           edgeList.push_back(evenSidedFace.getVertex(middleVertID));
+
+                           edgeList.push_back(evenSidedFace.getVertex(middleVertID));
+                           edgeList.push_back(evenSidedFace.getVertex(j2));
+
+                           //Create a new voronoi face with these edges and
+                           //add it to our container
+                           newFaces.push_back(VoronoiFace(edgeList));
+
+                           j+= 2;
+                       }
+                       else
+                       {
+                           //Iterate through the current face's verts
+                           std::vector<QVector3D> edgeList;
+
+                           //Create the index separately so we can
+                           //check to ensure it is within the range
+                           int j2 = clampIndex(j,       evenSidedFace.getNumVerts());
+                           int v2 = clampIndex(j + 2, evenSidedFace.getNumVerts());
+                           int v3 = clampIndex(j + 4, evenSidedFace.getNumVerts());
+
+                           //Now create a triangle
+                           edgeList.push_back(evenSidedFace.getVertex(j2));
+                           edgeList.push_back(evenSidedFace.getVertex(v2));
+
+                           edgeList.push_back(evenSidedFace.getVertex(v2));
+                           edgeList.push_back(evenSidedFace.getVertex(v3));
+
+                           edgeList.push_back(evenSidedFace.getVertex(v3));
+                           edgeList.push_back(evenSidedFace.getVertex(middleVertID));
+
+                           edgeList.push_back(evenSidedFace.getVertex(middleVertID));
+                           edgeList.push_back(evenSidedFace.getVertex(j2));
+
+                           //Create a new voronoi face with these edges and
+                           //add it to our container
+                           newFaces.push_back(VoronoiFace(edgeList));
+                       }
+                   }
+                }
+            }
         }
         else
         {
@@ -398,4 +422,14 @@ void EnglishFields::subdivideRegions()
 
     //Finally update the region container
     m_regions = newFaces;
+}
+
+int EnglishFields::clampIndex(int index, int numVertices)
+{
+    if(index >= (numVertices * 2))
+    {
+        index -= (numVertices * 2);
+    }
+
+    return index;
 }
