@@ -16,6 +16,13 @@ VoronoiFace::VoronoiFace(std::vector<QVector3D> _edgeVerts)
     m_vao.release();
 }
 
+VoronoiFace::VoronoiFace(std::vector<VoronoiEdge *> _edgeList)
+{
+    m_edges = _edgeList;
+
+    updateVerts();
+}
+
 VoronoiFace::~VoronoiFace()
 {
 
@@ -24,6 +31,11 @@ VoronoiFace::~VoronoiFace()
 VoronoiFace::VoronoiFace(const VoronoiFace &_toCopy)
 {
     m_edgeVerts = _toCopy.m_edgeVerts;
+
+    m_edges = _toCopy.m_edges;
+
+    updateVerts();
+
     m_midPointIsCalculated = _toCopy.m_midPointIsCalculated;
 
     if(!m_midPointIsCalculated)
@@ -36,11 +48,25 @@ void VoronoiFace::operator =(const VoronoiFace &_toCopy)
 {
     m_edgeVerts = _toCopy.m_edgeVerts;
 
+    m_edges = _toCopy.m_edges;
+    updateVerts();
+
     m_midPointIsCalculated = _toCopy.m_midPointIsCalculated;
 
     if(!m_midPointIsCalculated)
     {
         m_midPoint = _toCopy.m_midPoint;
+    }
+}
+
+void VoronoiFace::updateVerts()
+{
+    m_edgeVerts.clear();
+
+    for(uint i = 0; i < m_edges.size(); ++i)
+    {
+        m_edgeVerts.push_back(m_edges[i]->getStart());
+        m_edgeVerts.push_back(m_edges[i]->getEnd());
     }
 }
 
