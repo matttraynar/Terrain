@@ -10,14 +10,16 @@ SOURCES += src/main.cpp \
 					src/glwidget.cpp \
 					src/perlinnoise.cpp \
 					src/englishfields.cpp \
-    src/voronoiface.cpp
+    src/voronoiface.cpp \
+    src/voronoiedge.cpp
 
 
 HEADERS  += include/MainWindow.h \
 					include/glwidget.h \
 					include/perlinnoise.h \
 					include/englishfields.h \
-    include/voronoiface.h
+    include/voronoiface.h \
+    include/voronoiedge.h
 
 
 FORMS    += MainWindow.ui
