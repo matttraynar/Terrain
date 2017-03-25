@@ -65,7 +65,7 @@ void GLWidget::initializeGL()
     qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
 
-    bool adjustHeights = true;
+    bool adjustHeights = false;
     if(adjustHeights)
     {
         qInfo()<<"Adjusting heights";

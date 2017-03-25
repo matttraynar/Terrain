@@ -15,7 +15,7 @@ EnglishFields::EnglishFields(double _width)
 
     makeVoronoiDiagram();
 
-    subdivideRegions();
+//    subdivideRegions();
 }
 
 EnglishFields::EnglishFields(double _width,
@@ -98,7 +98,8 @@ void EnglishFields::makeVoronoiDiagram()
         HDS::Halfedge_const_handle end = currentEdge;
 
         //A container for storing edge vertices in
-        std::vector<QVector3D> edgeVerts;
+//        std::vector<QVector3D> edgeVerts;
+        std::vector<VoronoiEdge*> edges;
 
         do{
             //Do some assertions before we start using the data
@@ -106,21 +107,74 @@ void EnglishFields::makeVoronoiDiagram()
             CGAL_assertion(currentEdge->face() != HDS::Face_handle() );
             CGAL_assertion(currentEdge->face() == face);
 
-            //Add the edge to our container
-            QVector3D newPoint(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y());
-            edgeVerts.push_back(newPoint);
+            //Code added by me -------------START------------------
+
+            //Create a new point from the current edge's vertex
+            QVector3D* startPoint = new QVector3D(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y());
+
+            //Check whether we've already created a vertex reference
+            //at this position or not
+            int startID = vertExists(startPoint);
+
+            if(startID != -1)
+            {
+                //We have already created the vertex,
+                //change the pointer to point at the
+                //pre-exisiting reference
+                startPoint = m_allVerts[startID];
+            }
+            else
+            {
+                //The vertex doesn't already exist, add
+                //it to our references list
+                m_allVerts.push_back(startPoint);
+            }
 
             //Move on to the next edge
             currentEdge = currentEdge->next();
 
-            //And add a new point (edges have two verts)
-            newPoint = QVector3D(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y());
-            edgeVerts.push_back(newPoint);
+            //Create a new point (edges have two verts)
+            QVector3D* endPoint = new QVector3D(currentEdge->vertex()->point().x(), 0.0f, currentEdge->vertex()->point().y());
+
+            //Do the same process (check if already existing)
+            int endID = vertExists(endPoint);
+
+            if(endID != -1)
+            {
+                endPoint = m_allVerts[endID];
+            }
+            else
+            {
+                m_allVerts.push_back(endPoint);
+            }
+
+            //Now we create a new voronoi edge using the start and
+            //end pointers we just created
+            VoronoiEdge* newEdge = new VoronoiEdge(startPoint, endPoint);
+
+            //Again check if the edge already exists and act accordingly
+            int edgeID = edgeExists(newEdge);
+
+            if(edgeID != -1)
+            {
+                //Note that this time if the edge already exists we copy the
+                //pointer to out edge container
+                edges.push_back(m_allEdges[edgeID]);
+            }
+            else
+            {
+                //Add the new edge to our global container and the container
+                //for the current voronoi face
+                m_allEdges.push_back(newEdge);
+                edges.push_back(newEdge);
+            }
+
+            //Code added by me --------------END-------------------
 
         }while(currentEdge != end);
 
         //Add a new voronoi region and store it
-        m_regions.push_back(VoronoiFace(edgeVerts));
+        m_regions.push_back(VoronoiFace(edges));
     }
 }
 
@@ -432,4 +486,50 @@ int EnglishFields::clampIndex(int index, int numVertices)
     }
 
     return index;
+}
+
+int EnglishFields::edgeExists(VoronoiEdge *_edge)
+{
+    //Create an index count
+    int count = 0;
+
+    for(auto i = m_allEdges.begin(); i != m_allEdges.end(); ++i)
+    {
+        //Compare the edge passed in with the current edge in
+        //the global container. The double dereference looks
+        //bad but is actuall just dereferencing the iterator and
+        //then dereferencing the pointer it contains
+        if((*_edge) == (**i))
+        {
+            //The edge already exists in the global container,
+            //return the count(which will be the index the edge
+            //is stored at)
+            return count;
+        }
+
+        //Otherwise increment the count
+        ++count;
+    }
+
+    //Need to return something that is obviously not
+    //a valid index value. -1 will do
+    return -1;
+}
+
+int EnglishFields::vertExists(QVector3D *_vert)
+{
+    //Exactly the same process as with edgeExists()
+    int count = 0;
+
+    for(auto i = m_allVerts.begin(); i != m_allVerts.end(); ++i)
+    {
+        if((*_vert) == (**i))
+        {
+            return count;
+        }
+
+        ++count;
+    }
+
+    return -1;
 }

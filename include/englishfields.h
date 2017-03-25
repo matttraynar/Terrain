@@ -48,11 +48,17 @@ private:
 
     int clampIndex(int index, int numVertices);
 
+    int edgeExists(VoronoiEdge* _edge);
+    int vertExists(QVector3D* _vert);
+
     double m_width;
 
     std::vector<QVector3D> m_sites;
 
     std::vector<VoronoiFace> m_regions;
+
+    std::vector<VoronoiEdge*> m_allEdges;
+    std::vector<QVector3D*> m_allVerts;
 };
 
 #endif // ENGLISHFIELDS_H
