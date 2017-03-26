@@ -145,3 +145,27 @@ QVector3D VoronoiFace::getWeightedMiddle(int vert, float weight)
 
     return wMiddle;
 }
+
+QVector3D VoronoiFace::getWeightedMiddle2(int vert, float weight)
+{
+
+    QVector3D wMiddle;
+
+    for(uint i = 0; i < m_edges.size(); ++i)
+    {
+        wMiddle += *(m_edges[i]->m_startPTR);
+    }
+
+    wMiddle /= m_edges.size();
+
+    QVector3D wVector = *(m_edges[vert]->m_startPTR) - wMiddle;
+
+    if(wVector.length() > 5)
+    {
+        weight /= 2.0f;
+    }
+
+    wMiddle += (wVector * weight);
+
+    return wMiddle;
+}

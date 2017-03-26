@@ -32,11 +32,15 @@ public:
 
     inline std::vector<QVector3D> getEdges() const { return m_edgeVerts; }
     inline QVector3D getVertex(int index) const { return m_edgeVerts[index]; }
-    inline int getNumEdges() const  { return m_edgeVerts.size(); }
+//    inline int getNumEdges() const  { return m_edgeVerts.size(); }
     inline float getNumVerts() const { return m_edgeVerts.size() / 2.0f; }
 
     QVector3D getMiddle();
     QVector3D getWeightedMiddle(int vert, float weight);
+    QVector3D getWeightedMiddle2(int vert, float weight);
+
+    inline VoronoiEdge* getEdge(int index) const { return m_edges[index]; }
+    inline int getNumEdges() const {return m_edges.size(); }
 
     std::vector<VoronoiEdge*> m_edges;
 
