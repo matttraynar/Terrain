@@ -66,9 +66,9 @@ void EnglishFields::makeVoronoiDiagram()
     {
         //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
         srand(time(NULL));
-//        srand(451);
+//        srand(123);
 
-        uint numPoints = 6;
+        uint numPoints = 20;
 
         points.reserve(numPoints);
 
@@ -313,14 +313,14 @@ void EnglishFields::subdivideRegions()
 
                     //Create a new voronoi face with these edges and
                     //add it to our container
-//                    newFaces.push_back(VoronoiFace(edges));
+                    newFaces.push_back(VoronoiFace(edges));
                 }
             }
             else
             {
                 int subdivideSwitch = 100 * (float)rand() / (float)RAND_MAX;
 
-                if(subdivideSwitch > 90)
+                if(subdivideSwitch > 80)
                 {
                     newFaces.push_back(m_regions[i]);
                 }
@@ -328,15 +328,32 @@ void EnglishFields::subdivideRegions()
                 {
                     int startID = (m_regions[i].getNumEdges() - 1) / 2;
 
+                    //FIRST NEW FACE -------------------------
+                    std::vector<VoronoiEdge*> edges;
+
+                    //EXISTING EDGES
+                    for(int j = 0; j < startID; ++j)
+                    {
+                        edges.push_back(m_regions[i].getEdge(j));
+                    }
+
                     QVector3D* endVert = m_regions[i].getEdge(startID)->m_startPTR;
 
-                    if((*endVert) != *(m_regions[i].getEdge(startID - 1)->m_startPTR) ||
+                    if((*endVert) != *(m_regions[i].getEdge(startID - 1)->m_startPTR) &&
                        (*endVert) != *(m_regions[i].getEdge(startID - 1)->m_endPTR))
                     {
                         endVert = m_regions[i].getEdge(startID)->m_endPTR;
                     }
 
                     int endID = m_regions[i].getNumEdges() - 1;
+
+                    QVector3D* startVert = m_regions[i].getEdge(0)->m_startPTR;
+
+                    if((*startVert == *(m_regions[i].getEdge(1)->m_startPTR)) ||
+                      (*startVert == *(m_regions[i].getEdge(1)->m_endPTR)))
+                    {
+                        startVert = m_regions[i].getEdge(0)->m_endPTR;
+                    }
 
                     QVector3D* newVert = new QVector3D((*(m_regions[i].getEdge(endID)->m_startPTR) + *(m_regions[i].getEdge(endID)->m_endPTR)) / 2.0f);
 
@@ -349,22 +366,6 @@ void EnglishFields::subdivideRegions()
                     else
                     {
                         m_allVerts.push_back(newVert);
-                    }
-
-                    std::vector<VoronoiEdge*> edges;
-
-                    QVector3D* startVert = m_regions[i].getEdge(0);
-
-                    if((*startVert == *(m_regions[i].getEdge(1)->m_startPTR)) ||
-                      (*startVert == *(m_regions[i].getEdge(1)->m_endPTR)))
-                    {
-                        startVert = m_regions[i].getEdge(0)->m_endPTR;
-                    }
-
-                    //EXISTING EDGES
-                    for(int i = 0; i < startID; ++i)
-                    {
-                        edges.push_back(m_regions[i].getEdge(i));
                     }
 
                     //NEW EDGE 1
@@ -399,6 +400,41 @@ void EnglishFields::subdivideRegions()
 
                     edges.push_back(newEdge2);
 
+                    newFaces.push_back(VoronoiFace(edges));
+
+                    //SECOND NEW FACE
+                    edges.clear();
+
+                    for(int j = startID; j < endID; ++j)
+                    {
+                        edges.push_back(m_regions[i].getEdge(j));
+                    }
+
+                    QVector3D* endVert2 = m_regions[i].getEdge(endID)->m_startPTR;
+
+                    if((*endVert2 != *(m_regions[i].getEdge(endID - 1)->m_startPTR)) &&
+                       (*endVert2 != *(m_regions[i].getEdge(endID - 1)->m_endPTR)))
+                    {
+                        endVert2 = m_regions[i].getEdge(endID)->m_endPTR;
+                    }
+
+                    VoronoiEdge* newEdge3 = new VoronoiEdge(endVert2, newVert);
+
+                    edgeID = edgeExists(newEdge3);
+
+                    if(edgeID != -1)
+                    {
+                        newEdge3 = m_allEdges[edgeID];
+                    }
+                    else
+                    {
+                        m_allEdges.push_back(newEdge3);
+                    }
+
+                    edges.push_back(newEdge3);
+                    edges.push_back(newEdge);
+
+                    newFaces.push_back(VoronoiFace(edges));
 
 
                     /*//Randomly generate a vertex index and weight
@@ -866,7 +902,7 @@ void EnglishFields::subdivideRegions()
         }
         else
         {
-//            newFaces.push_back(m_regions[i]);
+            newFaces.push_back(m_regions[i]);
         }
 
 //        newFaces[newFaces.size() - 1].updateVerts();
