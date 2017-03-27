@@ -326,7 +326,82 @@ void EnglishFields::subdivideRegions()
                 }
                 else
                 {
-                    //Randomly generate a vertex index and weight
+                    int startID = (m_regions[i].getNumEdges() - 1) / 2;
+
+                    QVector3D* endVert = m_regions[i].getEdge(startID)->m_startPTR;
+
+                    if((*endVert) != *(m_regions[i].getEdge(startID - 1)->m_startPTR) ||
+                       (*endVert) != *(m_regions[i].getEdge(startID - 1)->m_endPTR))
+                    {
+                        endVert = m_regions[i].getEdge(startID)->m_endPTR;
+                    }
+
+                    int endID = m_regions[i].getNumEdges() - 1;
+
+                    QVector3D* newVert = new QVector3D((*(m_regions[i].getEdge(endID)->m_startPTR) + *(m_regions[i].getEdge(endID)->m_endPTR)) / 2.0f);
+
+                    int vertID = vertExists(newVert);
+
+                    if(vertID != -1)
+                    {
+                        newVert = m_allVerts[vertID];
+                    }
+                    else
+                    {
+                        m_allVerts.push_back(newVert);
+                    }
+
+                    std::vector<VoronoiEdge*> edges;
+
+                    QVector3D* startVert = m_regions[i].getEdge(0);
+
+                    if((*startVert == *(m_regions[i].getEdge(1)->m_startPTR)) ||
+                      (*startVert == *(m_regions[i].getEdge(1)->m_endPTR)))
+                    {
+                        startVert = m_regions[i].getEdge(0)->m_endPTR;
+                    }
+
+                    //EXISTING EDGES
+                    for(int i = 0; i < startID; ++i)
+                    {
+                        edges.push_back(m_regions[i].getEdge(i));
+                    }
+
+                    //NEW EDGE 1
+                    VoronoiEdge* newEdge = new VoronoiEdge(endVert, newVert);
+
+                    int edgeID = edgeExists(newEdge);
+
+                    if(edgeID != -1)
+                    {
+                        newEdge = m_allEdges[edgeID];
+                    }
+                    else
+                    {
+                        m_allEdges.push_back(newEdge);
+                    }
+
+                    edges.push_back(newEdge);
+
+                    //NEW EDGE 2
+                    VoronoiEdge* newEdge2 = new VoronoiEdge(newVert, startVert);
+
+                    edgeID = edgeExists(newEdge2);
+
+                    if(edgeID != -1)
+                    {
+                        newEdge2 = m_allEdges[edgeID];
+                    }
+                    else
+                    {
+                        m_allEdges.push_back(newEdge2);
+                    }
+
+                    edges.push_back(newEdge2);
+
+
+
+                    /*//Randomly generate a vertex index and weight
                     int vert = m_regions[i].getNumEdges() * (float)rand() / (float)RAND_MAX;
                     float weight = 7.5f * (float)rand() / (float)RAND_MAX;
 
@@ -540,7 +615,7 @@ void EnglishFields::subdivideRegions()
 //                           newFaces.push_back(VoronoiFace(edgeList));
 //                       }
 //                   }
-                }
+                }*/
             }
         }
 /*
@@ -787,8 +862,8 @@ void EnglishFields::subdivideRegions()
 //                       }
 //                   }
 //                }
-//            }
-//        }*/
+//            }*/
+        }
         else
         {
 //            newFaces.push_back(m_regions[i]);
