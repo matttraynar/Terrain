@@ -20,6 +20,8 @@ public:
     void operator = (const VoronoiFace &_toCopy);
 
     void updateVerts();
+    void updateEdge(int index, VoronoiEdge* _e1, VoronoiEdge* _e2);
+
     void passVBOToShader(QOpenGLShaderProgram &_pgm);
     void draw();
 
@@ -39,13 +41,13 @@ public:
     QVector3D getWeightedMiddle(int vert, float weight);
     QVector3D getWeightedMiddle2(int vert, float weight);
 
+    std::vector<VoronoiEdge*> getEdges() { return m_edges; }
     inline VoronoiEdge* getEdge(int index) const { return m_edges[index]; }
     inline int getNumEdges() const {return m_edges.size(); }
 
-    std::vector<VoronoiEdge*> m_edges;
-
 private:
 
+    std::vector<VoronoiEdge*> m_edges;
     std::vector<QVector3D> m_edgeVerts;
     QVector3D m_midPoint;
     bool m_midPointIsCalculated;

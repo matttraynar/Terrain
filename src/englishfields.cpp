@@ -219,6 +219,8 @@ void EnglishFields::subdivideRegions()
     //Container for storing our edited faces in
     std::vector<VoronoiFace> newFaces;
 
+    int odd = 0;
+
     for(uint i = 0; i < m_regions.size(); ++i)
     {
         if((m_regions[i].getNumEdges()) > 3)
@@ -330,7 +332,7 @@ void EnglishFields::subdivideRegions()
             else
             {
                 //This branch means we're on an odd-sided face
-                if(subdivideSwitch > 7)
+                if(subdivideSwitch > 10)
                 {
                     //Sometimes just duplicate the current face
                     newFaces.push_back(m_regions[i]);
@@ -443,7 +445,6 @@ void EnglishFields::subdivideRegions()
                     //and add it to our face container
                     newFaces.push_back(VoronoiFace(edges));
 
-
                     //Now we need to repeat the process but this time using the edges
                     //on the other 'half'. With our example this is edges {2,3} (remember
                     //edge 4 is being bisected)
@@ -499,7 +500,15 @@ void EnglishFields::subdivideRegions()
 
                     //Time to create a new face with these edges and add it to our container
                     newFaces.push_back(VoronoiFace(edges));
-            }
+
+                    if(odd > -1)
+                    {
+//                        newEdge3->m_endPTR->setY(5);
+                    }
+                    odd++;
+
+                    m_updaterEdges.push_back(EdgeToUpdate(m_regions[i].getEdge(endID), newEdge3, newEdge2));
+                }
             }
         }
         else
@@ -508,8 +517,32 @@ void EnglishFields::subdivideRegions()
         }
     }
 
+
     //Finally update the region container
     m_regions = newFaces;
+
+    if(m_updaterEdges.size() > 0)
+    {
+        int count = 0;
+
+        for(auto i = m_updaterEdges.begin(); i != m_updaterEdges.end(); ++i)
+        {
+            if(count > -10)
+            {
+                updateFaces(i->oldEdge, i->newEdge_1, i->newEdge_2);
+            }
+            count++;
+        }
+    }
+
+    for(int i = 0; i < m_updaterEdges.size(); ++i)
+    {
+        if(i > -1)
+        {
+            m_updaterEdges[i].newEdge_1->m_endPTR->setY(5);
+        }
+    }
+
 }
 
 int EnglishFields::clampIndex(int index, int numVertices)
@@ -550,6 +583,42 @@ int EnglishFields::edgeExists(VoronoiEdge *_edge)
     return -1;
 }
 
+int EnglishFields::edgeExists(VoronoiEdge *_edge, std::vector<VoronoiEdge *> _edges)
+{    //Create an index count
+    int count = 0;
+
+    qInfo()<<"----------------------------------";
+    qInfo()<<"Start: "<<*(_edge->m_startPTR)<<" End: "<<*(_edge->m_endPTR);
+    qInfo()<<"----------------x------------------";
+
+    for(auto i = _edges.begin(); i != _edges.end(); ++i)
+    {
+        qInfo()<<"Start: "<<*((*i)->m_startPTR)<<" End: "<<*((*i)->m_endPTR);
+
+        //Compare the edge passed in with the current edge in
+        //the global container. The double dereference looks
+        //bad but is actuall just dereferencing the iterator and
+        //then dereferencing the pointer it contains
+        if((*_edge) == (**i))
+        {
+            //The edge already exists in the global container,
+            //return the count(which will be the index the edge
+            //is stored at)
+            qInfo()<<"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\";
+            return count;
+        }
+
+        //Otherwise increment the count
+        ++count;
+    }
+
+    qInfo()<<"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\";
+
+    //Need to return something that is obviously not
+    //a valid index value. -1 will do
+    return -1;
+}
+
 int EnglishFields::vertExists(QVector3D *_vert)
 {
     //Exactly the same process as with edgeExists()
@@ -566,4 +635,39 @@ int EnglishFields::vertExists(QVector3D *_vert)
     }
 
     return -1;
+}
+
+void EnglishFields::updateFaces(VoronoiEdge *_prev, VoronoiEdge *_e1, VoronoiEdge *_e2)
+{
+    int edgeID = -1;
+    qInfo()<<"----------------------------------------------------------------------------------------------------";
+    qInfo()<<"----------------------------------------------------------------------------------------------------";
+
+    for(uint i = 0; i < m_regions.size(); ++i)
+    {
+        edgeID = edgeExists(_prev, m_regions[i].getEdges());
+
+        if(edgeID != -1)
+        {
+            qInfo()<<"Edge "<<edgeID<<" needs updating";
+            m_regions[i].updateEdge(edgeID, _e1, _e2);
+            edgeID = -1;
+        }
+    }
+
+    if(edgeID == -1)
+    {
+        qInfo()<<"Edge not being used";
+    }
+    else
+    {
+        qInfo()<<"Edge being used";
+    }
+
+    edgeID = edgeExists(_prev);
+
+    VoronoiEdge* tmp = m_allEdges[edgeID];
+
+    m_allEdges.erase(m_allEdges.begin() + edgeID);
+
 }

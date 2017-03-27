@@ -70,6 +70,30 @@ void VoronoiFace::updateVerts()
     }
 }
 
+void VoronoiFace::updateEdge(int index, VoronoiEdge *_e1, VoronoiEdge *_e2)
+{
+    qInfo()<<"Updating edge "<<index<<" Start: "<<*(m_edges[index]->m_startPTR)<<" End: "<<*(m_edges[index]->m_endPTR);
+//    qInfo()<<"New Edge 1 Start: "<<*(_e1->m_startPTR)<<" End: "<<*(_e1->m_endPTR);
+//    qInfo()<<"New Edge 2 Start: "<<*(_e2->m_startPTR)<<" End: "<<*(_e2->m_endPTR);
+
+    if(_e1->m_startPTR != m_edges[index]->m_startPTR &&
+       _e1->m_endPTR != m_edges[index]->m_startPTR)
+    {
+        m_edges[index] = _e2;
+        m_edges.insert(m_edges.begin() + index + 1, _e1);
+    }
+    else
+    {
+        m_edges[index] = _e1;
+        m_edges.insert(m_edges.begin() + index + 1, _e2);
+    }
+
+    qInfo()<<"Edges now Start: "<<*(m_edges[index]->m_startPTR)<<" End: "<<*(m_edges[index]->m_endPTR);
+    qInfo()<<"Edges now Start: "<<*(m_edges[index + 1]->m_startPTR)<<" End: "<<*(m_edges[index + 1]->m_endPTR);
+    qInfo()<<"----------xxx";
+
+}
+
 void VoronoiFace::passVBOToShader(QOpenGLShaderProgram &_pgm)
 {
     _pgm.bind();

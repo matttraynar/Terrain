@@ -25,6 +25,22 @@ typedef CGAL::HalfedgeDS_default< K, HDS_Item_extra > HDS;
 
 #include "voronoiface.h"
 
+struct EdgeToUpdate
+{
+    EdgeToUpdate(VoronoiEdge* _old,
+                          VoronoiEdge* _n1,
+                          VoronoiEdge* _n2)
+    {
+        oldEdge = _old;
+        newEdge_1 = _n1;
+        newEdge_2 = _n2;
+    }
+
+    VoronoiEdge* oldEdge;
+    VoronoiEdge* newEdge_1;
+    VoronoiEdge* newEdge_2;
+};
+
 class EnglishFields
 {
 public:
@@ -49,7 +65,10 @@ private:
     int clampIndex(int index, int numVertices);
 
     int edgeExists(VoronoiEdge* _edge);
+    int edgeExists(VoronoiEdge *_edge, std::vector<VoronoiEdge*> _edges);
     int vertExists(QVector3D* _vert);
+
+    void updateFaces(VoronoiEdge* _prev, VoronoiEdge* _e1, VoronoiEdge* _e2);
 
     double m_width;
 
@@ -59,6 +78,8 @@ private:
 
     std::vector<VoronoiEdge*> m_allEdges;
     std::vector<QVector3D*> m_allVerts;
+
+    std::vector<EdgeToUpdate> m_updaterEdges;
 };
 
 #endif // ENGLISHFIELDS_H

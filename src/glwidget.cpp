@@ -83,7 +83,7 @@ void GLWidget::initializeGL()
                 for(int k = 0; k < m_verts.size(); ++k)
                 {
                     QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
-                    QVector3D flatVector2(m_vRegions[i].getEdges()[j].x(), 0, m_vRegions[i].getEdges()[j].z());
+                    QVector3D flatVector2(m_vRegions[i].getEdges()[j]->m_startPTR->x(), 0, m_vRegions[i].getEdges()[j]->m_startPTR->z());
 
                     if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
                     {
