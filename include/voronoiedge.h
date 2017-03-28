@@ -12,6 +12,11 @@ public:
     {
         m_start = _start;
         m_end = _end;
+        m_midPoint = QVector3D(1000000,1000000,1000000);
+
+        m_gradient = (m_end.z() - m_start.z()) / (m_end.x() - m_start.x());
+        m_invGradient = -1.0f/m_gradient;
+        m_c = m_start.z() - (m_gradient * m_start.x());
 
         m_startPTR = NULL;
         m_endPTR = NULL;
@@ -21,6 +26,14 @@ public:
     {
         m_startPTR = _start;
         m_endPTR = _end;
+        m_midPoint = QVector3D(1000000,1000000,1000000);
+
+        m_start = *m_startPTR;
+        m_end = *m_endPTR;
+
+        m_gradient = (m_end.z() - m_start.z()) / (m_end.x() - m_start.x());
+        m_invGradient = -1.0f/m_gradient;
+        m_c = m_start.z() - (m_gradient * m_start.x());
     }
 
     ~VoronoiEdge();
@@ -57,6 +70,19 @@ public:
         return m_end;
     }
 
+    inline float getGradient() const { return m_gradient; }
+
+    inline QVector3D getMidPoint()
+    {
+        if(m_midPoint == QVector3D(1000000,1000000,1000000))
+        {
+            m_midPoint = m_end + m_start;
+            m_midPoint /= 2.0f;
+        }
+
+        return m_midPoint;
+    }
+
     bool operator == (const VoronoiEdge &RHS)
     {
         if(m_startPTR != NULL && m_endPTR != NULL)
@@ -69,6 +95,8 @@ public:
                  (m_start == RHS.m_end && m_end == RHS.m_start));
     }
 
+    float getLength();
+
     QVector3D m_start;
     QVector3D m_end;
 
@@ -77,6 +105,12 @@ public:
 
 private:
     VoronoiEdge();
+
+    QVector3D m_midPoint;
+
+    float m_gradient;
+    float m_invGradient;
+    float m_c;
 
 };
 

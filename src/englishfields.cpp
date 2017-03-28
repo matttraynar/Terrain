@@ -16,6 +16,8 @@ EnglishFields::EnglishFields(double _width)
     makeVoronoiDiagram();
 
     subdivideRegions();
+
+    makeFieldFeatures();
 }
 
 EnglishFields::EnglishFields(double _width,
@@ -623,4 +625,74 @@ void EnglishFields::updateFaces(VoronoiEdge *_prev, VoronoiEdge *_e1, VoronoiEdg
 
     m_allEdges.erase(m_allEdges.begin() + edgeID);
 
+}
+
+void EnglishFields::makeFieldFeatures()
+{
+    for(int i = 0; i < m_regions.size(); ++i)
+    {
+//        m_regions[i].checkUsable();
+
+        std::vector<VoronoiEdge*> edges = m_regions[i].getEdges();
+
+        QVector3D perpVector = QVector3D::crossProduct((*(m_regions[i].getEdge(0)->m_startPTR)) - (*(m_regions[i].getEdge(0)->m_endPTR)), QVector3D(0,1,0));
+        perpVector.normalize();
+
+        VoronoiEdge* furthestEdge = m_regions[i].getEdge(0);
+
+        float distance = -1000000;
+
+        QVector3D middleVector = m_regions[i].getMiddle() - m_regions[i].getEdge(0)->getMidPoint();
+
+        float middleDistance = QVector3D::dotProduct(middleVector, perpVector + m_regions[i].getEdge(0)->getMidPoint());
+        middleDistance /= perpVector.length();
+
+        perpVector = QVector3D::crossProduct((*(m_regions[i].getEdge(0)->m_startPTR)) - (*(m_regions[i].getEdge(0)->m_endPTR)), QVector3D(0,1,0));
+        perpVector.normalize();
+
+        if(middleDistance < 0)
+        {
+            perpVector *= -1;
+        }
+
+        for(auto j = edges.begin(); j != edges.end(); ++j)
+        {
+            QVector3D relativeVector = (*(*j)->m_startPTR) - m_regions[i].getEdge(0)->getMidPoint();
+
+            float tmpDistance = QVector3D::dotProduct(relativeVector, perpVector);
+            tmpDistance /= perpVector.length();
+
+            if(tmpDistance > distance)
+            {
+                distance = tmpDistance;
+                furthestEdge = (*j);
+            }
+        }
+
+        QVector3D* str = new QVector3D(m_regions[i].getEdge(0)->getMidPoint());
+        QVector3D* ending = new QVector3D((3 * perpVector) + (*str));
+        edges.push_back(new VoronoiEdge(str, ending));
+
+        for(int x = 1; x < 50; x++)
+        {
+            if((x * perpVector).length() > distance)
+            {
+                break;
+            }
+
+            QVector3D* newStart = new QVector3D(m_regions[i].getEdge(0)->m_start.x() + (x * perpVector.x()), 0, m_regions[i].getEdge(0)->m_start.z() + (x * perpVector.z()));
+            QVector3D* newEnd = new QVector3D(m_regions[i].getEdge(0)->m_end.x() + (x * perpVector.x()), 0, m_regions[i].getEdge(0)->m_end.z() + (x * perpVector.z()));
+
+            m_allVerts.push_back(newStart);
+            m_allVerts.push_back(newEnd);
+
+            VoronoiEdge* tmp = new VoronoiEdge(newStart, newEnd);
+
+            m_allEdges.push_back(tmp);
+
+//            edges.push_back(tmp);
+        }
+
+        m_regions[i] = VoronoiFace(edges);
+    }
 }

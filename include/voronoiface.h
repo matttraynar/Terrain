@@ -25,6 +25,8 @@ public:
     void passVBOToShader(QOpenGLShaderProgram &_pgm);
     void draw();
 
+    void checkUsable();
+
     void print();
 
     void adjustHeight(int index, float newHeight);
@@ -44,6 +46,8 @@ public:
     std::vector<VoronoiEdge*> getEdges() { return m_edges; }
     inline VoronoiEdge* getEdge(int index) const { return m_edges[index]; }
     inline int getNumEdges() const {return m_edges.size(); }
+
+    bool m_isUseless;
 
 private:
 

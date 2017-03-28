@@ -14,6 +14,8 @@ VoronoiFace::VoronoiFace(std::vector<QVector3D> _edgeVerts)
 
     m_verts.release();
     m_vao.release();
+
+    m_isUseless = false;
 }
 
 VoronoiFace::VoronoiFace(std::vector<VoronoiEdge *> _edgeList)
@@ -34,6 +36,8 @@ VoronoiFace::VoronoiFace(const VoronoiFace &_toCopy)
 
     m_edges = _toCopy.m_edges;
 
+    m_isUseless = _toCopy.m_isUseless;
+
     updateVerts();
 
     m_midPointIsCalculated = _toCopy.m_midPointIsCalculated;
@@ -49,6 +53,9 @@ void VoronoiFace::operator =(const VoronoiFace &_toCopy)
     m_edgeVerts = _toCopy.m_edgeVerts;
 
     m_edges = _toCopy.m_edges;
+
+    m_isUseless = _toCopy.m_isUseless;
+
     updateVerts();
 
     m_midPointIsCalculated = _toCopy.m_midPointIsCalculated;
@@ -72,10 +79,6 @@ void VoronoiFace::updateVerts()
 
 void VoronoiFace::updateEdge(int index, VoronoiEdge *_e1, VoronoiEdge *_e2)
 {
-    qInfo()<<"Updating edge "<<index<<" Start: "<<*(m_edges[index]->m_startPTR)<<" End: "<<*(m_edges[index]->m_endPTR);
-//    qInfo()<<"New Edge 1 Start: "<<*(_e1->m_startPTR)<<" End: "<<*(_e1->m_endPTR);
-//    qInfo()<<"New Edge 2 Start: "<<*(_e2->m_startPTR)<<" End: "<<*(_e2->m_endPTR);
-
     if(_e1->m_startPTR != m_edges[index]->m_startPTR &&
        _e1->m_endPTR != m_edges[index]->m_startPTR)
     {
@@ -87,11 +90,6 @@ void VoronoiFace::updateEdge(int index, VoronoiEdge *_e1, VoronoiEdge *_e2)
         m_edges[index] = _e1;
         m_edges.insert(m_edges.begin() + index + 1, _e2);
     }
-
-    qInfo()<<"Edges now Start: "<<*(m_edges[index]->m_startPTR)<<" End: "<<*(m_edges[index]->m_endPTR);
-    qInfo()<<"Edges now Start: "<<*(m_edges[index + 1]->m_startPTR)<<" End: "<<*(m_edges[index + 1]->m_endPTR);
-    qInfo()<<"----------xxx";
-
 }
 
 void VoronoiFace::passVBOToShader(QOpenGLShaderProgram &_pgm)
@@ -120,6 +118,34 @@ void VoronoiFace::draw()
     glDrawArrays(GL_LINES, 0, (int)m_edgeVerts.size());
 
     m_vao.release();
+}
+
+void VoronoiFace::checkUsable()
+{
+    if(m_isUseless = false)
+    {
+        if(m_edges.size() == 3)
+        {
+            m_isUseless = true;
+        }
+        else
+        {
+            int count = 0;
+
+            for(auto i = m_edges.begin(); i != m_edges.end(); ++i)
+            {
+                if((*i)->getLength() < 1.5f)
+                {
+                    count++;
+                }
+            }
+
+            if(count > 2)
+            {
+                m_isUseless = true;
+            }
+        }
+    }
 }
 
 void VoronoiFace::print()

@@ -62,6 +62,8 @@ public:
 private:
     void subdivideRegions();
 
+    void makeFieldFeatures();
+
     int clampIndex(int index, int numVertices);
 
     int edgeExists(VoronoiEdge* _edge);
