@@ -75,6 +75,8 @@ void VoronoiFace::updateVerts()
         m_edgeVerts.push_back(m_edges[i]->getStart());
         m_edgeVerts.push_back(m_edges[i]->getEnd());
     }
+
+    m_midPointIsCalculated = false;
 }
 
 void VoronoiFace::updateEdge(int index, VoronoiEdge *_e1, VoronoiEdge *_e2)
@@ -165,14 +167,15 @@ QVector3D VoronoiFace::getMiddle()
 {
     if(!m_midPointIsCalculated)
     {
-        for(uint i = 0; i < m_edgeVerts.size(); ++i)
+        m_midPointIsCalculated = true;
+
+        for(auto i = m_edges.begin(); i != m_edges.end(); ++i)
         {
-            m_midPoint += m_edgeVerts[i];
+            m_midPoint += (*(*i)->m_startPTR);
+            m_midPoint += (*(*i)->m_endPTR);
         }
 
-        m_midPoint /= m_edgeVerts.size();
-
-        m_midPointIsCalculated = true;
+        m_midPoint /= m_edges.size() * 2;
     }
 
     return m_midPoint;

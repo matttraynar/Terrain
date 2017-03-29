@@ -14,7 +14,15 @@ public:
         m_end = _end;
         m_midPoint = QVector3D(1000000,1000000,1000000);
 
-        m_gradient = (m_end.z() - m_start.z()) / (m_end.x() - m_start.x());
+        if(m_end.x() - m_start.x() == 0)
+        {
+            m_gradient = 0;
+        }
+        else
+        {
+            m_gradient = (m_end.z() - m_start.z()) / (m_end.x() - m_start.x());
+        }
+
         m_invGradient = -1.0f/m_gradient;
         m_c = m_start.z() - (m_gradient * m_start.x());
 
@@ -31,7 +39,15 @@ public:
         m_start = *m_startPTR;
         m_end = *m_endPTR;
 
-        m_gradient = (m_end.z() - m_start.z()) / (m_end.x() - m_start.x());
+        if(m_end.x() - m_start.x() == 0)
+        {
+            m_gradient = 0;
+        }
+        else
+        {
+            m_gradient = (m_end.z() - m_start.z()) / (m_end.x() - m_start.x());
+        }
+
         m_invGradient = -1.0f/m_gradient;
         m_c = m_start.z() - (m_gradient * m_start.x());
     }
@@ -49,6 +65,8 @@ public:
             qInfo()<<"Pointers are NULL";
         }
     }
+
+    QVector3D intersectEdge(VoronoiEdge* _test);
 
     inline QVector3D getStart() const
     {
@@ -96,6 +114,18 @@ public:
     }
 
     float getLength();
+
+    void updateGradient()
+    {
+        if(m_end.x() - m_start.x() == 0)
+        {
+            m_gradient = 0;
+        }
+        else
+        {
+            m_gradient = (m_end.z() - m_start.z()) / (m_end.x() - m_start.x());
+        }
+    }
 
     QVector3D m_start;
     QVector3D m_end;

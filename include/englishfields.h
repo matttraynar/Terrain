@@ -41,6 +41,30 @@ struct EdgeToUpdate
     VoronoiEdge* newEdge_2;
 };
 
+struct Intersection
+{
+    Intersection(float _length,
+                        VoronoiEdge* _edge,
+                        QVector3D _point)
+    {
+        length = _length;
+        edge = _edge;
+        point = _point;
+    }
+
+    float length;
+    VoronoiEdge* edge;
+    QVector3D point;
+};
+
+struct SortIntersection
+{
+    bool operator () (Intersection a, Intersection b)
+    {
+        return(a.length < b.length);
+    }
+};
+
 class EnglishFields
 {
 public:
