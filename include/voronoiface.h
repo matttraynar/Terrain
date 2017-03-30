@@ -47,7 +47,7 @@ public:
     inline VoronoiEdge* getEdge(int index) const { return m_edges[index]; }
     inline int getNumEdges() const {return m_edges.size(); }
 
-    bool m_isUseless;
+    bool m_isUsable;
 
 private:
 

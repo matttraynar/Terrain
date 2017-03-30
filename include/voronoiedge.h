@@ -136,6 +136,8 @@ public:
 private:
     VoronoiEdge();
 
+    float get2DCrossProduct(QVector3D a, QVector3D b);
+
     QVector3D m_midPoint;
 
     float m_gradient;

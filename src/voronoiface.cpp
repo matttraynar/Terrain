@@ -15,12 +15,14 @@ VoronoiFace::VoronoiFace(std::vector<QVector3D> _edgeVerts)
     m_verts.release();
     m_vao.release();
 
-    m_isUseless = false;
+    m_isUsable = true;
 }
 
 VoronoiFace::VoronoiFace(std::vector<VoronoiEdge *> _edgeList)
 {
     m_edges = _edgeList;
+    m_isUsable = true;
+    m_midPointIsCalculated = false;
 
     updateVerts();
 }
@@ -36,7 +38,7 @@ VoronoiFace::VoronoiFace(const VoronoiFace &_toCopy)
 
     m_edges = _toCopy.m_edges;
 
-    m_isUseless = _toCopy.m_isUseless;
+    m_isUsable = _toCopy.m_isUsable;
 
     updateVerts();
 
@@ -54,7 +56,7 @@ void VoronoiFace::operator =(const VoronoiFace &_toCopy)
 
     m_edges = _toCopy.m_edges;
 
-    m_isUseless = _toCopy.m_isUseless;
+    m_isUsable = _toCopy.m_isUsable;
 
     updateVerts();
 
@@ -124,11 +126,12 @@ void VoronoiFace::draw()
 
 void VoronoiFace::checkUsable()
 {
-    if(m_isUseless = false)
+    if(m_isUsable == true)
     {
         if(m_edges.size() == 3)
         {
-            m_isUseless = true;
+            qInfo()<<"Not enough edges";
+            m_isUsable = false;
         }
         else
         {
@@ -136,7 +139,7 @@ void VoronoiFace::checkUsable()
 
             for(auto i = m_edges.begin(); i != m_edges.end(); ++i)
             {
-                if((*i)->getLength() < 1.5f)
+                if((*i)->getLength() <1.0f)
                 {
                     count++;
                 }
@@ -144,7 +147,8 @@ void VoronoiFace::checkUsable()
 
             if(count > 2)
             {
-                m_isUseless = true;
+                qInfo()<<"Too many short edges";
+                m_isUsable = false;
             }
         }
     }
