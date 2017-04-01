@@ -98,21 +98,27 @@ void VoronoiFace::updateEdge(int index, VoronoiEdge *_e1, VoronoiEdge *_e2)
 
 void VoronoiFace::passVBOToShader(QOpenGLShaderProgram &_pgm)
 {
-    _pgm.bind();
-    m_vao.create();
-    m_vao.bind();
+    updateVerts();
 
-    m_verts.create();
-    m_verts.bind();
-    m_verts.allocate(&m_edgeVerts[0], (int)m_edgeVerts.size() * sizeof(GLfloat) * 3);
 
-    _pgm.enableAttributeArray("vertexPos");
-    _pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
+    if(m_edgeVerts.size() > 0)
+    {
+        _pgm.bind();
+        m_vao.create();
+        m_vao.bind();
 
-    m_verts.release();
-    m_vao.release();
+        m_verts.create();
+        m_verts.bind();
+        m_verts.allocate(&m_edgeVerts[0], (int)m_edgeVerts.size() * sizeof(GLfloat) * 3);
 
-    _pgm.release();
+        _pgm.enableAttributeArray("vertexPos");
+        _pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
+
+        m_verts.release();
+        m_vao.release();
+
+        _pgm.release();
+    }
 }
 
 void VoronoiFace::draw()

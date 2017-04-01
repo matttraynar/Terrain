@@ -108,8 +108,11 @@ void GLWidget::initializeGL()
             }
         }
 
+        qInfo()<<"Loading to shader "<<i;
         m_vRegions[i].passVBOToShader(m_pgm);
     }
+
+    //Finished creating regions
 
     m_pgm.bind();
 
