@@ -71,9 +71,9 @@ void EnglishFields::makeVoronoiDiagram()
     else
     {
         //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
-        srand(time(NULL));
-        qInfo()<<"Seed: "<<time(NULL);
-//        srand(1491134923);
+//        srand(time(NULL));
+//        qInfo()<<"Seed: "<<time(NULL);
+        srand(46632);
 
         uint numPoints = 5;
 
@@ -235,7 +235,7 @@ void EnglishFields::subdivideRegions()
             if((int)(m_regions[i].getNumEdges()) % 2 == 0)
             {
                 //We're on an even face, check our switch
-                if(subdivideSwitch > 10)
+                if(subdivideSwitch > 30)
                 {
                     //This branch calculates a weighted middle for the center of the face
                     //and then uses this point to create new edges (which in turn are used
@@ -337,7 +337,7 @@ void EnglishFields::subdivideRegions()
             else
             {
                 //This branch means we're on an odd-sided face
-                if(subdivideSwitch > 10)
+                if(subdivideSwitch > 70)
                 {
                     //Sometimes just duplicate the current face
                     newFaces.push_back(m_regions[i]);
@@ -642,6 +642,11 @@ void EnglishFields::makeFieldFeatures()
 
     for(int i = 0; i < m_regions.size(); ++i)
     {
+        if(i != 5)
+        {
+            continue;
+        }
+
         //Run a quick function which deems whether the face has enough
         //area to make a conviincing field
         m_regions[i].checkUsable();
@@ -670,8 +675,10 @@ void EnglishFields::makeFieldFeatures()
             QVector3D middleVector = m_regions[i].getMiddle() - m_regions[i].getEdge(0)->getMidPoint();
 
             //Now we calculate the projected length of this vector on the perpendicular vector
-            float middleDistance = QVector3D::dotProduct(middleVector, perpVector + m_regions[i].getEdge(0)->getMidPoint());
+            float middleDistance = QVector3D::dotProduct(middleVector, perpVector);// + m_regions[i].getEdge(0)->getMidPoint());
             middleDistance /= perpVector.length();
+
+            qInfo()<<"Middle distance is: "<<middleDistance;
 
             //If this distance is negative then the perpendicular vector is facing out from the face,
             //reverse it by doing *-1
@@ -738,6 +745,8 @@ void EnglishFields::makeFieldFeatures()
             //Just make sure there's no height values in the perpendicular vector
             perpVector.setY(0);
 
+            std::vector<VoronoiEdge*> intersectionSegments;
+
             //Now we are going to create our ridge and furrows
             for(int x = 1; x < 50; x+=2)
             {
@@ -780,6 +789,8 @@ void EnglishFields::makeFieldFeatures()
                 //Now we create a new line segment/edge with these verts
                 VoronoiEdge* tmp = new VoronoiEdge(newStart, newEnd);
 
+                intersectionSegments.push_back(tmp);
+
                 //Start a counter, this will be used to store edge indices
                 int edgeCount = 1;
 
@@ -812,6 +823,7 @@ void EnglishFields::makeFieldFeatures()
 
             //Ridge and furrows are completed, now check if we need to
             //deal with any intersections
+            qInfo()<<"Face "<<i<<" has "<<intersections.size()<<" intersections";
             if(intersections.size() > 0)
             {
                 //We're going to create a new edge list, as we don't need
@@ -1074,13 +1086,18 @@ void EnglishFields::makeFieldFeatures()
 
                 }
             }
-
+            else
+            {
+                qInfo()<<"Got a distance of "<<distance;
+                newFaces.push_back(VoronoiFace(intersectionSegments));
+            }
             //Code which adds a small line which shows the perpendicular
             //vector we've been using
-//            QVector3D* str = new QVector3D(m_regions[i].getEdge(0)->getMidPoint());
-//            QVector3D* ending = new QVector3D((3 * perpVector) + (*str));
+            QVector3D* str = new QVector3D(m_regions[i].getEdge(0)->getMidPoint());
+            QVector3D* ending = new QVector3D((3 * perpVector) + (*str));
 
-//            edges.push_back(new VoronoiEdge(str, ending));
+            edges.push_back(new VoronoiEdge(str, ending));
+            edges.push_back(new VoronoiEdge(new QVector3D(m_regions[i].getEdge(0)->getMidPoint()), new QVector3D(m_regions[i].getMiddle())));
 
             //And now we add a new face with our update edges.
             newFaces.push_back(VoronoiFace(edges));
@@ -1097,4 +1114,9 @@ void EnglishFields::makeFieldFeatures()
     //Now update our regions container to have the faces
     //with the updated edges in it
     m_regions = newFaces;
+
+    for(uint i = 0; i < m_regions.size(); ++i)
+    {
+        m_regions[i].updateVerts();
+    }
 }
