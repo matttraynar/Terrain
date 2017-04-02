@@ -826,8 +826,8 @@ void EnglishFields::makeFieldFeatures()
                 //Make sure we've added Edge 0 first though
                 edges.push_back(m_regions[i].getEdge(0));
 
-                QVector3D* lastIntersectionStart = m_regions[i].getEdge(0)->m_startPTR;
-                float lastSeparation = 0.0f;
+//                QVector3D* lastIntersectionStart = m_regions[i].getEdge(0)->m_startPTR;
+//                float lastSeparation = 0.0f;
 
                 //Iterate through our intersections
                 for(uint j = 0; j < intersections.size() - 1; j+=2)
@@ -839,40 +839,40 @@ void EnglishFields::makeFieldFeatures()
                     QVector3D* start = new QVector3D(intersections[j]);
                     QVector3D* end = new QVector3D(intersections[j + 1]);
 
-                    if(j == 0)
-                    {
-                        lastSeparation = (*start - *(m_regions[i].getEdge(0)->m_startPTR)).length();
+//                    if(j == 0)
+//                    {
+//                        lastSeparation = (*start - *(m_regions[i].getEdge(0)->m_startPTR)).length();
 
-                        lastIntersectionStart = m_regions[i].getEdge(0)->m_startPTR;
+//                        lastIntersectionStart = m_regions[i].getEdge(0)->m_startPTR;
 
-                        if((*start - *(m_regions[i].getEdge(0)->m_endPTR)).length() < lastSeparation)
-                        {
-                            lastSeparation = (*start - *(m_regions[i].getEdge(0)->m_endPTR)).length();
+//                        if((*start - *(m_regions[i].getEdge(0)->m_endPTR)).length() < lastSeparation)
+//                        {
+//                            lastSeparation = (*start - *(m_regions[i].getEdge(0)->m_endPTR)).length();
 
-                            lastIntersectionStart = m_regions[i].getEdge(0)->m_endPTR;
-                        }
+//                            lastIntersectionStart = m_regions[i].getEdge(0)->m_endPTR;
+//                        }
 
-                        qInfo()<<"Last: "<<lastSeparation;
-                    }
-                    else if(j != 0)
-                    {
-                        float thisSeparation = (*start - *lastIntersectionStart).length();
+//                        qInfo()<<"Last: "<<lastSeparation;
+//                    }
+//                    else if(j != 0)
+//                    {
+//                        float thisSeparation = (*start - *lastIntersectionStart).length();
 
-                        if(thisSeparation > 3.0f* lastSeparation)
-                        {
-                            qInfo()<<"BREAKING";
-                            qInfo()<<"Last: "<<lastSeparation<<" This: "<<thisSeparation;
-                            edges.clear();
-                            edges = m_regions[i].getEdges();
-                            intersectedEdges.clear();
+//                        if(thisSeparation > 3.0f* lastSeparation)
+//                        {
+//                            qInfo()<<"BREAKING";
+//                            qInfo()<<"Last: "<<lastSeparation<<" This: "<<thisSeparation;
+//                            edges.clear();
+//                            edges = m_regions[i].getEdges();
+//                            intersectedEdges.clear();
 
-                            break;
-                        }
-                        else
-                        {
-                            lastSeparation = thisSeparation;
-                        }
-                    }
+//                            break;
+//                        }
+//                        else
+//                        {
+//                            lastSeparation = thisSeparation;
+//                        }
+//                    }
 
                     //Standard check for pre-existing references
                     int ID = vertExists(start);
