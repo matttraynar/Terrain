@@ -637,43 +637,60 @@ void EnglishFields::updateFaces(VoronoiEdge *_prev, VoronoiEdge *_e1, VoronoiEdg
 
 void EnglishFields::makeFieldFeatures()
 {
+    //A container for storing our newly edited faces in
     std::vector<VoronoiFace> newFaces;
 
     for(int i = 0; i < m_regions.size(); ++i)
     {
+        //Run a quick function which deems whether the face has enough
+        //area to make a conviincing field
         m_regions[i].checkUsable();
 
+        //If the face is usable do some stuff
         if(m_regions[i].m_isUsable)
         {
+            //Not sure if needed but always good to ensure the verts are updated
             m_regions[i].updateVerts();
 
+            //Get the current container of edges for this face
             std::vector<VoronoiEdge*> edges = m_regions[i].getEdges();
 
+            //Calculate the perpendicular vector to the first edge on the face
             QVector3D perpVector = QVector3D::crossProduct((*(m_regions[i].getEdge(0)->m_startPTR)) - (*(m_regions[i].getEdge(0)->m_endPTR)), QVector3D(0,1,0));
             perpVector.normalize();
 
+            //Create a variable to store the edge which is furthest away.
+            //Set it to Edge 0 (this will change)
             VoronoiEdge* furthestEdge = m_regions[i].getEdge(0);
 
+            //Set a very small distance which is likely to be overwritten later
             float distance = -1000000;
 
+            //Calculate a vector between the midpoint of Edge 0 and the center of the face
             QVector3D middleVector = m_regions[i].getMiddle() - m_regions[i].getEdge(0)->getMidPoint();
 
+            //Now we calculate the projected length of this vector on the perpendicular vector
             float middleDistance = QVector3D::dotProduct(middleVector, perpVector + m_regions[i].getEdge(0)->getMidPoint());
             middleDistance /= perpVector.length();
 
-            perpVector = QVector3D::crossProduct((*(m_regions[i].getEdge(0)->m_startPTR)) - (*(m_regions[i].getEdge(0)->m_endPTR)), QVector3D(0,1,0));
-            perpVector.normalize();
-
+            //If this distance is negative then the perpendicular vector is facing out from the face,
+            //reverse it by doing *-1
             if(middleDistance < 0)
             {
                 perpVector *= -1;
             }
 
+            //Now we iterate over the face's edges
             for(auto j = edges.begin(); j != edges.end(); ++j)
             {
+                //Calculate two vectors, one from the current edge's start vertex to Edge 0's midpoint and then another
+                //from the edge's end vertex to the midpoint. This is essentially the process of joining each vertex
+                //in the face to Edge 's midpoint
                 QVector3D startToMid = (*(*j)->m_startPTR) - m_regions[i].getEdge(0)->getMidPoint();
                 QVector3D endToMid = (*(*j)->m_endPTR) - m_regions[i].getEdge(0)->getMidPoint();
 
+                //Now we get the longest of the two vectors. This will be the connection between the midpoint
+                //and the furthest vertex from that point
                 QVector3D relativeVector = startToMid;
 
                 if(endToMid.length() > startToMid.length())
@@ -681,10 +698,12 @@ void EnglishFields::makeFieldFeatures()
                     relativeVector = endToMid;
                 }
 
+                //Calculate the projected length of our joining vector on the perpendicular vector
                 float tmpDistance = QVector3D::dotProduct(relativeVector, perpVector);
-
                 tmpDistance /= perpVector.length();
 
+                //If we've calculated a larger distance than currently stored update the value
+                //and store a reference to the edge with the furthest vertex on it
                 if(tmpDistance > distance)
                 {
                     distance = tmpDistance;
@@ -692,35 +711,50 @@ void EnglishFields::makeFieldFeatures()
                 }
             }
 
+            //Now we create two new containers: one for storing intersection points
+            //and another for storing the indices of the intersected edges and their
+            //corresponding intersections
             std::vector< QVector3D > intersections;
 
+            //This one is resized to have the same size as the number of edges,
+            //this will be important later
             std::vector< std::vector<int> > intersectedEdges;
             intersectedEdges.resize(edges.size(), std::vector<int>(0));
 
+            //First get the two vertices of Edge 0
             QVector3D startEdge = *(m_regions[i].getEdge(0)->m_startPTR);
-            startEdge.setY(0);
-
             QVector3D endEdge = *(m_regions[i].getEdge(0)->m_endPTR);
-            endEdge.setY(0);
 
+            //Calculate the direction vector of this edge
             QVector3D edgeVector = endEdge - startEdge;
             edgeVector.normalize();
 
+            //We add this direction vector on to create a large line segment.
+            //This is done so that when we check for intersections later this
+            //segment is almost guaranteed to intersect (if it intersects at all)
             startEdge -= ((m_width / 2) * edgeVector);
             endEdge += ((m_width / 2) * edgeVector);
 
+            //Just make sure there's no height values in the perpendicular vector
             perpVector.setY(0);
 
+            //Now we are going to create our ridge and furrows
             for(int x = 1; x < 50; x+=2)
             {
+                //If the current x position is further away from Edge 0 than the
+                //furthest away vertex we can stop creating ridge and furrows
                 if((x * perpVector).length() > distance)
                 {
                     break;
                 }
 
+                //We create two new vertices which will dictate a new edge. The edge
+                //will be parallell to Edge 0 and moves further away as the loop continues
                 QVector3D* newStart = new QVector3D(startEdge + (x * perpVector));
                 QVector3D* newEnd = new QVector3D(endEdge + (x * perpVector));
 
+                //Do the standard to check to see if we already have references to these
+                //two points
                 int vertID = vertExists(newStart);
 
                 if(vertID != -1)
@@ -743,34 +777,61 @@ void EnglishFields::makeFieldFeatures()
                     m_allVerts.push_back(newEnd);
                 }
 
+                //Now we create a new line segment/edge with these verts
                 VoronoiEdge* tmp = new VoronoiEdge(newStart, newEnd);
 
+                //Start a counter, this will be used to store edge indices
                 int edgeCount = 1;
 
+                //Iterate through the face's edges. Note that we start at index
+                //1 because the new line segment is parallel to Edge 0 and
+                //we don't need to check for intersections there
                 for(auto j = edges.begin() + 1; j != edges.end(); ++j)
                 {
+                    //Calculate any line segment intersection between the new
+                    //segment and the current edge
                     QVector3D intersection = tmp->intersectEdge(*j);
 
+                    //The above function returns an obviously wrong 3D point
+                    //if there was no intersection so we can check if there
+                    //actually was one or not
                     if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
                     {
+                        //Add the intersection to our container
                         intersections.push_back(intersection);
+
+                        //And store the index of the new intersection in the
+                        //corresponding container for the current edge
                         intersectedEdges[edgeCount].push_back(intersections.size() - 1);
                     }
 
+                    //Increment the edge count regardless of intersection or not
                     ++edgeCount;
                 }
             }
 
+            //Ridge and furrows are completed, now check if we need to
+            //deal with any intersections
             if(intersections.size() > 0)
             {
+                //We're going to create a new edge list, as we don't need
+                //the one containing the face edges any more we can reuse it
                 edges.clear();
+
+                //Make sure we've added Edge 0 first though
                 edges.push_back(m_regions[i].getEdge(0));
 
+                //Iterate through our intersections
                 for(uint j = 0; j < intersections.size(); j+=2)
                 {
+                    //Because we are using line segment intersection (instead of normal
+                    //line intersection) we know there will only be two intersections
+                    //per ridge/furrow. This means we can create a new edge by just using
+                    //two intersections which are next to each other in the container
                     QVector3D* start = new QVector3D(intersections[j]);
                     QVector3D* end = new QVector3D(intersections[j + 1]);
 
+                    //Standard check for pre-existing references
                     int ID = vertExists(start);
 
                     if(ID != -1)
@@ -793,6 +854,7 @@ void EnglishFields::makeFieldFeatures()
                         m_allVerts.push_back(end);
                     }
 
+                    //Create a new edge with our points and check for references
                     VoronoiEdge* newEdge = new VoronoiEdge(start, end);
 
                     ID = edgeExists(newEdge);
@@ -806,21 +868,29 @@ void EnglishFields::makeFieldFeatures()
                         m_allEdges.push_back(newEdge);
                     }
 
+                    //Add the new edge to our container
                     edges.push_back(newEdge);
                 }
 
+                //Now we need to update the pre-existing edges that we've added
+                //vertices to (at the intersection point)
                 for(uint j = 0; j < intersectedEdges.size(); ++j)
                 {
+                    //A boolean value used to mark if the edge actually goes
+                    //from endPTR---->startPTR instead of startPTR---->endPTR
                     bool edgeIsReversed = false;
-
-                    std::vector<VoronoiEdge*> newEdges;
 
                     if(intersectedEdges[j].size() == 0)
                     {
-                        newEdges.push_back(m_regions[i].getEdge(j));
+                        //If the current container has no size then this means the current
+                        //edge had no intersections on it, we need to just add the
+                        //unedited edge to our container
+                        edges.push_back(m_regions[i].getEdge(j));
                     }
                     else if(intersectedEdges[j].size() == 1)
                     {
+                        //This means the current edge only had one intersection,
+                        //so we need to construct the two new edges
                         QVector3D* start = new QVector3D(intersections[intersectedEdges[j][0]]);
 
                         int ID = vertExists(start);
@@ -834,6 +904,7 @@ void EnglishFields::makeFieldFeatures()
                             m_allVerts.push_back(start);
                         }
 
+                        //Consturct and edge from the current edge's startPTR to the intersection
                         VoronoiEdge* newEdge = new VoronoiEdge(m_regions[i].getEdge(j)->m_startPTR, start);
                         ID = edgeExists(newEdge);
 
@@ -846,8 +917,10 @@ void EnglishFields::makeFieldFeatures()
                             m_allEdges.push_back(newEdge);
                         }
 
-                        newEdges.push_back(newEdge);
+                        //Add it to the container
+                        edges.push_back(newEdge);
 
+                        //And now a new edge from the intersection point to the current edge's endPTR
                         VoronoiEdge* newEdge2 = new VoronoiEdge(start, m_regions[i].getEdge(j)->m_endPTR);
                         ID = edgeExists(newEdge2);
 
@@ -860,13 +933,17 @@ void EnglishFields::makeFieldFeatures()
                             m_allEdges.push_back(newEdge2);
                         }
 
-                        newEdges.push_back(newEdge2);
+                        //FInally add the second new edge to the container
+                        edges.push_back(newEdge2);
 
                     }
                     else
                     {
+                        //This means the current edge container has more than
+                        //one intersection in it, so we iterate through
                         for(uint k = 0; k < intersectedEdges[j].size(); ++k)
                         {
+                            //Get the intersection point using the index we stored in this container
                             QVector3D* start = new QVector3D(intersections[intersectedEdges[j][k]]);
 
                             int ID = vertExists(start);
@@ -882,18 +959,26 @@ void EnglishFields::makeFieldFeatures()
 
                             if(k == 0)
                             {
+                                //This is our first new edge segment. We first need to figure out the direction
+                                //of the edge (start--->end or end--->start). This is done by getting the length
+                                //from each vertex to our current intersection point.
                                 float lengthToStart = (*start - *m_regions[i].getEdge(j)->m_startPTR).length();
                                 float lengthToEnd = (*start - *m_regions[i].getEdge(j)->m_endPTR).length();
 
-                                QVector3D* lastPoint = m_regions[i].getEdge(j)->m_startPTR;
+                                //This is the default for the start vertex
+                                QVector3D* startPoint = m_regions[i].getEdge(j)->m_startPTR;
 
                                 if(lengthToEnd < lengthToStart)
                                 {
+                                    //If the distance from the intersection is actually shorter towards
+                                    //the end vertex then the direction is end--->start. Mark this using
+                                    //the boolean and update the start vertex for our edge
                                     edgeIsReversed = true;
-                                    lastPoint = m_regions[i].getEdge(j)->m_endPTR;
+                                    startPoint = m_regions[i].getEdge(j)->m_endPTR;
                                 }
 
-                                VoronoiEdge* newEdge = new VoronoiEdge(lastPoint, start);
+                                //Create a new edge from the edge's start to our intersection
+                                VoronoiEdge* newEdge = new VoronoiEdge(startPoint, start);
                                 ID = edgeExists(newEdge);
 
                                 if(ID != -1)
@@ -905,10 +990,13 @@ void EnglishFields::makeFieldFeatures()
                                     m_allEdges.push_back(newEdge);
                                 }
 
-                                newEdges.push_back(newEdge);
+                                //After checking for references add it to our container
+                                edges.push_back(newEdge);
                             }
                             else if(k != intersectedEdges[j].size() - 1)
                             {
+                                //This case takes care of all new edges up until the final one.
+                                //First we get the position of the last intersection in our container
                                 QVector3D* lastPoint = new QVector3D(intersections[intersectedEdges[j][k - 1]]);
 
                                 ID = vertExists(lastPoint);
@@ -922,6 +1010,8 @@ void EnglishFields::makeFieldFeatures()
                                     m_allVerts.push_back(lastPoint);
                                 }
 
+                                //Then we create an edge between the last intersection and
+                                //the current one
                                 VoronoiEdge* newEdge = new VoronoiEdge(lastPoint, start);
 
                                 ID = edgeExists(newEdge);
@@ -935,10 +1025,13 @@ void EnglishFields::makeFieldFeatures()
                                     m_allEdges.push_back(newEdge);
                                 }
 
-                                newEdges.push_back(newEdge);
+                                //And finally add it to the container
+                                edges.push_back(newEdge);
                             }
                             else
                             {
+                                //This case takes care of the last new edge we need to add.
+                                //Similar to the above case we get the position of the last intersection
                                 QVector3D* lastPoint = new QVector3D(intersections[intersectedEdges[j][k - 1]]);
 
                                 ID = vertExists(lastPoint);
@@ -952,8 +1045,11 @@ void EnglishFields::makeFieldFeatures()
                                     m_allVerts.push_back(lastPoint);
                                 }
 
+                                //This time though we set the end point and the end point of the current edge
                                 VoronoiEdge* newEdge = new VoronoiEdge(lastPoint, m_regions[i].getEdge(j)->m_endPTR);
 
+                                //If the edge direction is reversed (end--->start) the 'end point' is actually stored
+                                //in the startPTR, so update new change to reflect this
                                 if(edgeIsReversed)
                                 {
                                     newEdge = new VoronoiEdge(lastPoint, m_regions[i].getEdge(j)->m_startPTR);
@@ -970,28 +1066,35 @@ void EnglishFields::makeFieldFeatures()
                                     m_allEdges.push_back(newEdge);
                                 }
 
-                                newEdges.push_back(newEdge);
+                                //Add the edge to the container
+                                edges.push_back(newEdge);
                             }
                         }
                     }
 
-                    newFaces.push_back(VoronoiFace(newEdges));
                 }
             }
 
+            //Code which adds a small line which shows the perpendicular
+            //vector we've been using
 //            QVector3D* str = new QVector3D(m_regions[i].getEdge(0)->getMidPoint());
 //            QVector3D* ending = new QVector3D((3 * perpVector) + (*str));
 
 //            edges.push_back(new VoronoiEdge(str, ending));
 
+            //And now we add a new face with our update edges.
             newFaces.push_back(VoronoiFace(edges));
         }
         else
         {
+            //The field isn't usable, print and simply add the unedited face
+            //to our container
             qInfo()<<"Face "<<i<<" is not usable";
             newFaces.push_back(m_regions[i]);
         }
     }
 
+    //Now update our regions container to have the faces
+    //with the updated edges in it
     m_regions = newFaces;
 }
