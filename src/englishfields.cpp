@@ -73,7 +73,7 @@ void EnglishFields::makeVoronoiDiagram()
         //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
 //        srand(time(NULL));
 //        qInfo()<<"Seed: "<<time(NULL);
-        srand(46632);
+        srand(1491153403);
 
         uint numPoints = 5;
 
@@ -642,11 +642,6 @@ void EnglishFields::makeFieldFeatures()
 
     for(int i = 0; i < m_regions.size(); ++i)
     {
-        if(i != 5)
-        {
-            continue;
-        }
-
         //Run a quick function which deems whether the face has enough
         //area to make a conviincing field
         m_regions[i].checkUsable();
@@ -677,8 +672,6 @@ void EnglishFields::makeFieldFeatures()
             //Now we calculate the projected length of this vector on the perpendicular vector
             float middleDistance = QVector3D::dotProduct(middleVector, perpVector);// + m_regions[i].getEdge(0)->getMidPoint());
             middleDistance /= perpVector.length();
-
-            qInfo()<<"Middle distance is: "<<middleDistance;
 
             //If this distance is negative then the perpendicular vector is facing out from the face,
             //reverse it by doing *-1
@@ -833,8 +826,11 @@ void EnglishFields::makeFieldFeatures()
                 //Make sure we've added Edge 0 first though
                 edges.push_back(m_regions[i].getEdge(0));
 
+                QVector3D* lastIntersectionStart = m_regions[i].getEdge(0)->m_startPTR;
+                float lastSeparation = 0.0f;
+
                 //Iterate through our intersections
-                for(uint j = 0; j < intersections.size(); j+=2)
+                for(uint j = 0; j < intersections.size() - 1; j+=2)
                 {
                     //Because we are using line segment intersection (instead of normal
                     //line intersection) we know there will only be two intersections
@@ -842,6 +838,41 @@ void EnglishFields::makeFieldFeatures()
                     //two intersections which are next to each other in the container
                     QVector3D* start = new QVector3D(intersections[j]);
                     QVector3D* end = new QVector3D(intersections[j + 1]);
+
+                    if(j == 0)
+                    {
+                        lastSeparation = (*start - *(m_regions[i].getEdge(0)->m_startPTR)).length();
+
+                        lastIntersectionStart = m_regions[i].getEdge(0)->m_startPTR;
+
+                        if((*start - *(m_regions[i].getEdge(0)->m_endPTR)).length() < lastSeparation)
+                        {
+                            lastSeparation = (*start - *(m_regions[i].getEdge(0)->m_endPTR)).length();
+
+                            lastIntersectionStart = m_regions[i].getEdge(0)->m_endPTR;
+                        }
+
+                        qInfo()<<"Last: "<<lastSeparation;
+                    }
+                    else if(j != 0)
+                    {
+                        float thisSeparation = (*start - *lastIntersectionStart).length();
+
+                        if(thisSeparation > 3.0f* lastSeparation)
+                        {
+//                            qInfo()<<"BREAKING";
+//                            qInfo()<<"Last: "<<lastSeparation<<" This: "<<thisSeparation;
+//                            edges.clear();
+//                            edges = m_regions[i].getEdges();
+//                            intersectedEdges.clear();
+
+//                            break;
+                        }
+                        else
+                        {
+                            lastSeparation = thisSeparation;
+                        }
+                    }
 
                     //Standard check for pre-existing references
                     int ID = vertExists(start);
@@ -1091,13 +1122,12 @@ void EnglishFields::makeFieldFeatures()
                 qInfo()<<"Got a distance of "<<distance;
                 newFaces.push_back(VoronoiFace(intersectionSegments));
             }
-            //Code which adds a small line which shows the perpendicular
+            //Code which adds a small line showing the perpendicular
             //vector we've been using
-            QVector3D* str = new QVector3D(m_regions[i].getEdge(0)->getMidPoint());
-            QVector3D* ending = new QVector3D((3 * perpVector) + (*str));
+//            QVector3D* str = new QVector3D(m_regions[i].getEdge(0)->getMidPoint());
+//            QVector3D* ending = new QVector3D((3 * perpVector) + (*str));
 
-            edges.push_back(new VoronoiEdge(str, ending));
-            edges.push_back(new VoronoiEdge(new QVector3D(m_regions[i].getEdge(0)->getMidPoint()), new QVector3D(m_regions[i].getMiddle())));
+//            edges.push_back(new VoronoiEdge(str, ending));
 
             //And now we add a new face with our update edges.
             newFaces.push_back(VoronoiFace(edges));
