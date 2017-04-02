@@ -72,7 +72,8 @@ void EnglishFields::makeVoronoiDiagram()
     {
         //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
 //        srand(time(NULL));
-        srand(123);
+//        qInfo()<<"Seed: "<<time(NULL);
+        srand(1491134923);
 
         uint numPoints = 5;
 
@@ -640,7 +641,7 @@ void EnglishFields::makeFieldFeatures()
 
     std::vector< std::vector<VoronoiEdge*> > allNewEdges;
 
-    std::vector<VoronoiFace> newFaces;// = m_regions;
+    std::vector<VoronoiFace> newFaces;
 
     for(int i = 0; i < m_regions.size(); ++i)
     {
@@ -656,8 +657,6 @@ void EnglishFields::makeFieldFeatures()
             perpVector.normalize();
 
             VoronoiEdge* furthestEdge = m_regions[i].getEdge(0);
-
-            //        furthestEdge->m_startPTR->setY(5);
 
             float distance = -1000000;
 
@@ -750,7 +749,7 @@ void EnglishFields::makeFieldFeatures()
 
                 VoronoiEdge* tmp = new VoronoiEdge(newStart, newEnd);
 
-                int edgeCount = 0;
+                int edgeCount = 1;
 
                 for(auto j = edges.begin() + 1; j != edges.end(); ++j)
                 {
@@ -768,6 +767,9 @@ void EnglishFields::makeFieldFeatures()
 
             if(intersections.size() > 0)
             {
+                edges.clear();
+                edges.push_back(m_regions[i].getEdge(0));
+
                 for(uint j = 0; j < intersections.size(); j+=2)
                 {
                     QVector3D* start = new QVector3D(intersections[j]);
@@ -817,217 +819,120 @@ void EnglishFields::makeFieldFeatures()
 
                     std::vector<VoronoiEdge*> newEdges;
 
-                    for(uint k = 0; k < intersectedEdges[j].size(); ++k)
+                    if(intersectedEdges[j].size() == 0)
                     {
-                        QVector3D* start = new QVector3D(intersections[intersectedEdges[j][k]]);
-
-                        int ID = vertExists(start);
-
-                        if(ID != -1)
+                        newEdges.push_back(m_regions[i].getEdge(j));
+                    }
+                    else
+                    {
+                        for(uint k = 0; k < intersectedEdges[j].size(); ++k)
                         {
-                            start = m_allVerts[ID];
-                        }
-                        else
-                        {
-                            m_allVerts.push_back(start);
-                        }
+                            QVector3D* start = new QVector3D(intersections[intersectedEdges[j][k]]);
 
-                        if(k == 0)
-                        {
-                            float lengthToStart = (*start - *m_regions[i].getEdge(j)->m_startPTR).length();
-                            float lengthToEnd = (*start - *m_regions[i].getEdge(j)->m_endPTR).length();
-
-                            QVector3D* lastPoint = m_regions[i].getEdge(j)->m_startPTR;
-
-                            if(lengthToEnd < lengthToStart)
-                            {
-                                edgeIsReversed = true;
-                                lastPoint = m_regions[i].getEdge(j)->m_endPTR;
-                            }
-
-                            VoronoiEdge* newEdge = new VoronoiEdge(lastPoint, start);
-
-                            ID = edgeExists(newEdge);
+                            int ID = vertExists(start);
 
                             if(ID != -1)
                             {
-                                newEdge = m_allEdges[ID];
+                                start = m_allVerts[ID];
                             }
                             else
                             {
-                                m_allEdges.push_back(newEdge);
+                                m_allVerts.push_back(start);
                             }
 
-//                            newEdge->m_startPTR->setY(5);
-                            newEdges.push_back(newEdge);
+                            if(k == 0)
+                            {
+                                float lengthToStart = (*start - *m_regions[i].getEdge(j)->m_startPTR).length();
+                                float lengthToEnd = (*start - *m_regions[i].getEdge(j)->m_endPTR).length();
 
-//                            if(edgeIsReversed)
-//                            {
-//                                VoronoiEdge* updateEdge1 = new VoronoiEdge(m_regions[i].getEdge(j)->m_endPTR, start);
-//                                VoronoiEdge* updateEdge2 = new VoronoiEdge(start, m_regions[i].getEdge(j)->m_startPTR);
+                                QVector3D* lastPoint = m_regions[i].getEdge(j)->m_startPTR;
 
-//                                ID = edgeExists(updateEdge1);
+                                if(lengthToEnd < lengthToStart)
+                                {
+                                    edgeIsReversed = true;
+                                    lastPoint = m_regions[i].getEdge(j)->m_endPTR;
+                                }
 
-//                                if(ID != -1)
-//                                {
-//                                    updateEdge1 = m_allEdges[ID];
-//                                }
-//                                else
-//                                {
-//                                    m_allEdges.push_back(updateEdge1);
-//                                }
+                                VoronoiEdge* newEdge = new VoronoiEdge(lastPoint, start);
+                                ID = edgeExists(newEdge);
 
-//                                ID = edgeExists(updateEdge2);
+                                if(ID != -1)
+                                {
+                                    newEdge = m_allEdges[ID];
+                                }
+                                else
+                                {
+                                    m_allEdges.push_back(newEdge);
+                                }
 
-//                                if(ID != -1)
-//                                {
-//                                    updateEdge2 = m_allEdges[ID];
-//                                }
-//                                else
-//                                {
-//                                    m_allEdges.push_back(updateEdge2);
-//                                }
+                                newEdges.push_back(newEdge);
+                            }
+                            else if(k != intersectedEdges[j].size() - 1)
+                            {
+                                QVector3D* lastPoint = new QVector3D(intersections[intersectedEdges[j][k - 1]]);
 
-//                                edgesNeedUpdating.push_back(EdgeToUpdate(remainingEdge, updateEdge1, updateEdge2));
-//                            }
-//                            else
-//                            {
-//                                VoronoiEdge* updateEdge1 = new VoronoiEdge(m_regions[i].getEdge(j)->m_startPTR, start);
-//                                VoronoiEdge* updateEdge2 = new VoronoiEdge(start, m_regions[i].getEdge(j)->m_endPTR);
+                                ID = vertExists(lastPoint);
 
-//                                ID = edgeExists(updateEdge1);
+                                if(ID != -1)
+                                {
+                                    lastPoint = m_allVerts[ID];
+                                }
+                                else
+                                {
+                                    m_allVerts.push_back(lastPoint);
+                                }
 
-//                                if(ID != -1)
-//                                {
-//                                    updateEdge1 = m_allEdges[ID];
-//                                }
-//                                else
-//                                {
-//                                    m_allEdges.push_back(updateEdge1);
-//                                }
+                                VoronoiEdge* newEdge = new VoronoiEdge(lastPoint, start);
 
-//                                ID = edgeExists(updateEdge2);
+                                ID = edgeExists(newEdge);
 
-//                                if(ID != -1)
-//                                {
-//                                    updateEdge2 = m_allEdges[ID];
-//                                }
-//                                else
-//                                {
-//                                    m_allEdges.push_back(updateEdge2);
-//                                }
+                                if(ID != -1)
+                                {
+                                    newEdge = m_allEdges[ID];
+                                }
+                                else
+                                {
+                                    m_allEdges.push_back(newEdge);
+                                }
 
-//                                edgesNeedUpdating.push_back(EdgeToUpdate(remainingEdge, updateEdge1, updateEdge2));
-//                            }
+                                newEdges.push_back(newEdge);
+                            }
+                            else
+                            {
+                                QVector3D* lastPoint = new QVector3D(intersections[intersectedEdges[j][k - 1]]);
+
+                                ID = vertExists(lastPoint);
+
+                                if(ID != -1)
+                                {
+                                    lastPoint = m_allVerts[ID];
+                                }
+                                else
+                                {
+                                    m_allVerts.push_back(lastPoint);
+                                }
+
+                                VoronoiEdge* newEdge = new VoronoiEdge(lastPoint, m_regions[i].getEdge(j)->m_endPTR);
+
+                                if(edgeIsReversed)
+                                {
+                                    newEdge = new VoronoiEdge(lastPoint, m_regions[i].getEdge(j)->m_startPTR);
+                                }
+
+                                ID = edgeExists(newEdge);
+
+                                if(ID != -1)
+                                {
+                                    newEdge = m_allEdges[ID];
+                                }
+                                else
+                                {
+                                    m_allEdges.push_back(newEdge);
+                                }
+
+                                newEdges.push_back(newEdge);
+                            }
                         }
-                        else
-                        {
-                            QVector3D* lastPoint = new QVector3D(intersections[intersectedEdges[j][k - 1]]);
-
-                            ID = vertExists(lastPoint);
-
-                            if(ID != -1)
-                            {
-                                lastPoint = m_allVerts[ID];
-                            }
-                            else
-                            {
-                                m_allVerts.push_back(lastPoint);
-                            }
-
-                            VoronoiEdge* newEdge = new VoronoiEdge(lastPoint, start);
-
-                            ID = edgeExists(newEdge);
-
-                            if(ID != -1)
-                            {
-                                newEdge = m_allEdges[ID];
-                            }
-                            else
-                            {
-                                m_allEdges.push_back(newEdge);
-                            }
-
-                            newEdge->m_startPTR->setY(5);
-//                            newEdges.push_back(newEdge);
-                        }
-
-//                        newEdges[newEdges.size() - 1]->m_startPTR->setY(5);
-//                        newEdges[newEdges.size() - 1]->m_endPTR->setY(5);
-//                        else
-//                        {
-//                            QVector3D* previousStart = new QVector3D(intersections[intersectedEdges[j][k - 1]]);
-
-//                            ID = vertExists(previousStart);
-
-//                            if(ID != -1)
-//                            {
-//                                previousStart = m_allVerts[ID];
-//                            }
-//                            else
-//                            {
-//                                m_allVerts.push_back(previousStart);
-//                            }
-
-//                            VoronoiEdge* lastUpdatedEdge = NULL;
-
-//                            if(edgesNeedUpdating.size() > 0)
-//                            {
-//                                lastUpdatedEdge = edgesNeedUpdating[edgesNeedUpdating.size() - 1].newEdge_2;
-//                            }
-//                            else
-//                            {
-//                                if(edgeIsReversed)
-//                                {
-//                                    lastUpdatedEdge = new VoronoiEdge(previousStart, m_regions[i].getEdge(j)->m_startPTR);
-//                                }
-//                                else
-//                                {
-//                                    lastUpdatedEdge = new VoronoiEdge(previousStart, m_regions[i].getEdge(j)->m_endPTR);
-//                                }
-//                            }
-//                                    //NULL;
-
-
-
-//                            ID = edgeExists(lastUpdatedEdge);
-
-//                            if(ID != -1)
-//                            {
-//                                lastUpdatedEdge = m_allEdges[ID];
-//                            }
-//                            else
-//                            {
-//                                m_allEdges.push_back(lastUpdatedEdge);
-//                            }
-
-//                            float lengthToStart = (*previousStart - *lastUpdatedEdge->m_startPTR).length();
-//                            float lengthToEnd = (*previousStart - *lastUpdatedEdge->m_endPTR).length();
-
-//                            if(lengthToEnd < lengthToStart)
-//                            {
-//                                edgeIsReversed = true;
-//                            }
-//                            else
-//                            {
-//                                edgeIsReversed = false;
-//                            }
-
-//                            if(edgeIsReversed)
-//                            {
-//                                VoronoiEdge* updateEdge1 = new VoronoiEdge(lastUpdatedEdge->m_endPTR, start);
-//                                VoronoiEdge* updateEdge2 = new VoronoiEdge(start, lastUpdatedEdge->m_startPTR);
-
-//                                edgesNeedUpdating.push_back(EdgeToUpdate(lastUpdatedEdge, updateEdge1, updateEdge2));
-//                            }
-//                            else
-//                            {
-//                                VoronoiEdge* updateEdge1 = new VoronoiEdge(lastUpdatedEdge->m_startPTR, start);
-//                                VoronoiEdge* updateEdge2 = new VoronoiEdge(start, lastUpdatedEdge->m_endPTR);
-
-//                                edgesNeedUpdating.push_back(EdgeToUpdate(lastUpdatedEdge, updateEdge1, updateEdge2));
-//                            }
-//                        }
                     }
 
                     allNewEdges.push_back(newEdges);
@@ -1035,16 +940,18 @@ void EnglishFields::makeFieldFeatures()
                 }
             }
 
-            QVector3D* str = new QVector3D(m_regions[i].getEdge(0)->getMidPoint());
-            QVector3D* ending = new QVector3D((3 * perpVector) + (*str));
+//            QVector3D* str = new QVector3D(m_regions[i].getEdge(0)->getMidPoint());
+//            QVector3D* ending = new QVector3D((3 * perpVector) + (*str));
 
-            edges.push_back(new VoronoiEdge(str, ending));
+//            edges.push_back(new VoronoiEdge(str, ending));
 
-            m_regions[i] = VoronoiFace(edges);
+//            m_regions[i] = VoronoiFace(edges);
+            newFaces.push_back(VoronoiFace(edges));
         }
         else
         {
             qInfo()<<"Face "<<i<<" is not usable";
+            newFaces.push_back(m_regions[i]);
         }
     }
 
