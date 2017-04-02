@@ -71,9 +71,9 @@ void EnglishFields::makeVoronoiDiagram()
     else
     {
         //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
-//        srand(time(NULL));
-//        qInfo()<<"Seed: "<<time(NULL);
-        srand(1491134923);
+        srand(time(NULL));
+        qInfo()<<"Seed: "<<time(NULL);
+//        srand(1491134923);
 
         uint numPoints = 5;
 
@@ -637,10 +637,6 @@ void EnglishFields::updateFaces(VoronoiEdge *_prev, VoronoiEdge *_e1, VoronoiEdg
 
 void EnglishFields::makeFieldFeatures()
 {
-    std::vector<EdgeToUpdate> edgesNeedUpdating;
-
-    std::vector< std::vector<VoronoiEdge*> > allNewEdges;
-
     std::vector<VoronoiFace> newFaces;
 
     for(int i = 0; i < m_regions.size(); ++i)
@@ -823,6 +819,50 @@ void EnglishFields::makeFieldFeatures()
                     {
                         newEdges.push_back(m_regions[i].getEdge(j));
                     }
+                    else if(intersectedEdges[j].size() == 1)
+                    {
+                        QVector3D* start = new QVector3D(intersections[intersectedEdges[j][0]]);
+
+                        int ID = vertExists(start);
+
+                        if(ID != -1)
+                        {
+                            start = m_allVerts[ID];
+                        }
+                        else
+                        {
+                            m_allVerts.push_back(start);
+                        }
+
+                        VoronoiEdge* newEdge = new VoronoiEdge(m_regions[i].getEdge(j)->m_startPTR, start);
+                        ID = edgeExists(newEdge);
+
+                        if(ID != -1)
+                        {
+                            newEdge = m_allEdges[ID];
+                        }
+                        else
+                        {
+                            m_allEdges.push_back(newEdge);
+                        }
+
+                        newEdges.push_back(newEdge);
+
+                        VoronoiEdge* newEdge2 = new VoronoiEdge(start, m_regions[i].getEdge(j)->m_endPTR);
+                        ID = edgeExists(newEdge2);
+
+                        if(ID != -1)
+                        {
+                            newEdge2 = m_allEdges[ID];
+                        }
+                        else
+                        {
+                            m_allEdges.push_back(newEdge2);
+                        }
+
+                        newEdges.push_back(newEdge2);
+
+                    }
                     else
                     {
                         for(uint k = 0; k < intersectedEdges[j].size(); ++k)
@@ -935,7 +975,6 @@ void EnglishFields::makeFieldFeatures()
                         }
                     }
 
-                    allNewEdges.push_back(newEdges);
                     newFaces.push_back(VoronoiFace(newEdges));
                 }
             }
@@ -945,7 +984,6 @@ void EnglishFields::makeFieldFeatures()
 
 //            edges.push_back(new VoronoiEdge(str, ending));
 
-//            m_regions[i] = VoronoiFace(edges);
             newFaces.push_back(VoronoiFace(edges));
         }
         else
@@ -953,11 +991,6 @@ void EnglishFields::makeFieldFeatures()
             qInfo()<<"Face "<<i<<" is not usable";
             newFaces.push_back(m_regions[i]);
         }
-    }
-
-    for(uint i = 0; i < edgesNeedUpdating.size(); ++i)
-    {
-         updateFaces(edgesNeedUpdating[i].oldEdge, edgesNeedUpdating[i].newEdge_1, edgesNeedUpdating[i].newEdge_2);
     }
 
     m_regions = newFaces;
