@@ -860,13 +860,13 @@ void EnglishFields::makeFieldFeatures()
 
                         if(thisSeparation > 3.0f* lastSeparation)
                         {
-//                            qInfo()<<"BREAKING";
-//                            qInfo()<<"Last: "<<lastSeparation<<" This: "<<thisSeparation;
-//                            edges.clear();
-//                            edges = m_regions[i].getEdges();
-//                            intersectedEdges.clear();
+                            qInfo()<<"BREAKING";
+                            qInfo()<<"Last: "<<lastSeparation<<" This: "<<thisSeparation;
+                            edges.clear();
+                            edges = m_regions[i].getEdges();
+                            intersectedEdges.clear();
 
-//                            break;
+                            break;
                         }
                         else
                         {
