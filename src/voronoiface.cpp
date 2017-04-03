@@ -100,7 +100,6 @@ void VoronoiFace::passVBOToShader(QOpenGLShaderProgram &_pgm)
 {
     updateVerts();
 
-
     if(m_edgeVerts.size() > 0)
     {
         _pgm.bind();
