@@ -80,3 +80,10 @@ float VoronoiEdge::getAngle(VoronoiEdge *_test)
 
     return angle;
 }
+
+QVector3D VoronoiEdge::getDirection()
+{
+    QVector3D direction = *m_endPTR - * m_startPTR;
+    direction.normalize();
+    return direction;
+}
