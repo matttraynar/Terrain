@@ -507,8 +507,6 @@ void EnglishFields::makeFieldFeatures()
         {
             int ridgeSwitch = 100 * (float)rand() / (float)RAND_MAX;
 
-            qInfo()<<"Switch: "<<ridgeSwitch;
-
             //If the face is usable do some stuff
             if(ridgeSwitch > 80)
             {
@@ -522,8 +520,6 @@ void EnglishFields::makeFieldFeatures()
             }
             else
             {
-                //The field isn't usable, print and simply add the unedited face
-                //to our container
                 qInfo()<<"Leaving face as is";
                 newFaces.push_back(m_regions[i]);
             }
@@ -1073,29 +1069,6 @@ void EnglishFields::threeField(VoronoiFace face, std::vector<VoronoiFace> &_face
 
     VoronoiEdge* middleEdge = new VoronoiEdge(new QVector3D(face.getEdge(0)->getMidPoint()), middleVert);
 
-    ID = edgeExists(middleEdge);
-
-    if(ID != -1)
-    {
-        middleEdge = m_allEdges[ID];
-    }
-    else
-    {
-        m_allEdges.push_back(middleEdge);
-    }
-
-    for(uint i = 0; i < edges.size(); ++i)
-    {
-        QVector3D intersection = middleEdge->intersectEdge(edges[i]);
-
-        if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
-        {
-            qInfo()<<"Edge isn't going to work, returning";
-            _facesToUpdate.push_back(face);
-            return;
-        }
-    }
-
     VoronoiEdge* halfEdge = NULL;
     VoronoiEdge* edgeToUse = middleEdge;
     int edgeIndex = 0;
@@ -1123,12 +1096,30 @@ void EnglishFields::threeField(VoronoiFace face, std::vector<VoronoiFace> &_face
         }
     }
 
+    for(uint i = 0; i < edges.size(); ++i)
+    {
+        if(i == edgeIndex)
+        {
+            continue;
+        }
+
+        QVector3D intersection = edgeToUse->intersectEdge(edges[i]);
+
+        if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
+        {
+            qInfo()<<"Edge "<<edgeIndex<<" intersects with "<<i;
+            edgeToUse->m_endPTR = new QVector3D(intersection);
+//            _facesToUpdate.push_back(face);
+//            return;
+        }
+    }
+
     qInfo()<<"Found a good edge at: "<<edgeIndex;
 
     QVector3D* newStartPoint = new QVector3D(*(face.getEdge(edgeIndex)->m_startPTR) + (face.getMiddle() - face.getEdge(edgeIndex)->getMidPoint()));
     QVector3D* newEndPoint = new QVector3D(*(face.getEdge(edgeIndex)->m_endPTR) + (face.getMiddle() - face.getEdge(edgeIndex)->getMidPoint()));
 
-    VoronoiEdge* fieldEdge = new VoronoiEdge(new QVector3D(face.getMiddle()), newStartPoint);
+    VoronoiEdge* fieldEdge = new VoronoiEdge(middleVert, newStartPoint);
 
     fieldEdge->m_endPTR = new QVector3D(*(fieldEdge->m_endPTR) + (fieldEdge->getDirection() * (m_width / 2.0f)));
 
@@ -1143,18 +1134,7 @@ void EnglishFields::threeField(VoronoiFace face, std::vector<VoronoiFace> &_face
         }
     }
 
-    ID = vertExists(fieldEdge->m_endPTR);
-
-    if(ID != -1)
-    {
-        fieldEdge->m_endPTR = m_allVerts[ID];
-    }
-    else
-    {
-        m_allVerts.push_back(fieldEdge->m_endPTR);
-    }
-
-    VoronoiEdge* fieldEdge2 = new VoronoiEdge(new QVector3D(face.getMiddle()), newEndPoint);
+    VoronoiEdge* fieldEdge2 = new VoronoiEdge(middleVert, newEndPoint);
 
     fieldEdge2->m_endPTR = new QVector3D(*(fieldEdge2->m_endPTR) + (fieldEdge2->getDirection() * (m_width / 2.0f)));
 
@@ -1169,20 +1149,79 @@ void EnglishFields::threeField(VoronoiFace face, std::vector<VoronoiFace> &_face
         }
     }
 
-    ID = vertExists(fieldEdge2->m_endPTR);
+    ID = edgeExists(edgeToUse);
 
     if(ID != -1)
     {
-        fieldEdge2->m_endPTR = m_allVerts[ID];
+        edgeToUse = m_allEdges[ID];
     }
     else
     {
-        m_allVerts.push_back(fieldEdge2->m_endPTR);
+        m_allEdges.push_back(edgeToUse);
     }
 
     edges.push_back(edgeToUse);
-    edges.push_back(fieldEdge);
-    edges.push_back(fieldEdge2);
+
+    float threeFieldSwitch = 10.0f* (float)rand()/(float)RAND_MAX;
+
+    if(threeFieldSwitch < 8.0f)
+    {
+        ID = vertExists(fieldEdge->m_endPTR);
+
+        if(ID != -1)
+        {
+            fieldEdge->m_endPTR = m_allVerts[ID];
+        }
+        else
+        {
+            m_allVerts.push_back(fieldEdge->m_endPTR);
+        }
+
+        edges.push_back(fieldEdge);
+
+        ID = vertExists(fieldEdge2->m_endPTR);
+
+        if(ID != -1)
+        {
+            fieldEdge2->m_endPTR = m_allVerts[ID];
+        }
+        else
+        {
+            m_allVerts.push_back(fieldEdge2->m_endPTR);
+        }
+
+        edges.push_back(fieldEdge2);
+    }
+    else if(threeFieldSwitch < 9.0f)
+    {
+        ID = vertExists(fieldEdge->m_endPTR);
+
+        if(ID != -1)
+        {
+            fieldEdge->m_endPTR = m_allVerts[ID];
+        }
+        else
+        {
+            m_allVerts.push_back(fieldEdge->m_endPTR);
+        }
+
+        edges.push_back(fieldEdge);
+    }
+    else
+    {
+        ID = vertExists(fieldEdge2->m_endPTR);
+
+        if(ID != -1)
+        {
+            fieldEdge2->m_endPTR = m_allVerts[ID];
+        }
+        else
+        {
+            m_allVerts.push_back(fieldEdge2->m_endPTR);
+        }
+
+        edges.push_back(fieldEdge2);
+    }
 
     _facesToUpdate.push_back(VoronoiFace(edges));
 }
