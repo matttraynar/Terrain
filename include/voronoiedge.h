@@ -127,6 +127,8 @@ public:
         }
     }
 
+    float getAngle(VoronoiEdge*_test);
+
     QVector3D m_start;
     QVector3D m_end;
 

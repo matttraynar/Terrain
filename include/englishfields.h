@@ -76,7 +76,7 @@ public:
 
     void operator = (EnglishFields &toCopy);
 
-    void makeVoronoiDiagram();
+    void makeVoronoiDiagram(int _seed);
 
     void subdivideEdge(QVector3D _start, QVector3D _end, std::vector< std::pair< QVector3D, QVector3D > > & edgeLis);
 
@@ -84,6 +84,10 @@ public:
 
 
 private:
+    void ridgeAndFurrow(VoronoiFace face, std::vector<VoronoiFace> &_facesToUpdate);
+
+    void threeField(VoronoiFace face, std::vector<VoronoiFace> &_facesToUpdate);
+
     void subdivideRegions();
 
     void makeFieldFeatures();

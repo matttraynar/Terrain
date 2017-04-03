@@ -68,3 +68,15 @@ float VoronoiEdge::get2DCrossProduct(QVector3D a, QVector3D b)
     //Assuming we're ignoring height
     return((a.x() * b.z()) - (a.z() * b.x()));
 }
+
+float VoronoiEdge::getAngle(VoronoiEdge *_test)
+{
+    QVector3D translatedThis = m_end - m_start;
+    QVector3D translatedTest = _test->m_end - _test->m_start;
+
+    float dotProduct = QVector3D::dotProduct(translatedThis, translatedTest);
+
+    float angle = acos(dotProduct / (translatedThis.length() * translatedTest.length()));
+
+    return angle;
+}
