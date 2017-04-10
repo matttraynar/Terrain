@@ -75,7 +75,7 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
         srand(_seed);
         qInfo()<<"Seed: "<<_seed;
 
-        uint numPoints = 5;
+        uint numPoints = 100;
 
         points.reserve(numPoints);
 
