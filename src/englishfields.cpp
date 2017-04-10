@@ -14,6 +14,7 @@ EnglishFields::EnglishFields(double _width)
     m_width = _width;
 
     makeVoronoiDiagram(time(NULL));
+//    makeVoronoiDiagram(321);
 
     subdivideRegions();
 
@@ -75,7 +76,7 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
         srand(_seed);
         qInfo()<<"Seed: "<<_seed;
 
-        uint numPoints = 100;
+        uint numPoints = 5;
 
         points.reserve(numPoints);
 
@@ -499,12 +500,18 @@ void EnglishFields::makeFieldFeatures()
 
     for(int i = 0; i < m_regions.size(); ++i)
     {
+        if(i != 6)
+        {
+//            continue;
+        }
+
         //Run a quick function which deems whether the face has enough
         //area to make a conviincing field
         m_regions[i].checkUsable();
 
         if(m_regions[i].m_isUsable)
         {
+            qInfo()<<"Face: "<<i;
             int ridgeSwitch = 100 * (float)rand() / (float)RAND_MAX;
 
             //If the face is usable do some stuff
@@ -637,7 +644,7 @@ void EnglishFields::ridgeAndFurrow(VoronoiFace face, std::vector<VoronoiFace> &_
     std::vector<VoronoiEdge*> intersectionSegments;
 
     //Now we are going to create our ridge and furrows
-    for(int x = 1; x < 50; x+=2)
+    for(int x = 1; x < 50; x+=1)
     {
         //If the current x position is further away from Edge 0 than the
         //furthest away vertex we can stop creating ridge and furrows
@@ -1008,6 +1015,8 @@ void EnglishFields::ridgeAndFurrow(VoronoiFace face, std::vector<VoronoiFace> &_
                         //Add the edge to the container
                         edges.push_back(newEdge);
                     }
+
+//                    edges[edges.size() - 1]->m_startPTR->setY(5);
                 }
             }
         }
@@ -1024,7 +1033,7 @@ void EnglishFields::ridgeAndFurrow(VoronoiFace face, std::vector<VoronoiFace> &_
 
     //            edges.push_back(new VoronoiEdge(str, ending));
 
-    //And now we add a new face with our update edges.
+    //And now we add a new face with our updated edges.
     _facesToUpdate.push_back(VoronoiFace(edges));
 }
 
@@ -1196,7 +1205,6 @@ void EnglishFields::threeField(VoronoiFace face, std::vector<VoronoiFace> &_face
 
     std::vector<VoronoiEdge*> newField_1;
 
-    qInfo()<<edgeIndex;
     qInfo()<<"Intersects: "<<intersect_1<<" & "<<intersect_2;
 
     if(threeFieldSwitch < 8.0f)
