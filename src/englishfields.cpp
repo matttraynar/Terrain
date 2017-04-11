@@ -506,7 +506,7 @@ void EnglishFields::makeFieldFeatures()
         }
 
         makeOrganic(m_regions[i]);
-//        continue;
+        continue;
 
         //Run a quick function which deems whether the face has enough
         //area to make a conviincing field
@@ -1286,6 +1286,8 @@ void EnglishFields::makeOrganic(VoronoiFace &_face)
     std::vector<VoronoiEdge*> faceEdges;
 
     static std::vector<VoronoiEdge*> editedEdges;
+    std::vector<VoronoiEdge*> newEdges;
+    static std::vector<std::vector<VoronoiEdge*>> updatedEdges;
 
     qInfo()<<"Count: "<<_face.getEdges().size();
     for(int i = 0; i < _face.getEdges().size(); ++i)
@@ -1294,13 +1296,22 @@ void EnglishFields::makeOrganic(VoronoiFace &_face)
 
         int ID = edgeExists(_face.getEdge(i), editedEdges);
 
-        if(ID != -1)
+        if(ID == -1)
         {
-            continue;
+            midPointDisplace(_face.getEdge(i), 1, newEdges);
+
+            editedEdges.push_back(_face.getEdge(i));
+            updatedEdges.push_back(newEdges);
+        }
+        else
+        {
+            newEdges = updatedEdges[ID];
         }
 
-        midPointDisplace(_face.getEdge(i), 1, faceEdges);
-        editedEdges.push_back(_face.getEdge(i));
+        for(int j = 0; j < newEdges.size(); ++j)
+        {
+            faceEdges.push_back(newEdges[j]);
+        }
     }
 
     qInfo()<<"Final Count: "<<faceEdges.size();
