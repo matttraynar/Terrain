@@ -96,6 +96,8 @@ private:
 
     void makeFieldFeatures();
 
+    void midPointDisplace(VoronoiEdge* edge, int iteration, std::vector<VoronoiEdge*> &_edges);
+
     int clampIndex(int index, int numVertices);
 
     int edgeExists(VoronoiEdge* _edge);

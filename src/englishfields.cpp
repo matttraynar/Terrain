@@ -13,8 +13,8 @@ EnglishFields::EnglishFields(double _width)
     //Set up and create the voronoi diagram.
     m_width = _width;
 
-//    makeVoronoiDiagram(time(NULL));
-    makeVoronoiDiagram(321);
+    makeVoronoiDiagram(time(NULL));
+//    makeVoronoiDiagram(321);
 
     subdivideRegions();
 
@@ -506,7 +506,7 @@ void EnglishFields::makeFieldFeatures()
         }
 
         makeOrganic(m_regions[i]);
-        continue;
+//        continue;
 
         //Run a quick function which deems whether the face has enough
         //area to make a conviincing field
@@ -516,6 +516,8 @@ void EnglishFields::makeFieldFeatures()
         {
             qInfo()<<"Face: "<<i;
             int ridgeSwitch = 100 * (float)rand() / (float)RAND_MAX;
+
+            ridgeSwitch = 50;
 
             //If the face is usable do some stuff
             if(ridgeSwitch > 80)
@@ -1283,15 +1285,64 @@ void EnglishFields::makeOrganic(VoronoiFace &_face)
 {
     std::vector<VoronoiEdge*> faceEdges;
 
+    static std::vector<VoronoiEdge*> editedEdges;
+
     qInfo()<<"Count: "<<_face.getEdges().size();
     for(int i = 0; i < _face.getEdges().size(); ++i)
     {
-        subdivideEdge(_face.getEdge(i), faceEdges);
+//        subdivideEdge(_face.getEdge(i), faceEdges);
+
+        int ID = edgeExists(_face.getEdge(i), editedEdges);
+
+        if(ID != -1)
+        {
+            continue;
+        }
+
+        midPointDisplace(_face.getEdge(i), 1, faceEdges);
+        editedEdges.push_back(_face.getEdge(i));
     }
 
     qInfo()<<"Final Count: "<<faceEdges.size();
 
     _face = VoronoiFace(faceEdges);
+}
+
+void EnglishFields::midPointDisplace(VoronoiEdge *edge, int iteration, std::vector<VoronoiEdge*> &_edges)
+{
+    qInfo()<<"Iteration: "<<iteration;
+
+    if(iteration > 3)
+    {
+        _edges.push_back(edge);
+        return;
+    }
+
+    if((edge->m_startPTR->x() >= m_width / 2.0f || edge->m_startPTR->z() >= m_width / 2.0f || edge->m_startPTR->x() <= -1.0f * m_width / 2.0f || edge->m_startPTR->z() <= -1.0f * m_width / 2.0f) &&
+       (edge->m_endPTR->x() >= m_width / 2.0f || edge->m_endPTR->z() >= m_width / 2.0f || edge->m_endPTR->x() <= -1.0f * m_width / 2.0f || edge->m_endPTR->z() <= -1.0f * m_width / 2.0f))
+    {
+        _edges.push_back(edge);
+        return;
+    }
+
+    if(edge->getLength() < 2.5f)
+    {
+        _edges.push_back(edge);
+        return;
+    }
+
+    PerlinNoise noise;
+
+    QVector3D* midPoint = new QVector3D(edge->getMidPoint());
+
+    midPoint->setX((((3.0f / float(iteration)) * (double)rand()/(double)RAND_MAX) - 0.5f) + midPoint->x());
+//    midPoint->setX(((2.0f * midPoint->x()) + noise.noise(float(iteration), 0.0f, 0.0f)) / 2.0f);
+
+    midPoint->setZ((((3.0f  / float(iteration))* (double)rand()/(double)RAND_MAX) - 0.5f) + midPoint->z());
+//    midPoint->setZ(((2.0f *midPoint->z()) + noise.noise(float(iteration), 0.0f, 0.0f)) / 2.0f);
+
+    midPointDisplace(new VoronoiEdge(edge->m_startPTR, midPoint), iteration + 1, _edges);
+    midPointDisplace(new VoronoiEdge(midPoint, edge->m_endPTR), iteration + 1, _edges);
 }
 
 //Field processing
