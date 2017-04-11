@@ -24,6 +24,7 @@ typedef CGAL::HalfedgeDS_default< K, HDS_Item_extra > HDS;
 #include <time.h>
 
 #include "voronoiface.h"
+#include "perlinnoise.h"
 
 struct EdgeToUpdate
 {
@@ -79,6 +80,7 @@ public:
     void makeVoronoiDiagram(int _seed);
 
     void subdivideEdge(QVector3D _start, QVector3D _end, std::vector< std::pair< QVector3D, QVector3D > > & edgeLis);
+    void subdivideEdge(VoronoiEdge* edge, std::vector<VoronoiEdge *> &_edges);
 
     inline std::vector<VoronoiFace> getRegions() const { return m_regions; }
 
@@ -87,6 +89,8 @@ private:
     void ridgeAndFurrow(VoronoiFace face, std::vector<VoronoiFace> &_facesToUpdate);
 
     void threeField(VoronoiFace face, std::vector<VoronoiFace> &_facesToUpdate);
+
+    void makeOrganic(VoronoiFace &_face);
 
     void subdivideRegions();
 

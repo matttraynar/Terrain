@@ -13,8 +13,8 @@ EnglishFields::EnglishFields(double _width)
     //Set up and create the voronoi diagram.
     m_width = _width;
 
-    makeVoronoiDiagram(time(NULL));
-//    makeVoronoiDiagram(321);
+//    makeVoronoiDiagram(time(NULL));
+    makeVoronoiDiagram(321);
 
     subdivideRegions();
 
@@ -76,7 +76,7 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
         srand(_seed);
         qInfo()<<"Seed: "<<_seed;
 
-        uint numPoints = 5;
+        uint numPoints = 6;
 
         points.reserve(numPoints);
 
@@ -500,10 +500,13 @@ void EnglishFields::makeFieldFeatures()
 
     for(int i = 0; i < m_regions.size(); ++i)
     {
-        if(i != 6)
+        if(i != 1)
         {
 //            continue;
         }
+
+        makeOrganic(m_regions[i]);
+        continue;
 
         //Run a quick function which deems whether the face has enough
         //area to make a conviincing field
@@ -542,7 +545,7 @@ void EnglishFields::makeFieldFeatures()
 
     //Now update our regions container to have the faces
     //with the updated edges in it
-    m_regions = newFaces;
+//    m_regions = newFaces;
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
@@ -1276,6 +1279,21 @@ void EnglishFields::threeField(VoronoiFace face, std::vector<VoronoiFace> &_face
     _facesToUpdate.push_back(VoronoiFace(edges));
 }
 
+void EnglishFields::makeOrganic(VoronoiFace &_face)
+{
+    std::vector<VoronoiEdge*> faceEdges;
+
+    qInfo()<<"Count: "<<_face.getEdges().size();
+    for(int i = 0; i < _face.getEdges().size(); ++i)
+    {
+        subdivideEdge(_face.getEdge(i), faceEdges);
+    }
+
+    qInfo()<<"Final Count: "<<faceEdges.size();
+
+    _face = VoronoiFace(faceEdges);
+}
+
 //Field processing
 void EnglishFields::subdivideEdge(QVector3D _start, QVector3D _end, std::vector< std::pair< QVector3D, QVector3D > > & edgeList)
 {
@@ -1311,6 +1329,114 @@ void EnglishFields::subdivideEdge(QVector3D _start, QVector3D _end, std::vector<
 
     //Finally add on the last piece of the edge
     edgeList.push_back(std::make_pair(newStart, _end));
+}
+
+void EnglishFields::subdivideEdge(VoronoiEdge *edge, std::vector<VoronoiEdge *> &_edges)
+{
+    PerlinNoise noise;
+
+    static float yValue = 0;
+
+    float length = edge->getLength();
+
+    int resolution = 1;
+
+    QVector3D* newStart = edge->m_startPTR;
+    QVector3D* newEnd = new QVector3D(((edge->m_end - edge->m_start) / (int)length * resolution) + edge->m_start);
+
+    for(float i = 0; i < (int)(length * resolution) - resolution; i += 0.5f)
+    {
+        qInfo()<<"New Segment: "<<(*newEnd - *newStart).length();
+
+        if((*newEnd - edge->m_start).length() > (length))
+        {
+            break;
+        }
+        _edges.push_back(new VoronoiEdge(newStart, newEnd));
+
+        newStart = newEnd;
+
+        int ridgeSwitch = 100 ;//* (float)rand() / (float)RAND_MAX;
+
+        bool modifyX = false;
+        if(newStart->x() != m_width / 2.0f && newStart->x() != -1 * m_width / 2.0f)
+        {
+            modifyX = true;
+        }
+
+        bool modifyZ = false;
+        if(newStart->z() != m_width / 2.0f && newStart->z() != -1 * m_width / 2.0f)
+        {
+            modifyZ = true;
+        }
+
+//        modifyX = false;
+//        modifyZ = false;
+
+//        modifyX = true;
+//        modifyZ = true;
+
+        if(ridgeSwitch > 50 && (modifyX || modifyZ))
+        {
+            float seedX = float(i) / float(((float)length * resolution) - resolution);// (newStart->x() + (m_width / 2.0f)) / m_width;
+            float seedY = (newStart->z() + (m_width / 2.0f)) / m_width;
+
+            if(seedX > 0.99f)
+            {
+                seedX = 0.99f;
+            }
+
+            if(seedY > 0.99f)
+            {
+                seedY = 0.99f;
+            }
+
+            qInfo()<<"SeedX: "<<seedX;
+            qInfo()<<"SeedY: "<<seedY;
+
+            qInfo()<<"Noise: "<<noise.noise(seedX, 0.0f, 0.0f);
+
+            if(modifyX)
+            {
+                qInfo()<<"Previous  X: "<<newStart->x();
+                float newX = newStart->x() + ((noise.noise(seedX, 0.0f, 0.0f) - 0.5f) * float(4.0f));
+                qInfo()<<"Changing X: "<<newX;
+
+                if(newX < (m_width / 2.0f) && newX > (-1 * m_width/2.0f))
+                {
+                    newStart->setX(newX);
+                }
+                else
+                {
+                    qInfo()<<"Not changed";
+                }
+            }
+
+            if(modifyZ)
+            {
+                qInfo()<<"Previous  Z: "<<newStart->z();
+                float newZ = newStart->z() + ((noise.noise(seedX, 0.0f, 0.0f) - 0.5f) * float(4.0f));
+                qInfo()<<"Changing Z: "<<newZ;
+
+                if(newZ < (m_width / 2.0f) && newZ > (-1 * m_width/2.0f))
+                {
+                    newStart->setZ(newZ);
+                }
+                else
+                {
+                    qInfo()<<"Not changed";
+                }
+
+            }
+        }
+
+
+        newEnd = new QVector3D(((edge->m_end - edge->m_start) / (int)length * resolution) + *newEnd);
+    }
+
+    _edges.push_back(new VoronoiEdge(newStart, edge->m_endPTR));
+
+    yValue += 1.0f;
 }
 
 int EnglishFields::clampIndex(int index, int numVertices)
