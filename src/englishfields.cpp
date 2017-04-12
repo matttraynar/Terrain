@@ -14,7 +14,7 @@ EnglishFields::EnglishFields(double _width)
     m_width = _width;
 
     makeVoronoiDiagram(time(NULL));
-//    makeVoronoiDiagram(321);
+//    makeVoronoiDiagram(123);
 
     subdivideRegions();
 
@@ -1292,22 +1292,37 @@ void EnglishFields::makeOrganic(VoronoiFace &_face)
     qInfo()<<"Count: "<<_face.getEdges().size();
     for(int i = 0; i < _face.getEdges().size(); ++i)
     {
-//        subdivideEdge(_face.getEdge(i), faceEdges);
+        //Create a switch will turn the midpoint displacement on
+        float switcher = 10.0f* (float)rand() / (float)RAND_MAX;
 
+        //Check if we've already edited this edge
         int ID = edgeExists(_face.getEdge(i), editedEdges);
 
         if(ID == -1)
         {
-            midPointDisplace(_face.getEdge(i), 1, newEdges);
+            //Now check the switch
+            if(switcher > 2.5f)
+            {
+                //Displace the edge
+                midPointDisplace(_face.getEdge(i), 1, newEdges);
+            }
+            else
+            {
+                //Otherwise just use our unedited edge
+                newEdges.push_back(_face.getEdge(i));
+            }
 
+            //Update the static vectors
             editedEdges.push_back(_face.getEdge(i));
             updatedEdges.push_back(newEdges);
         }
         else
         {
+            //Otherwise jus gee udated edges and duplicate them
             newEdges = updatedEdges[ID];
         }
 
+        //Now add the edited edges to our container for the face
         for(int j = 0; j < newEdges.size(); ++j)
         {
             faceEdges.push_back(newEdges[j]);
@@ -1321,8 +1336,6 @@ void EnglishFields::makeOrganic(VoronoiFace &_face)
 
 void EnglishFields::midPointDisplace(VoronoiEdge *edge, int iteration, std::vector<VoronoiEdge*> &_edges)
 {
-    qInfo()<<"Iteration: "<<iteration;
-
     if(iteration > 6)
     {
         _edges.push_back(edge);
@@ -1346,11 +1359,11 @@ void EnglishFields::midPointDisplace(VoronoiEdge *edge, int iteration, std::vect
 
     QVector3D* midPoint = new QVector3D(edge->getMidPoint());
 
-    midPoint->setX((((3.0f / float(iteration)) * (double)rand()/(double)RAND_MAX) - 0.5f) + midPoint->x());
-//    midPoint->setX(((2.0f * midPoint->x()) + noise.noise(float(iteration), 0.0f, 0.0f)) / 2.0f);
+    midPoint->setX((((4.0f / float(iteration)) * (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->x());
+    midPoint->setX(((2.0f * midPoint->x()) + noise.noise(float(iteration), 0.0f, 0.0f)) / 2.0f);
 
-    midPoint->setZ((((3.0f  / float(iteration))* (double)rand()/(double)RAND_MAX) - 0.5f) + midPoint->z());
-//    midPoint->setZ(((2.0f *midPoint->z()) + noise.noise(float(iteration), 0.0f, 0.0f)) / 2.0f);
+    midPoint->setZ((((4.0f  / float(iteration))* (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->z());
+    midPoint->setZ(((2.0f *midPoint->z()) + noise.noise(float(iteration), 0.0f, 0.0f)) / 2.0f);
 
     midPointDisplace(new VoronoiEdge(edge->m_startPTR, midPoint), iteration + 1, _edges);
     midPointDisplace(new VoronoiEdge(midPoint, edge->m_endPTR), iteration + 1, _edges);
