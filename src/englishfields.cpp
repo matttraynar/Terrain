@@ -1323,7 +1323,7 @@ void EnglishFields::midPointDisplace(VoronoiEdge *edge, int iteration, std::vect
 {
     qInfo()<<"Iteration: "<<iteration;
 
-    if(iteration > 3)
+    if(iteration > 6)
     {
         _edges.push_back(edge);
         return;
