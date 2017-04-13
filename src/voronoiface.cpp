@@ -36,10 +36,58 @@ VoronoiFace::VoronoiFace(std::vector<uint> _indices)
 
 void VoronoiFace::loadVerts(std::vector<VoronoiEdge *> &_edges)
 {
+    m_edges.clear();
+
     for(uint i = 0; i < m_indices.size(); ++i)
     {
         m_edges.push_back(_edges[m_indices[i]]);
     }
+
+    updateEdgeCount();
+}
+
+bool VoronoiFace::usesEdge(uint ID)
+{
+    if(std::find(m_indices.begin(), m_indices.end(), ID) != m_indices.end())
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void VoronoiFace::replaceEdge(uint ID, std::vector<uint> newIDs)
+{
+    auto existingID = std::find(m_indices.begin(), m_indices.end(), ID);
+
+    if(existingID != m_indices.end())
+    {
+        for(uint i = 0; i < newIDs.size(); ++i)
+        {
+            m_indices.push_back(newIDs[i]);
+        }
+    }
+}
+
+void VoronoiFace::removeEdge(uint ID)
+{
+    int removeIndex = 0;
+
+    for(uint i = 0; i < m_indices.size(); ++i)
+    {
+        if(m_indices[i] == ID)
+        {
+            removeIndex = i;
+            continue;
+        }
+
+        if(m_indices[i] > ID)
+        {
+            m_indices[i]--;
+        }
+    }
+
+    m_indices.erase(m_indices.begin() + removeIndex);
 }
 
 VoronoiFace::~VoronoiFace()

@@ -87,7 +87,15 @@ public:
 
 private:
     void subdivide();
+    void editEdges();
+    void displaceEdge(VoronoiFace &_face);
+    void midPointEdge(VoronoiEdge *edge, int iteration, std::vector<uint> &_newIDs);
+    void updateEdge(uint _oldID, std::vector<uint> _newIDs);
+    void removeEdge(uint ID);
 
+    bool checkContains(uint ID, std::vector<uint> IDs);
+
+    std::vector<uint> m_editedEdgeIDs;
 
 
 

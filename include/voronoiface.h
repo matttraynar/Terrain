@@ -7,6 +7,8 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 
+#include <algorithm>
+
 #include "voronoiedge.h"
 
 class VoronoiFace
@@ -22,8 +24,15 @@ public:
 
     void loadVerts(std::vector<VoronoiEdge*> &_edges);
 
-    inline int getEdgeCount() const          { return m_indices.size(); }
+    inline int getEdgeCount() const          { return m_edgeCount; }
     inline uint getEdgeID(int index) const { return m_indices[index]; }
+    inline void updateEdgeCount() { m_edgeCount = m_indices.size(); }
+
+    bool usesEdge(uint ID);
+    void replaceEdge(uint ID, std::vector<uint> newIDs);
+    void removeEdge(uint ID);
+
+    int m_edgeCount;
 
     //------------------------------------------------
     void operator = (const VoronoiFace &_toCopy);
