@@ -86,6 +86,12 @@ public:
 
 
 private:
+    void subdivide();
+
+
+
+
+    //--------------------------------------------------------------------------------------//
     void ridgeAndFurrow(VoronoiFace face, std::vector<VoronoiFace> &_facesToUpdate);
 
     void threeField(VoronoiFace face, std::vector<VoronoiFace> &_facesToUpdate);

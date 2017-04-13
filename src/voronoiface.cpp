@@ -27,6 +27,21 @@ VoronoiFace::VoronoiFace(std::vector<VoronoiEdge *> _edgeList)
     updateVerts();
 }
 
+VoronoiFace::VoronoiFace(std::vector<uint> _indices)
+{
+    m_indices = _indices;
+    m_isUsable = true;
+    m_midPointIsCalculated = false;
+}
+
+void VoronoiFace::loadVerts(std::vector<VoronoiEdge *> &_edges)
+{
+    for(uint i = 0; i < m_indices.size(); ++i)
+    {
+        m_edges.push_back(_edges[m_indices[i]]);
+    }
+}
+
 VoronoiFace::~VoronoiFace()
 {
 
@@ -39,6 +54,8 @@ VoronoiFace::VoronoiFace(const VoronoiFace &_toCopy)
     m_edges = _toCopy.m_edges;
 
     m_isUsable = _toCopy.m_isUsable;
+
+    m_indices = _toCopy.m_indices;
 
     updateVerts();
 
@@ -57,6 +74,8 @@ void VoronoiFace::operator =(const VoronoiFace &_toCopy)
     m_edges = _toCopy.m_edges;
 
     m_isUsable = _toCopy.m_isUsable;
+
+    m_indices = _toCopy.m_indices;
 
     updateVerts();
 

@@ -14,9 +14,18 @@ class VoronoiFace
 public:
     VoronoiFace(std::vector<QVector3D> _edgeVerts);
     VoronoiFace(std::vector<VoronoiEdge *> _edgeList);
+
+    VoronoiFace(std::vector<uint> _indices);
+
     ~VoronoiFace();
     VoronoiFace(const VoronoiFace & _toCopy);
 
+    void loadVerts(std::vector<VoronoiEdge*> &_edges);
+
+    inline int getEdgeCount() const          { return m_indices.size(); }
+    inline uint getEdgeID(int index) const { return m_indices[index]; }
+
+    //------------------------------------------------
     void operator = (const VoronoiFace &_toCopy);
 
     void updateVerts();
@@ -50,7 +59,7 @@ public:
     bool m_isUsable;
 
 private:
-
+    std::vector<uint> m_indices;
     std::vector<VoronoiEdge*> m_edges;
     std::vector<QVector3D> m_edgeVerts;
     QVector3D m_midPoint;
