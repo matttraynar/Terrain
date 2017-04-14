@@ -12,13 +12,14 @@ EnglishFields::EnglishFields(double _width)
 {
     //Set up and create the voronoi diagram.
     m_width = _width;
+    m_maxDisplacementIterations = 7;
 
-    makeVoronoiDiagram(time(NULL));
-//    makeVoronoiDiagram(321);
+//    makeVoronoiDiagram(time(NULL));
+    makeVoronoiDiagram(1492192424);
 
     subdivide();
     editEdges();
-    fixEdges();
+//    fixEdges();
 
 //    makeFieldFeatures();
 }
@@ -589,7 +590,16 @@ void EnglishFields::displaceEdge(VoronoiFace &_face)
     {
         if(!checkContains(_face.getEdgeID(i), m_editedEdgeIDs))
         {
-            midPointEdge(m_allEdges[_face.getEdgeID(i)], 1, updatedEdgeIDs);
+            VoronoiEdge* currentEdge = m_allEdges[_face.getEdgeID(i)];
+
+            if(!isBoundaryEdge(currentEdge))
+            {
+                midPointEdge(m_allEdges[_face.getEdgeID(i)], 1, updatedEdgeIDs);
+            }
+            else
+            {
+                midPointEdge(m_allEdges[_face.getEdgeID(i)], m_maxDisplacementIterations + 1, updatedEdgeIDs);
+            }
 
             updateEdge(_face.getEdgeID(i), updatedEdgeIDs);
             updatedEdgeIDs.clear();
@@ -603,7 +613,7 @@ void EnglishFields::midPointEdge(VoronoiEdge* edge, int iteration, std::vector<u
 {
 //    qInfo()<<"ID Count: "<<_newIDs.size();
 
-    if(iteration > 7)
+    if(iteration > m_maxDisplacementIterations)
     {
         m_allEdges.push_back(edge);
         _newIDs.push_back(m_allEdges.size() - 1);
@@ -630,10 +640,10 @@ void EnglishFields::midPointEdge(VoronoiEdge* edge, int iteration, std::vector<u
     QVector3D* midPoint = new QVector3D(edge->getMidPoint());
 
     midPoint->setX((((4.0f / float(iteration)) * (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->x());
-    midPoint->setX(((2.0f * midPoint->x()) + noise.noise(float(iteration) / 7.0f, 0.0f, 0.0f)) / 2.0f);
+    midPoint->setX(((2.0f * midPoint->x()) + noise.noise(float(iteration) / float(m_maxDisplacementIterations), 0.0f, 0.0f)) / 2.0f);
 
     midPoint->setZ((((4.0f  / float(iteration))* (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->z());
-    midPoint->setZ(((2.0f *midPoint->z()) + noise.noise(float(iteration) / 7.0f, 0.0f, 0.0f)) / 2.0f);
+    midPoint->setZ(((2.0f *midPoint->z()) + noise.noise(float(iteration) / float(m_maxDisplacementIterations), 0.0f, 0.0f)) / 2.0f);
 
     midPointEdge(new VoronoiEdge(edge->m_startPTR, midPoint), iteration + 1, _newIDs);
     midPointEdge(new VoronoiEdge(midPoint, edge->m_endPTR), iteration + 1, _newIDs);
@@ -668,6 +678,21 @@ bool EnglishFields::checkContains(uint ID, std::vector<uint> IDs)
         {
             return true;
         }
+    }
+
+    return false;
+}
+
+bool EnglishFields::isBoundaryEdge(VoronoiEdge *_edge)
+{
+    float halfWidth = m_width / 2.0f;
+
+    if((_edge->m_startPTR->x() == halfWidth && _edge->m_endPTR->x() == halfWidth) ||
+       (_edge->m_startPTR->z() == halfWidth && _edge->m_endPTR->z() == halfWidth) ||
+       (_edge->m_startPTR->x() == -halfWidth && _edge->m_endPTR->x() == -halfWidth) ||
+       (_edge->m_startPTR->z() == -halfWidth && _edge->m_endPTR->z() == -halfWidth))
+    {
+        return true;
     }
 
     return false;
@@ -725,6 +750,7 @@ void EnglishFields::fixEdges()
         }
     }
 }
+
 
 
 
