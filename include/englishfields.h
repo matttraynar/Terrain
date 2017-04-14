@@ -96,9 +96,6 @@ private:
     bool checkContains(uint ID, std::vector<uint> IDs);
     bool isBoundaryEdge(VoronoiEdge* _edge);
 
-    void fixVertex(QVector3D* _vert);
-    void fixEdges();
-
     int m_maxDisplacementIterations;
     std::vector<uint> m_editedEdgeIDs;
 

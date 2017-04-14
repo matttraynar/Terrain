@@ -14,12 +14,11 @@ EnglishFields::EnglishFields(double _width)
     m_width = _width;
     m_maxDisplacementIterations = 7;
 
-//    makeVoronoiDiagram(time(NULL));
-    makeVoronoiDiagram(1492192424);
+    makeVoronoiDiagram(time(NULL));
+//    makeVoronoiDiagram(1492192424);
 
     subdivide();
     editEdges();
-//    fixEdges();
 
 //    makeFieldFeatures();
 }
@@ -213,11 +212,11 @@ void EnglishFields::subdivide()
 
             if((int)(m_regions[i].getEdgeCount()) % 2 == 0)
             {
+                qInfo()<<"IGNORING "<<i;
                 //We're on an even face, check our switch
-                if(subdivideSwitch > 20.0f)
+                if(subdivideSwitch > 0.0f)
                 {
                     subdividedFaces.push_back(i);
-
                     //This branch calculates a weighted middle for the center of the face
                     //and then uses this point to create new edges (which in turn are used
                     //to create new faces). Generally not used as actually looks a little too
@@ -248,18 +247,25 @@ void EnglishFields::subdivide()
                         m_allVerts.push_back(regionMiddle);
                     }
 
-                    for(int j = 0; j < m_regions[i].getEdgeCount(); j += 2)
+                    //Even sided face {0,1,2,3}
+                    int edgeCount = m_regions[i].getEdgeCount();
+                    for(int j = 0; j < edgeCount; j += 2)
                     {
                         //Iterate through the current face's verts
-                        std::vector<VoronoiEdge*> edges;
                         std::vector<uint> edgeIDs;
+                        std::vector<uint> newEdgeIDs;
 
-                        int v2 = clampIndex(j + 1, m_regions[i].getEdgeCount());
+                        int v2 = clampIndex(j + 1, edgeCount);
 
+                        //Get the first two edges (loop 1: {0, 1})
                         //Now create a triangle
                         edgeIDs.push_back(m_regions[i].getEdgeID(j));
                         edgeIDs.push_back(m_regions[i].getEdgeID(v2));
 
+                        newEdgeIDs.push_back(m_regions[i].getEdgeID(j));
+                        newEdgeIDs.push_back(m_regions[i].getEdgeID(v2));
+
+                        //Get the start of the loop (beginning of edge 0)
                         VoronoiEdge* startReference = m_allEdges[m_regions[i].getEdgeID(j)];
                         VoronoiEdge* nextReference = m_allEdges[m_regions[i].getEdgeID(v2)];
 
@@ -271,6 +277,7 @@ void EnglishFields::subdivide()
                             edgeStart = startReference->m_endPTR;
                         }
 
+                        //Get the end of the loop (end of edge 1)
                         QVector3D* edgeEnd = nextReference->m_startPTR;
 
                         if((*edgeEnd) == *(startReference->m_startPTR) ||
@@ -279,6 +286,7 @@ void EnglishFields::subdivide()
                             edgeEnd = nextReference->m_endPTR;
                         }
 
+                        //Create an edge from the end of the loop to the middle
                         VoronoiEdge* newEdge = new VoronoiEdge(edgeEnd, regionMiddle);
 
                         int edgeID = edgeExists(newEdge);
@@ -286,13 +294,16 @@ void EnglishFields::subdivide()
                         if(edgeID != -1)
                         {
                             edgeIDs.push_back(edgeID);
+                            newEdgeIDs.push_back(edgeID);
                         }
                         else
                         {
                             m_allEdges.push_back(newEdge);
                             edgeIDs.push_back(m_allEdges.size() - 1);
+                            newEdgeIDs.push_back(m_allEdges.size() - 1);
                         }
 
+                        //And another from the middle to the start of the loop
                         VoronoiEdge* newEdge2 = new VoronoiEdge(regionMiddle, edgeStart);
 
                         edgeID = edgeExists(newEdge2);
@@ -300,11 +311,13 @@ void EnglishFields::subdivide()
                         if(edgeID != -1)
                         {
                             edgeIDs.push_back(edgeID);
+                            newEdgeIDs.push_back(edgeID);
                         }
                         else
                         {
                             m_allEdges.push_back(newEdge2);
                             edgeIDs.push_back(m_allEdges.size() - 1);
+                            newEdgeIDs.push_back(m_allEdges.size() - 1);
                         }
 
                         //Create a new voronoi face with these edges and
@@ -696,59 +709,6 @@ bool EnglishFields::isBoundaryEdge(VoronoiEdge *_edge)
     }
 
     return false;
-}
-
-void EnglishFields::fixVertex(QVector3D *_vert)
-{
-    float halfWidth = m_width / 2.0f;
-
-    if(_vert->x() > halfWidth)
-    {
-        _vert->setX(halfWidth);
-    }
-    else if(_vert->x() < -1.0f * halfWidth)
-    {
-        _vert->setX(-1.0f * halfWidth);
-    }
-
-    if(_vert->z() > halfWidth)
-    {
-        _vert->setZ(halfWidth);
-    }
-    else if(_vert->z() < -1.0f * halfWidth)
-    {
-        _vert->setZ(-1.0f * halfWidth);
-    }
-}
-
-void EnglishFields::fixEdges()
-{
-    float halfWidth = m_width / 2.0f;
-
-    for(uint i = 0; i < m_allEdges.size(); ++i)
-    {
-        if(m_allEdges[i]->m_startPTR->x() > halfWidth || m_allEdges[i]->m_endPTR->x() > halfWidth)
-        {
-            m_allEdges[i]->m_startPTR->setX(halfWidth);
-            m_allEdges[i]->m_endPTR->setX(halfWidth);
-        }
-        else if(m_allEdges[i]->m_startPTR->x() < -halfWidth || m_allEdges[i]->m_endPTR->x() < -halfWidth)
-        {
-            m_allEdges[i]->m_startPTR->setX(-halfWidth);
-            m_allEdges[i]->m_endPTR->setX(-halfWidth);
-        }
-
-        if(m_allEdges[i]->m_startPTR->z() > halfWidth || m_allEdges[i]->m_endPTR->z() > halfWidth)
-        {
-            m_allEdges[i]->m_startPTR->setZ(halfWidth);
-            m_allEdges[i]->m_endPTR->setZ(halfWidth);
-        }
-        else if(m_allEdges[i]->m_startPTR->z() < -halfWidth || m_allEdges[i]->m_endPTR->z() < -halfWidth)
-        {
-            m_allEdges[i]->m_startPTR->setZ(-halfWidth);
-            m_allEdges[i]->m_endPTR->setZ(-halfWidth);
-        }
-    }
 }
 
 
