@@ -14,10 +14,11 @@ EnglishFields::EnglishFields(double _width)
     m_width = _width;
 
     makeVoronoiDiagram(time(NULL));
-//    makeVoronoiDiagram(1492104612);
+//    makeVoronoiDiagram(321);
 
-//    subdivide();
+    subdivide();
     editEdges();
+    fixEdges();
 
 //    makeFieldFeatures();
 }
@@ -199,7 +200,7 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
 void EnglishFields::subdivide()
 {
     //Container for storing our edited faces in
-    std::vector<VoronoiFace> newFaces;
+    std::vector<uint> subdividedFaces;
 
     int startFaceCount = m_regions.size();
 
@@ -212,8 +213,10 @@ void EnglishFields::subdivide()
             if((int)(m_regions[i].getEdgeCount()) % 2 == 0)
             {
                 //We're on an even face, check our switch
-                if(subdivideSwitch > 10.0f)
+                if(subdivideSwitch > 20.0f)
                 {
+                    subdividedFaces.push_back(i);
+
                     //This branch calculates a weighted middle for the center of the face
                     //and then uses this point to create new edges (which in turn are used
                     //to create new faces). Generally not used as actually looks a little too
@@ -314,176 +317,221 @@ void EnglishFields::subdivide()
                 //This branch means we're on an odd-sided face
                 if(subdivideSwitch < 70.0f)
                 {
+                    subdividedFaces.push_back(i);
+                    std::vector<uint> newEdgeIDs;
+
+                    qInfo()<<"Subdividing "<<i;
                     //Otherwise first get the index of the 'middle' edge.
                     //For a face with edges {0,1,2,3,4} this ID is 2
                     int startID = (m_regions[i].getEdgeCount() - 1) / 2;
 
-                    //FIRST NEW FACE -------------------------
-                    std::vector<uint> newIDs;
-
-                    //Add the neccesary edges which already exist to the
-                    //container. Taking our example this will be edges {0,1}
-                    for(int j = 0; j < startID; ++j)
+                    if(!checkContains(m_regions[i].getEdgeID(startID), m_editedEdgeIDs))
                     {
-                        newIDs.push_back(m_regions[i].getEdgeID(j));
-                    }
+                        //FIRST NEW FACE -------------------------
+                        std::vector<uint> newIDs;
 
-                    //Now we get the start vertex of our 'middle' edge (the end vertex
-                    //of our current list of edges)
-                    VoronoiEdge* previousEdgeReference = m_allEdges[m_regions[i].getEdgeID(startID) - 1];
-                    VoronoiEdge* middleEdgeReference = m_allEdges[m_regions[i].getEdgeID(startID)];
+                        //Add the neccesary edges which already exist to the
+                        //container. Taking our example this will be edges {0,1}
+                        for(int j = 0; j < startID; ++j)
+                        {
+                            newIDs.push_back(m_regions[i].getEdgeID(j));
+                        }
 
-                    QVector3D* endVert = middleEdgeReference->m_startPTR;
+                        //Now we get the start vertex of our 'middle' edge (the end vertex
+                        //of our current list of edges)
+                        VoronoiEdge* previousEdgeReference = m_allEdges[m_regions[i].getEdgeID(startID) - 1];
+                        VoronoiEdge* middleEdgeReference = m_allEdges[m_regions[i].getEdgeID(startID)];
 
-                    //Because we're using references there is no way to be sure that
-                    //all edges on this face are aligned {start->end} -- {start->end}. We
-                    //can check this because the vertex should be equal to either the
-                    //start or end vertex of the previous edge
-                    if((*endVert) != *(previousEdgeReference->m_startPTR) &&
-                       (*endVert) != *(previousEdgeReference->m_endPTR))
-                    {
-                        //If it is not equal then we know that (in this frame of reference)
-                        //the m_startPTR actually points to the *end* of the edge and
-                        //m_endPTR actually points to the *start*. So update the end vert
-                        endVert = middleEdgeReference->m_endPTR;
-                    }
+                        QVector3D* endVert = middleEdgeReference->m_startPTR;
 
-                    //Next we get the ID of the last edge. With our example this
-                    //ID will be set to 4
-                    int endID = m_regions[i].getEdgeCount() - 1;
+                        //Because we're using references there is no way to be sure that
+                        //all edges on this face are aligned {start->end} -- {start->end}. We
+                        //can check this because the vertex should be equal to either the
+                        //start or end vertex of the previous edge
+                        if((*endVert) != *(previousEdgeReference->m_startPTR) &&
+                           (*endVert) != *(previousEdgeReference->m_endPTR))
+                        {
+                            //If it is not equal then we know that (in this frame of reference)
+                            //the m_startPTR actually points to the *end* of the edge and
+                            //m_endPTR actually points to the *start*. So update the end vert
+                            endVert = middleEdgeReference->m_endPTR;
+                        }
 
-                    //This is a similar process to getting endVert, only this time we're
-                    //getting the vertex the current edge list starts at
-                    VoronoiEdge* startEdgeReference = m_allEdges[m_regions[i].getEdgeID(0)];
-                    VoronoiEdge* secondEdgeReference = m_allEdges[m_regions[i].getEdgeID(1)];
-                    VoronoiEdge* endEdgeReference = m_allEdges[m_regions[i].getEdgeID(endID)];
+                        //Next we get the ID of the last edge. With our example this
+                        //ID will be set to 4
+                        int endID = m_regions[i].getEdgeCount() - 1;
 
-                    QVector3D* startVert = startEdgeReference->m_startPTR;
+                        //This is a similar process to getting endVert, only this time we're
+                        //getting the vertex the current edge list starts at
+                        VoronoiEdge* startEdgeReference = m_allEdges[m_regions[i].getEdgeID(0)];
+                        VoronoiEdge* secondEdgeReference = m_allEdges[m_regions[i].getEdgeID(1)];
+                        VoronoiEdge* endEdgeReference = m_allEdges[m_regions[i].getEdgeID(endID)];
 
-                    if((*startVert == *(secondEdgeReference->m_startPTR)) ||
-                      (*startVert == *(secondEdgeReference->m_endPTR)))
-                    {
-                        startVert = startEdgeReference->m_endPTR;
-                    }
+                        QVector3D* startVert = startEdgeReference->m_startPTR;
 
-                    //Now we create a new vertex which lies halfway along the last edge (edge number 4)
-                    QVector3D* newVert = new QVector3D((*(endEdgeReference->m_startPTR) + *(endEdgeReference->m_endPTR)) / 2.0f);
+                        if((*startVert == *(secondEdgeReference->m_startPTR)) ||
+                          (*startVert == *(secondEdgeReference->m_endPTR)))
+                        {
+                            startVert = startEdgeReference->m_endPTR;
+                        }
 
-                    //Because we're using references we don't want to duplicate vertices
-                    //so first we check if it already exists
-                    int vertID = vertExists(newVert);
+                        //Now we create a new vertex which lies halfway along the last edge (edge number 4)
+                        QVector3D* newVert = new QVector3D((*(endEdgeReference->m_startPTR) + *(endEdgeReference->m_endPTR)) / 2.0f);
 
-                    //If it does we update the pointer, otherwise we add it to our container
-                    if(vertID != -1)
-                    {
-                        newVert = m_allVerts[vertID];
-                    }
-                    else
-                    {
-                        m_allVerts.push_back(newVert);
-                    }
+                        //Because we're using references we don't want to duplicate vertices
+                        //so first we check if it already exists
+                        int vertID = vertExists(newVert);
 
-                    //Now we need to create a new edge. This will run from the end of our current
-                    //edge list to the midpoint we just calculated
-                    VoronoiEdge* newEdge = new VoronoiEdge(endVert, newVert);
+                        //If it does we update the pointer, otherwise we add it to our container
+                        if(vertID != -1)
+                        {
+                            newVert = m_allVerts[vertID];
+                        }
+                        else
+                        {
+                            m_allVerts.push_back(newVert);
+                        }
 
-                    //Again, we only want one edge instance, so check whether it exists
-                    //already and act accordingly
-                    int edgeID = edgeExists(newEdge);
+                        //Now we need to create a new edge. This will run from the end of our current
+                        //edge list to the midpoint we just calculated
 
-                    if(edgeID != -1)
-                    {
+                        VoronoiEdge* newEdge = new VoronoiEdge(endVert, newVert);
+
+                        //Again, we only want one edge instance, so check whether it exists
+                        //already and act accordingly
+                        int edgeID = edgeExists(newEdge);
+
+                        if(edgeID != -1)
+                        {
+                            newIDs.push_back(edgeID);
+                        }
+                        else
+                        {
+                            m_allEdges.push_back(newEdge);
+                            newIDs.push_back(m_allEdges.size() - 1);
+                        }
+
+                        //Next we must add the joining edge from the midpoint to the start
+                        //vertex of our edge list
+                        VoronoiEdge* newEdge2 = new VoronoiEdge(newVert, startVert);
+
+                        //Find out if our edge already exists or not (simply overwriting a variable)
+                        edgeID = edgeExists(newEdge2);
+
+                        if(edgeID != -1)
+                        {
+                            newIDs.push_back(edgeID);
+                            newEdgeIDs.push_back(edgeID);
+                        }
+                        else
+                        {
+                            m_allEdges.push_back(newEdge2);
+                            newIDs.push_back(m_allEdges.size() - 1);
+                            newEdgeIDs.push_back(m_allEdges.size() - 1);
+                        }
+
+                        //The edge list is now complete so we create a new face using it
+                        //and add it to our face container
+                        m_regions.push_back(VoronoiFace(newIDs));
+
+                        //Now we need to repeat the process but this time using the edges
+                        //on the other 'half'. With our example this is edges {2,3} (remember
+                        //edge 4 is being bisected)
+
+                        //First clear our container so we can reuse it
+                        newIDs.clear();
+
+                        //Add the existing edges again (note the for loop range has changed)
+                        for(int j = startID; j < endID; ++j)
+                        {
+                            newIDs.push_back(m_regions[i].getEdgeID(j));
+                        }
+
+                        //Calculate the end vertex of this new edge list
+                        QVector3D* endVert2 = endEdgeReference->m_startPTR;
+                        VoronoiEdge* penultimateEdgeReference = m_allEdges[m_regions[i].getEdgeID(endID - 1)];
+
+                        //Check the value again to make sure it is correct
+                        if((*endVert2 != *(penultimateEdgeReference->m_startPTR)) &&
+                           (*endVert2 != *(penultimateEdgeReference->m_endPTR)))
+                        {
+                            endVert2 = endEdgeReference->m_endPTR;
+                        }
+
+                        //Now create a new edge from the end of our edge list to the
+                        //point midway along edge 4
+                        VoronoiEdge* newEdge3 = new VoronoiEdge(endVert2, newVert);
+
+                        //Check again for duplicates
+                        edgeID = edgeExists(newEdge3);
+
+                        if(edgeID != -1)
+                        {
+                            newIDs.push_back(edgeID);
+                            newEdgeIDs.push_back(edgeID);
+                        }
+                        else
+                        {
+                            m_allEdges.push_back(newEdge3);
+                            newIDs.push_back(m_allEdges.size() - 1);
+                            newEdgeIDs.push_back(m_allEdges.size() - 1);
+                        }
+
+                        //Because we created the edge between the mid point and the start
+                        //of edge 2 we can duplicate it here. Note this is an example of where
+                        //we do not know the direction of the edge. Our faces are defined in
+                        //a clockwise order where the first face had edges:
+                        //          {0,1, newEdge, newEdge2}
+                        //and this new face will have edges:
+                        //          {2,3,newEdge3,newEdge}
+                        //Note that the first face traverses 'newEdge' from start->end and the
+                        //second face traverses 'newEdge' from end->start
+
+                        edgeID = edgeExists(newEdge);
                         newIDs.push_back(edgeID);
+
+                        //Time to create a new face with these edges and add it to our container
+                        m_regions.push_back(VoronoiFace(newIDs));
+
+                        updateEdge(m_regions[i].getEdgeID(endID), newEdgeIDs);
+                        m_editedEdgeIDs.push_back(m_regions[i].getEdgeID(endID));
                     }
-                    else
-                    {
-                        m_allEdges.push_back(newEdge);
-                        newIDs.push_back(m_allEdges.size() - 1);
-                    }
-
-                    //Next we must add the joining edge from the midpoint to the start
-                    //vertex of our edge list
-                    VoronoiEdge* newEdge2 = new VoronoiEdge(newVert, startVert);
-
-                    //Find out if our edge already exists or not (simply overwriting a variable)
-                    edgeID = edgeExists(newEdge2);
-
-                    if(edgeID != -1)
-                    {
-                        newIDs.push_back(edgeID);
-                    }
-                    else
-                    {
-                        m_allEdges.push_back(newEdge2);
-                        newIDs.push_back(m_allEdges.size() - 1);
-                    }
-
-                    //The edge list is now complete so we create a new face using it
-                    //and add it to our face container
-                    m_regions.push_back(VoronoiFace(newIDs));
-
-                    //Now we need to repeat the process but this time using the edges
-                    //on the other 'half'. With our example this is edges {2,3} (remember
-                    //edge 4 is being bisected)
-
-                    //First clear our container so we can reuse it
-                    newIDs.clear();
-
-                    //Add the existing edges again (note the for loop range has changed)
-                    for(int j = startID; j < endID; ++j)
-                    {
-                        newIDs.push_back(m_regions[i].getEdgeID(j));
-                    }
-
-                    //Calculate the end vertex of this new edge list
-                    QVector3D* endVert2 = endEdgeReference->m_startPTR;
-                    VoronoiEdge* penultimateEdgeReference = m_allEdges[m_regions[i].getEdgeID(endID - 1)];
-
-                    //Check the value again to make sure it is correct
-                    if((*endVert2 != *(penultimateEdgeReference->m_startPTR)) &&
-                       (*endVert2 != *(penultimateEdgeReference->m_endPTR)))
-                    {
-                        endVert2 = endEdgeReference->m_endPTR;
-                    }
-
-                    //Now create a new edge from the end of our edge list to the
-                    //point midway along edge 4
-                    VoronoiEdge* newEdge3 = new VoronoiEdge(endVert2, newVert);
-
-                    //Check again for duplicates
-                    edgeID = edgeExists(newEdge3);
-
-                    if(edgeID != -1)
-                    {
-                        newIDs.push_back(edgeID);
-                    }
-                    else
-                    {
-                        m_allEdges.push_back(newEdge3);
-                        newIDs.push_back(m_allEdges.size() - 1);
-                    }
-
-                    //Because we created the edge between the mid point and the start
-                    //of edge 2 we can duplicate it here. Note this is an example of where
-                    //we do not know the direction of the edge. Our faces are defined in
-                    //a clockwise order where the first face had edges:
-                    //          {0,1, newEdge, newEdge2}
-                    //and this new face will have edges:
-                    //          {2,3,newEdge3,newEdge}
-                    //Note that the first face traverses 'newEdge' from start->end and the
-                    //second face traverses 'newEdge' from end->start
-
-                    edgeID = edgeExists(newEdge);
-                    newIDs.push_back(edgeID);
-
-                    //Time to create a new face with these edges and add it to our container
-                    m_regions.push_back(VoronoiFace(newIDs));
-
-//                    m_updaterEdges.push_back(EdgeToUpdate(m_regions[i].getEdge(endID), newEdge3, newEdge2));
                 }
             }
         }
-    };
+    }
+
+    for(uint i = 0; i < m_editedEdgeIDs.size(); ++i)
+    {
+        removeEdge(m_editedEdgeIDs[i]);
+
+        for(uint j = 0; j < m_editedEdgeIDs.size(); ++j)
+        {
+            if(m_editedEdgeIDs[j] > m_editedEdgeIDs[i])
+            {
+                m_editedEdgeIDs[j]--;
+            }
+        }
+    }
+
+    m_editedEdgeIDs.clear();
+
+    if(subdividedFaces.size() > 0)
+    {
+        for(uint i = 0; i < subdividedFaces.size(); ++i)
+        {
+            m_regions.erase(m_regions.begin() + subdividedFaces[i]);
+
+            for(uint j = 0; j < subdividedFaces.size(); ++j)
+            {
+                if(subdividedFaces[j] > subdividedFaces[i])
+                {
+                    subdividedFaces[j]--;
+                }
+            }
+
+        }
+    }
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
@@ -521,7 +569,7 @@ void EnglishFields::editEdges()
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
-        if(i != 0)
+        if(i != 6)
         {
 //            continue;
         }
@@ -544,6 +592,7 @@ void EnglishFields::displaceEdge(VoronoiFace &_face)
             midPointEdge(m_allEdges[_face.getEdgeID(i)], 1, updatedEdgeIDs);
 
             updateEdge(_face.getEdgeID(i), updatedEdgeIDs);
+            updatedEdgeIDs.clear();
 
             m_editedEdgeIDs.push_back(_face.getEdgeID(i));
         }
@@ -581,10 +630,10 @@ void EnglishFields::midPointEdge(VoronoiEdge* edge, int iteration, std::vector<u
     QVector3D* midPoint = new QVector3D(edge->getMidPoint());
 
     midPoint->setX((((4.0f / float(iteration)) * (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->x());
-    midPoint->setX(((2.0f * midPoint->x()) + noise.noise(float(iteration), 0.0f, 0.0f)) / 2.0f);
+    midPoint->setX(((2.0f * midPoint->x()) + noise.noise(float(iteration) / 7.0f, 0.0f, 0.0f)) / 2.0f);
 
     midPoint->setZ((((4.0f  / float(iteration))* (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->z());
-    midPoint->setZ(((2.0f *midPoint->z()) + noise.noise(float(iteration), 0.0f, 0.0f)) / 2.0f);
+    midPoint->setZ(((2.0f *midPoint->z()) + noise.noise(float(iteration) / 7.0f, 0.0f, 0.0f)) / 2.0f);
 
     midPointEdge(new VoronoiEdge(edge->m_startPTR, midPoint), iteration + 1, _newIDs);
     midPointEdge(new VoronoiEdge(midPoint, edge->m_endPTR), iteration + 1, _newIDs);
@@ -624,7 +673,58 @@ bool EnglishFields::checkContains(uint ID, std::vector<uint> IDs)
     return false;
 }
 
+void EnglishFields::fixVertex(QVector3D *_vert)
+{
+    float halfWidth = m_width / 2.0f;
 
+    if(_vert->x() > halfWidth)
+    {
+        _vert->setX(halfWidth);
+    }
+    else if(_vert->x() < -1.0f * halfWidth)
+    {
+        _vert->setX(-1.0f * halfWidth);
+    }
+
+    if(_vert->z() > halfWidth)
+    {
+        _vert->setZ(halfWidth);
+    }
+    else if(_vert->z() < -1.0f * halfWidth)
+    {
+        _vert->setZ(-1.0f * halfWidth);
+    }
+}
+
+void EnglishFields::fixEdges()
+{
+    float halfWidth = m_width / 2.0f;
+
+    for(uint i = 0; i < m_allEdges.size(); ++i)
+    {
+        if(m_allEdges[i]->m_startPTR->x() > halfWidth || m_allEdges[i]->m_endPTR->x() > halfWidth)
+        {
+            m_allEdges[i]->m_startPTR->setX(halfWidth);
+            m_allEdges[i]->m_endPTR->setX(halfWidth);
+        }
+        else if(m_allEdges[i]->m_startPTR->x() < -halfWidth || m_allEdges[i]->m_endPTR->x() < -halfWidth)
+        {
+            m_allEdges[i]->m_startPTR->setX(-halfWidth);
+            m_allEdges[i]->m_endPTR->setX(-halfWidth);
+        }
+
+        if(m_allEdges[i]->m_startPTR->z() > halfWidth || m_allEdges[i]->m_endPTR->z() > halfWidth)
+        {
+            m_allEdges[i]->m_startPTR->setZ(halfWidth);
+            m_allEdges[i]->m_endPTR->setZ(halfWidth);
+        }
+        else if(m_allEdges[i]->m_startPTR->z() < -halfWidth || m_allEdges[i]->m_endPTR->z() < -halfWidth)
+        {
+            m_allEdges[i]->m_startPTR->setZ(-halfWidth);
+            m_allEdges[i]->m_endPTR->setZ(-halfWidth);
+        }
+    }
+}
 
 
 

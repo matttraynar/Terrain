@@ -71,11 +71,11 @@ void VoronoiFace::replaceEdge(uint ID, std::vector<uint> newIDs)
 
 void VoronoiFace::removeEdge(uint ID)
 {
-    int removeIndex = 0;
+    int removeIndex = -1;
 
     for(uint i = 0; i < m_indices.size(); ++i)
     {
-        if(m_indices[i] == ID)
+        if(m_indices[i] == ID && removeIndex == -1)
         {
             removeIndex = i;
             continue;
@@ -87,7 +87,10 @@ void VoronoiFace::removeEdge(uint ID)
         }
     }
 
-    m_indices.erase(m_indices.begin() + removeIndex);
+    if(removeIndex != -1)
+    {
+        m_indices.erase(m_indices.begin() + removeIndex);
+    }
 }
 
 VoronoiFace::~VoronoiFace()

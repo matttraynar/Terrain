@@ -95,6 +95,9 @@ private:
 
     bool checkContains(uint ID, std::vector<uint> IDs);
 
+    void fixVertex(QVector3D* _vert);
+    void fixEdges();
+
     std::vector<uint> m_editedEdgeIDs;
 
 
