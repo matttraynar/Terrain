@@ -12,10 +12,10 @@ EnglishFields::EnglishFields(double _width)
 {
     //Set up and create the voronoi diagram.
     m_width = _width;
-    m_maxDisplacementIterations = 7;
+    m_maxDisplacementIterations = 3;
 
-    makeVoronoiDiagram(time(NULL));
-//    makeVoronoiDiagram(1492192424);
+//    makeVoronoiDiagram(time(NULL));
+    makeVoronoiDiagram(1492271501);
 
     subdivide();
     editEdges();
@@ -614,6 +614,8 @@ void EnglishFields::displaceEdge(VoronoiFace &_face)
                 midPointEdge(m_allEdges[_face.getEdgeID(i)], m_maxDisplacementIterations + 1, updatedEdgeIDs);
             }
 
+            qInfo()<<"Size: "<<updatedEdgeIDs.size();
+
             updateEdge(_face.getEdgeID(i), updatedEdgeIDs);
             updatedEdgeIDs.clear();
 
@@ -624,8 +626,6 @@ void EnglishFields::displaceEdge(VoronoiFace &_face)
 
 void EnglishFields::midPointEdge(VoronoiEdge* edge, int iteration, std::vector<uint> &_newIDs)
 {
-//    qInfo()<<"ID Count: "<<_newIDs.size();
-
     if(iteration > m_maxDisplacementIterations)
     {
         m_allEdges.push_back(edge);
@@ -633,15 +633,7 @@ void EnglishFields::midPointEdge(VoronoiEdge* edge, int iteration, std::vector<u
         return;
     }
 
-    if((edge->m_startPTR->x() >= m_width / 2.0f || edge->m_startPTR->z() >= m_width / 2.0f || edge->m_startPTR->x() <= -1.0f * m_width / 2.0f || edge->m_startPTR->z() <= -1.0f * m_width / 2.0f) &&
-       (edge->m_endPTR->x() >= m_width / 2.0f || edge->m_endPTR->z() >= m_width / 2.0f || edge->m_endPTR->x() <= -1.0f * m_width / 2.0f || edge->m_endPTR->z() <= -1.0f * m_width / 2.0f))
-    {
-//        m_allEdges.push_back(edge);
-//        _newIDs.push_back(m_allEdges.size() - 1);
-//        return;
-    }
-
-    if(edge->getLength() < 2.5f)
+    if(edge->getLength() <1.0f)
     {
         m_allEdges.push_back(edge);
         _newIDs.push_back(m_allEdges.size() - 1);
@@ -652,11 +644,22 @@ void EnglishFields::midPointEdge(VoronoiEdge* edge, int iteration, std::vector<u
 
     QVector3D* midPoint = new QVector3D(edge->getMidPoint());
 
+    float yValue = float(_newIDs.size())/float(2.0f * m_maxDisplacementIterations);
+
+    while(yValue > 0.99f)
+    {
+        yValue /= 2.0f;
+    }
+
+    float noiseValue = (noise.noise(float(iteration) / float(m_maxDisplacementIterations), yValue, 0.0f) - 0.5f);
+
+    qInfo()<<"Iteration: "<<iteration<<" YValue: "<<yValue<<" Noise: "<<noiseValue;
+
     midPoint->setX((((4.0f / float(iteration)) * (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->x());
-    midPoint->setX(((2.0f * midPoint->x()) + noise.noise(float(iteration) / float(m_maxDisplacementIterations), 0.0f, 0.0f)) / 2.0f);
+    midPoint->setX(((2.0f * midPoint->x()) + noiseValue) / 2.0f);
 
     midPoint->setZ((((4.0f  / float(iteration))* (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->z());
-    midPoint->setZ(((2.0f *midPoint->z()) + noise.noise(float(iteration) / float(m_maxDisplacementIterations), 0.0f, 0.0f)) / 2.0f);
+    midPoint->setZ(((2.0f *midPoint->z()) + noiseValue) / 2.0f);
 
     midPointEdge(new VoronoiEdge(edge->m_startPTR, midPoint), iteration + 1, _newIDs);
     midPointEdge(new VoronoiEdge(midPoint, edge->m_endPTR), iteration + 1, _newIDs);
