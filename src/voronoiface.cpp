@@ -93,6 +93,76 @@ void VoronoiFace::removeEdge(uint ID)
     }
 }
 
+void VoronoiFace::storeOriginalEdges(std::vector<VoronoiEdge *> &_edges)
+{
+    m_originalEdges.clear();
+
+    for(uint i = 0; i < m_indices.size(); ++i)
+    {
+        m_originalEdges.push_back(new VoronoiEdge(*(_edges[m_indices[i]])));
+    }
+}
+
+std::vector<uint> VoronoiFace::getEdgeIDsInRange(uint start, uint end)
+{
+    uint newID = m_indices[start];
+    std::vector<uint> rangeIDs;
+
+    while(newID != m_indices[end])
+    {
+        newID = getNextEdge(newID);
+
+
+        if(newID != -1)
+        {
+            rangeIDs.push_back(newID);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return rangeIDs;
+}
+
+uint VoronoiFace::getNextEdge(uint index)
+{
+    int localEdgeID = -1;
+
+    auto indexPosition = std::find(m_indices.begin(), m_indices.end(), index);
+
+    if(indexPosition != m_indices.end())
+    {
+        localEdgeID = distance(m_indices.begin(), indexPosition);
+    }
+
+    uint i = -1;
+
+    if(localEdgeID != -1)
+    {
+        VoronoiEdge* currentEdge = m_edges[localEdgeID];
+
+
+        for(i = 0; i < m_edges.size(); ++i)
+        {
+            if(i == localEdgeID)
+            {
+                continue;
+            }
+
+            if(m_edges[i]->m_startPTR == currentEdge->m_endPTR ||
+               m_edges[i]->m_startPTR == currentEdge->m_startPTR)
+            {
+                break;
+            }
+        }
+    }
+
+    return m_indices[i];
+}
+
+//-----------------------
 VoronoiFace::~VoronoiFace()
 {
 
@@ -107,6 +177,8 @@ VoronoiFace::VoronoiFace(const VoronoiFace &_toCopy)
     m_isUsable = _toCopy.m_isUsable;
 
     m_indices = _toCopy.m_indices;
+
+    m_originalEdges = _toCopy.m_originalEdges;
 
     updateVerts();
 
@@ -127,6 +199,8 @@ void VoronoiFace::operator =(const VoronoiFace &_toCopy)
     m_isUsable = _toCopy.m_isUsable;
 
     m_indices = _toCopy.m_indices;
+
+    m_originalEdges = _toCopy.m_originalEdges;
 
     updateVerts();
 

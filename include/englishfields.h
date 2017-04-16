@@ -90,6 +90,8 @@ private:
     void editEdges();
     void displaceEdge(VoronoiFace &_face);
     void midPointEdge(VoronoiEdge *edge, int iteration, std::vector<uint> &_newIDs);
+    void threeField(VoronoiFace &_face);
+
     void updateEdge(uint _oldID, std::vector<uint> _newIDs);
     void removeEdge(uint ID);
 
@@ -102,17 +104,17 @@ private:
 
 
     //--------------------------------------------------------------------------------------//
-    void ridgeAndFurrow(VoronoiFace face, std::vector<VoronoiFace> &_facesToUpdate);
+//    void ridgeAndFurrow(VoronoiFace face, std::vector<VoronoiFace> &_facesToUpdate);
 
-    void threeField(VoronoiFace face, std::vector<VoronoiFace> &_facesToUpdate);
+//    void threeField(VoronoiFace face, std::vector<VoronoiFace> &_facesToUpdate);
 
-    void makeOrganic(VoronoiFace &_face);
+//    void makeOrganic(VoronoiFace &_face);
 
-    void subdivideRegions();
+//    void subdivideRegions();
 
-    void makeFieldFeatures();
+//    void makeFieldFeatures();
 
-    void midPointDisplace(VoronoiEdge* edge, int iteration, std::vector<VoronoiEdge*> &_edges);
+//    void midPointDisplace(VoronoiEdge* edge, int iteration, std::vector<VoronoiEdge*> &_edges);
 
     int clampIndex(int index, int numVertices);
 

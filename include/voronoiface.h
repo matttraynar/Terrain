@@ -24,13 +24,21 @@ public:
 
     void loadVerts(std::vector<VoronoiEdge*> &_edges);
 
-    inline int getEdgeCount() const          { return m_edgeCount; }
-    inline uint getEdgeID(int index) const { return m_indices[index]; }
+    inline int getEdgeCount() const                                    { return m_edgeCount; }
+    inline int getOriginalEdgeCount() const                         { return m_originalEdges.size(); }
+    inline uint getEdgeID(int index) const                           { return m_indices[index]; }
+    inline VoronoiEdge* getOriginalEdge(int index) const     { return m_originalEdges[index]; }
+
     inline void updateEdgeCount() { m_edgeCount = m_indices.size(); }
 
     bool usesEdge(uint ID);
     void replaceEdge(uint ID, std::vector<uint> newIDs);
     void removeEdge(uint ID);
+
+    void storeOriginalEdges(std::vector<VoronoiEdge*> &_edges);
+
+    std::vector<uint> getEdgeIDsInRange(uint start, uint end);
+    uint getNextEdge(uint index);
 
     int m_edgeCount;
 
@@ -69,6 +77,8 @@ public:
 
 private:
     std::vector<uint> m_indices;
+    std::vector<VoronoiEdge*> m_originalEdges;
+
     std::vector<VoronoiEdge*> m_edges;
     std::vector<QVector3D> m_edgeVerts;
     QVector3D m_midPoint;
