@@ -111,7 +111,7 @@ std::vector<uint> VoronoiFace::getEdgeIDsInRange(uint start, uint end)
     while(newID != m_indices[end])
     {
         newID = getNextEdge(newID);
-
+        qInfo()<<"ID: "<<newID;
 
         if(newID != -1)
         {

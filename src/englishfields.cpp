@@ -845,11 +845,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
     std::vector<uint> newIDs;
 
-    //Create a random switch value
-    float threeFieldSwitch = 100.0f * (float)rand()/(float)RAND_MAX;
-
-    threeFieldSwitch = 50.0f;
-
     VoronoiEdge* startSplit = new VoronoiEdge(m_allEdges[_face.getEdgeID(middleIntersection)]->m_startPTR, edgeToUse->m_startPTR);
     VoronoiEdge* endSplit = new VoronoiEdge(edgeToUse->m_startPTR, m_allEdges[_face.getEdgeID(middleIntersection)]->m_endPTR);
 
@@ -887,7 +882,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
     qInfo()<<"Intersects: "<<intersect_1<<", "<<middleIntersection<<", "<<intersect_2;
 
-
     //Now check the middle edge for references
     int middleEdgeID = edgeExists(edgeToUse);
 
@@ -901,6 +895,11 @@ void EnglishFields::threeField(VoronoiFace &_face)
         m_allEdges.push_back(edgeToUse);
         newIDs.push_back(m_allEdges.size() - 1);
     }
+
+    //Create a random switch value
+    float threeFieldSwitch = 100.0f * (float)rand()/(float)RAND_MAX;
+
+    threeFieldSwitch = 80.0f;
 
     if(threeFieldSwitch < 40.0f)
     {
@@ -936,6 +935,8 @@ void EnglishFields::threeField(VoronoiFace &_face)
     }
     else if(threeFieldSwitch < 70.0f)
     {
+        //THIS SWITCH IS FINISHED
+
         //This only adds one new edge
         ID = vertExists(fieldEdge->m_endPTR);
 
@@ -1030,7 +1031,23 @@ void EnglishFields::threeField(VoronoiFace &_face)
     }
     else
     {
-        //This edge also only adds one edge
+//        //This edge also only adds one edge
+//        ID = vertExists(fieldEdge2->m_endPTR);
+
+//        if(ID != -1)
+//        {
+//            fieldEdge2->m_endPTR = m_allVerts[ID];
+//        }
+//        else
+//        {
+//            m_allVerts.push_back(fieldEdge2->m_endPTR);
+//        }
+
+//        m_allEdges.push_back(fieldEdge2);
+//        newIDs.push_back(m_allEdges.size() - 1);
+
+        //NEW
+        //This only adds one new edge
         ID = vertExists(fieldEdge2->m_endPTR);
 
         if(ID != -1)
@@ -1044,6 +1061,91 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         m_allEdges.push_back(fieldEdge2);
         newIDs.push_back(m_allEdges.size() - 1);
+
+        qInfo()<<"Getting range IDs";
+        std::vector<uint> newFace1 = _face.getEdgeIDsInRange(intersect_2, middleIntersection);
+        newFace1.erase(newFace1.begin() + newFace1.size() - 1);
+        uint endPoint = (intersect_2 > 0) ? intersect_2 : _face.getEdgeCount() - 1;
+        qInfo()<<"Middle: "<<middleIntersection<<" Intersection: "<<endPoint;
+        qInfo()<<"Value: "<<_face.getEdgeID(middleIntersection)<<", "<<_face.getEdgeID(intersect_2);
+
+
+        std::vector<uint> newFace2 = _face.getEdgeIDsInRange(middleIntersection, intersect_2);
+
+        newFace2.erase(newFace2.begin() + newFace2.size() - 1);
+
+        newFace1.push_back(m_allEdges.size() - 2);
+        newFace1.push_back(m_allEdges.size() - 1);
+
+        newFace2.push_back(m_allEdges.size() - 2);
+        newFace2.push_back(m_allEdges.size() - 1);
+
+        QVector3D* midpoint = new QVector3D(m_allEdges[_face.getEdgeID(intersect_2)]->getMidPoint());
+
+        int midpointID = vertExists(midpoint);
+
+        if(midpointID != -1)
+        {
+            midpoint = m_allVerts[midpointID];
+        }
+        else
+        {
+            m_allVerts.push_back(midpoint);
+        }
+
+        VoronoiEdge* splitEdge1 = new VoronoiEdge(m_allEdges[_face.getEdgeID(intersect_2)]->m_startPTR, fieldEdge2->m_endPTR);
+        VoronoiEdge* splitEdge2 = new VoronoiEdge(fieldEdge2->m_endPTR, m_allEdges[_face.getEdgeID(intersect_2)]->m_endPTR);
+
+        int midEdgeID = edgeExists(splitEdge1);
+
+        if(midEdgeID != -1)
+        {
+            splitEdge1 = m_allEdges[midEdgeID];
+        }
+        else
+        {
+            m_allEdges.push_back(splitEdge1);
+            midEdgeID = m_allEdges.size() - 1;
+        }
+
+        int midEdgeID2 = edgeExists(splitEdge2);
+
+        if(midEdgeID2 != -1)
+        {
+            splitEdge2 = m_allEdges[midEdgeID2];
+        }
+        else
+        {
+            m_allEdges.push_back(splitEdge2);
+            midEdgeID2 = m_allEdges.size() - 1;
+        }
+
+        if(splitEdge1->m_startPTR == m_allEdges[_face.getEdgeID(intersect_2) - 1]->m_startPTR ||
+           splitEdge1->m_startPTR == m_allEdges[_face.getEdgeID(intersect_2) - 1]->m_endPTR)
+        {
+            newFace1.push_back(midEdgeID);
+            newFace2.push_back(midEdgeID2);
+        }
+        else
+        {
+            newFace1.push_back(midEdgeID2);
+            newFace2.push_back(midEdgeID);
+        }
+
+        if(isReversed)
+        {
+            newFace1.push_back(splitID);
+            newFace2.push_back(splitID2);
+        }
+        else
+        {
+            newFace1.push_back(splitID2);
+            newFace2.push_back(splitID);
+        }
+
+        m_regions.push_back(VoronoiFace(newFace1));
+
+        m_regions.push_back(VoronoiFace(newFace2));
     }
 
 //    m_regions.push_back(VoronoiFace(newIDs));
