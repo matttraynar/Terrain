@@ -15,7 +15,7 @@ EnglishFields::EnglishFields(double _width)
     m_maxDisplacementIterations = 3;
 
 //    makeVoronoiDiagram(time(NULL));
-    makeVoronoiDiagram(1492340143);
+    makeVoronoiDiagram(1492512167);
 
     subdivide();
     editEdges();
@@ -586,6 +586,7 @@ void EnglishFields::editEdges()
     for(uint i = 0; i < m_regions.size(); ++i)
     {
         m_regions[i].loadVerts(m_allEdges);
+        m_regions[i].organiseEdgeIDs();
     }
 
     qInfo()<<"Verts loaded";
@@ -667,8 +668,6 @@ void EnglishFields::midPointEdge(VoronoiEdge* edge, int iteration, std::vector<u
     }
 
     float noiseValue = (noise.noise(float(iteration) / float(m_maxDisplacementIterations), yValue, 0.0f) - 0.5f);
-
-//    qInfo()<<"Iteration: "<<iteration<<" YValue: "<<yValue<<" Noise: "<<noiseValue;
 
     midPoint->setX((((4.0f / float(iteration)) * (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->x());
     midPoint->setX(((2.0f * midPoint->x()) + noiseValue) / 2.0f);

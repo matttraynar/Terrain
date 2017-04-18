@@ -39,6 +39,9 @@ public:
 
     std::vector<uint> getEdgeIDsInRange(uint start, uint end);
     uint getNextEdge(uint index);
+    bool m_reversedEdge;
+
+    void organiseEdgeIDs();
 
     int m_edgeCount;
 

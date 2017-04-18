@@ -16,6 +16,8 @@ VoronoiFace::VoronoiFace(std::vector<QVector3D> _edgeVerts)
     m_vao.release();
 
     m_isUsable = true;
+
+    m_reversedEdge = false;
 }
 
 VoronoiFace::VoronoiFace(std::vector<VoronoiEdge *> _edgeList)
@@ -23,6 +25,8 @@ VoronoiFace::VoronoiFace(std::vector<VoronoiEdge *> _edgeList)
     m_edges = _edgeList;
     m_isUsable = true;
     m_midPointIsCalculated = false;
+
+    m_reversedEdge = false;
 
     updateVerts();
 }
@@ -32,6 +36,8 @@ VoronoiFace::VoronoiFace(std::vector<uint> _indices)
     m_indices = _indices;
     m_isUsable = true;
     m_midPointIsCalculated = false;
+
+    m_reversedEdge = false;
 }
 
 void VoronoiFace::loadVerts(std::vector<VoronoiEdge *> &_edges)
@@ -44,6 +50,9 @@ void VoronoiFace::loadVerts(std::vector<VoronoiEdge *> &_edges)
     }
 
     updateEdgeCount();
+
+    qInfo()<<"Organising edges";
+//    organiseEdgeIDs();
 }
 
 bool VoronoiFace::usesEdge(uint ID)
@@ -108,19 +117,30 @@ std::vector<uint> VoronoiFace::getEdgeIDsInRange(uint start, uint end)
     uint newID = m_indices[start];
     std::vector<uint> rangeIDs;
 
-    while(newID != m_indices[end])
-    {
-        newID = getNextEdge(newID);
-        qInfo()<<"ID: "<<newID;
+//    while(newID != m_indices[end])
+//    {
+//        newID = getNextEdge(newID);
 
-        if(newID != -1)
+//        if(newID != -1)
+//        {
+//            rangeIDs.push_back(newID);
+//        }
+//        else
+//        {
+//            break;
+//        }
+//    }
+
+    while(start != end)
+    {
+        start++;
+
+        if(start == m_indices.size())
         {
-            rangeIDs.push_back(newID);
+            start -= m_indices.size();
         }
-        else
-        {
-            break;
-        }
+
+        rangeIDs.push_back(m_indices[start]);
     }
 
     return rangeIDs;
@@ -139,10 +159,12 @@ uint VoronoiFace::getNextEdge(uint index)
 
     uint i = -1;
 
+//    qInfo()<<"Local: "<<localEdgeID;
+
     if(localEdgeID != -1)
     {
         VoronoiEdge* currentEdge = m_edges[localEdgeID];
-
+//        qInfo()<<"Current Edge: "<<*(currentEdge->m_startPTR)<<" -----> "<<*(currentEdge->m_endPTR);
 
         for(i = 0; i < m_edges.size(); ++i)
         {
@@ -151,15 +173,102 @@ uint VoronoiFace::getNextEdge(uint index)
                 continue;
             }
 
-            if(m_edges[i]->m_startPTR == currentEdge->m_endPTR ||
-               m_edges[i]->m_startPTR == currentEdge->m_startPTR)
+//            qInfo()<<"Edge "<<i<<": "<<*(m_edges[i]->m_startPTR)<<" -----> "<<*(m_edges[i]->m_endPTR);
+
+            if(m_reversedEdge)
             {
-                break;
+                if(m_edges[i]->m_startPTR == currentEdge->m_startPTR)
+                {
+                    m_reversedEdge = false;
+                    break;
+                }
+            }
+            else
+            {
+                if(m_edges[i]->m_startPTR == currentEdge->m_endPTR)
+                {
+                    m_reversedEdge = false;
+                    break;
+                }
+            }
+        }
+
+        if(i == m_edges.size())
+        {
+            for(i = 0; i < m_edges.size(); ++i)
+            {
+                if(i == localEdgeID)
+                {
+                    continue;
+                }
+
+                if(m_reversedEdge)
+                {
+                    if(m_edges[i]->m_endPTR == currentEdge->m_startPTR)
+                    {
+                        m_reversedEdge = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    if(m_edges[i]->m_endPTR == currentEdge->m_endPTR)
+                    {
+                        m_reversedEdge = true;
+                        break;
+                    }
+                }
             }
         }
     }
 
+    if(i != m_edges.size())
+    {
+//        qInfo()<<"Found Edge: "<<*(m_edges[i]->m_startPTR)<<" -----> "<<*(m_edges[i]->m_endPTR);
+    }
+//    qInfo()<<"First: "<<i;
+
     return m_indices[i];
+}
+
+void VoronoiFace::organiseEdgeIDs()
+{
+//    qInfo()<<"------------- NEW FACE -------------";
+    std::vector<uint> newIDOrder;
+
+//    for(uint i = 0; i < m_indices.size(); ++i)
+//    {
+//        qInfo()<<"Index "<<i<<": "<<m_indices[i];
+//    }
+
+    uint startID = m_indices[0];
+//    qInfo()<<"Start ID: "<<startID;
+
+    uint nextID = getNextEdge(startID);
+//    qInfo()<<"ID: "<<nextID;
+
+    newIDOrder.push_back(startID);
+    newIDOrder.push_back(nextID);
+
+    while(nextID != startID)
+    {
+        if(newIDOrder.size() > 100)
+        {
+            break;
+        }
+        nextID = getNextEdge(nextID);
+//        qInfo()<<"ID: "<<nextID;
+        newIDOrder.push_back(nextID);
+    }
+     newIDOrder.erase(newIDOrder.begin() + newIDOrder.size() - 1);
+
+//    for(uint i = 0; i < newIDOrder.size(); ++i)
+//    {
+//        qInfo()<<"Index "<<i<<": "<<newIDOrder[i];
+//    }
+
+     m_indices = newIDOrder;
+
 }
 
 //-----------------------
@@ -179,6 +288,8 @@ VoronoiFace::VoronoiFace(const VoronoiFace &_toCopy)
     m_indices = _toCopy.m_indices;
 
     m_originalEdges = _toCopy.m_originalEdges;
+
+    m_reversedEdge = false;
 
     updateVerts();
 
@@ -201,6 +312,8 @@ void VoronoiFace::operator =(const VoronoiFace &_toCopy)
     m_indices = _toCopy.m_indices;
 
     m_originalEdges = _toCopy.m_originalEdges;
+
+    m_reversedEdge = false;
 
     updateVerts();
 
