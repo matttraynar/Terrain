@@ -16,6 +16,8 @@ EnglishFields::EnglishFields(double _width)
 
     makeVoronoiDiagram(time(NULL));
 //    makeVoronoiDiagram(1492596731);
+//    makeVoronoiDiagram(1492629112);
+
 //    makeVoronoiDiagram(1492598967);
 
     subdivide();
@@ -872,13 +874,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
     bool isReversed = false;
 
-//    if(startSplit->m_startPTR != m_allEdges[_face.getEdgeID(middleIntersection) - 1]->m_startPTR ||
-//       startSplit->m_startPTR != m_allEdges[_face.getEdgeID(middleIntersection) - 1]->m_endPTR)
-//    {
-//        isReversed = true;
-//    }
-
-
     QVector3D centerToMiddleVector(*(edgeToUse->m_startPTR) - _face.getMiddle());
     QVector3D centerToVertVector(*(m_allEdges[_face.getEdgeID(middleIntersection)]->m_startPTR) - _face.getMiddle());
 
@@ -893,11 +888,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
     {
         isReversed = true;
     }
-
-
-
-
-
 
     qInfo()<<"Intersects: "<<intersect_1<<", "<<middleIntersection<<", "<<intersect_2;
 
@@ -915,9 +905,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
     //Create a random switch value
     float threeFieldSwitch = 100.0f * (float)rand()/(float)RAND_MAX;
-
-    threeFieldSwitch = 20.0f;
-
     if(threeFieldSwitch < 40.0f)
     {
         //This switch is the most popular and adds
@@ -1123,10 +1110,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         qInfo()<<"Next edges";
 
-//        endID = (intersect_1 < 2) ? _face.getEdgeCount() - 2 + intersect_1 : intersect_1 - 2;
-
-//        qInfo()<<"Previous edge ID: "<<_face.getNextEdge(_face.getEdgeID(endID));
-
         VoronoiEdge* splitEdge3 = new VoronoiEdge(m_allEdges[_face.getEdgeID(intersect_1)]->m_startPTR, fieldEdge->m_endPTR);
         VoronoiEdge* splitEdge4 = new VoronoiEdge(fieldEdge->m_endPTR, m_allEdges[_face.getEdgeID(intersect_1)]->m_endPTR);
 
@@ -1171,18 +1154,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
             newFace2.push_back(midEdgeID2);
         }
 
-//        if(splitEdge3->m_startPTR == m_allEdges[_face.getNextEdge(_face.getEdgeID(endID))]->m_startPTR ||
-//           splitEdge3->m_startPTR == m_allEdges[_face.getNextEdge(_face.getEdgeID(endID))]->m_endPTR)
-//        {
-//            newFace1.push_back(midEdgeID);
-//            newFace2.push_back(midEdgeID2);
-//        }
-//        else
-//        {
-//            newFace1.push_back(midEdgeID2);
-//            newFace2.push_back(midEdgeID);
-//        }
-
         if(isReversed)
         {
             newFace2.push_back(splitID);
@@ -1202,7 +1173,9 @@ void EnglishFields::threeField(VoronoiFace &_face)
     }
     else if(threeFieldSwitch < 70.0f)
     {
-        //This only adds one new edge
+        //This switch is the most popular and adds
+        //both new edges to the container
+
         ID = vertExists(fieldEdge->m_endPTR);
 
         if(ID != -1)
@@ -1216,9 +1189,38 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         m_allEdges.push_back(fieldEdge);
 
-        std::vector<uint> newFace1 = _face.getEdgeIDsInRange(intersect_1, middleIntersection);
+        std::vector<uint> newFace1;
+        std::vector<uint> newFace2;
+
+        if(middleIntersection < intersect_1)
+        {
+            if(middleIntersection < intersect_2 && intersect_1 > intersect_2)
+            {
+                newFace1 = _face.getEdgeIDsInRange(middleIntersection, intersect_1);
+                newFace2 = _face.getEdgeIDsInRange(intersect_1, middleIntersection);
+            }
+            else
+            {
+                newFace1 = _face.getEdgeIDsInRange(intersect_1, middleIntersection);
+                newFace2 = _face.getEdgeIDsInRange(middleIntersection, intersect_1);
+            }
+        }
+        else
+        {
+            if(intersect_1 < intersect_2 && middleIntersection > intersect_2)
+            {
+                newFace1 = _face.getEdgeIDsInRange(intersect_1, middleIntersection);
+                newFace2 = _face.getEdgeIDsInRange(middleIntersection, intersect_1);
+            }
+            else
+            {
+                newFace1 = _face.getEdgeIDsInRange(middleIntersection, intersect_1);
+                newFace2 = _face.getEdgeIDsInRange(intersect_1, middleIntersection);
+            }
+        }
+
         newFace1.erase(newFace1.begin() + newFace1.size() - 1);
-        std::vector<uint> newFace2 = _face.getEdgeIDsInRange(middleIntersection, intersect_1 - 1);
+        newFace2.erase(newFace2.begin() + newFace2.size() - 1);
 
         newFace1.push_back(m_allEdges.size() - 2);
         newFace1.push_back(m_allEdges.size() - 1);
@@ -1266,8 +1268,18 @@ void EnglishFields::threeField(VoronoiFace &_face)
             midEdgeID2 = m_allEdges.size() - 1;
         }
 
-        if(splitEdge1->m_startPTR == m_allEdges[_face.getEdgeID(intersect_1) - 1]->m_startPTR ||
-           splitEdge1->m_startPTR == m_allEdges[_face.getEdgeID(intersect_1) - 1]->m_endPTR)
+        //Get angle
+        QVector3D splitEdge1Vector(*(m_allEdges[_face.getEdgeID(intersect_1)]->m_startPTR) - *(fieldEdge->m_endPTR));
+        QVector3D middleEdgeVector(*(edgeToUse->m_endPTR) - *(edgeToUse->m_startPTR));
+
+        splitEdge1Vector.normalize();
+        middleEdgeVector.normalize();
+
+        float dotValue = QVector3D::dotProduct(splitEdge1Vector, middleEdgeVector);
+
+        qInfo()<<"Dot: "<<dotValue;
+
+        if(dotValue < 0)
         {
             newFace1.push_back(midEdgeID2);
             newFace2.push_back(midEdgeID);
@@ -1280,13 +1292,13 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         if(isReversed)
         {
-            newFace1.push_back(splitID);
-            newFace2.push_back(splitID2);
+            newFace2.push_back(splitID);
+            newFace1.push_back(splitID2);
         }
         else
         {
-            newFace1.push_back(splitID2);
-            newFace2.push_back(splitID);
+            newFace2.push_back(splitID2);
+            newFace1.push_back(splitID);
         }
 
         m_regions.push_back(VoronoiFace(newFace1));
@@ -1295,7 +1307,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
     }
     else
     {
-        //This only adds one new edge
         ID = vertExists(fieldEdge2->m_endPTR);
 
         if(ID != -1)
@@ -1309,12 +1320,36 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         m_allEdges.push_back(fieldEdge2);
 
-        std::vector<uint> newFace1 = _face.getEdgeIDsInRange(intersect_2, middleIntersection);
+        std::vector<uint> newFace1;
+        std::vector<uint> newFace2;
+
+        if(middleIntersection < intersect_2)
+        {
+            if(middleIntersection < intersect_1 && intersect_2 > intersect_1)
+            {
+                newFace1 = _face.getEdgeIDsInRange(middleIntersection, intersect_2);
+                newFace2 = _face.getEdgeIDsInRange(intersect_2, middleIntersection);
+            }
+            else
+            {
+                newFace1 = _face.getEdgeIDsInRange(intersect_2, middleIntersection);
+                newFace2 = _face.getEdgeIDsInRange(middleIntersection, intersect_2);
+            }
+        }
+        else
+        {
+            if(intersect_2 < intersect_1 && middleIntersection > intersect_1)
+            {
+                newFace1 = _face.getEdgeIDsInRange(intersect_2, middleIntersection);
+                newFace2 = _face.getEdgeIDsInRange(middleIntersection, intersect_2);
+            }
+            else
+            {
+                newFace1 = _face.getEdgeIDsInRange(middleIntersection, intersect_2);
+                newFace2 = _face.getEdgeIDsInRange(intersect_2, middleIntersection);
+            }
+        }
         newFace1.erase(newFace1.begin() + newFace1.size() - 1);
-        uint endPoint = (intersect_2 > 0) ? intersect_2 : _face.getEdgeCount() - 1;
-
-        std::vector<uint> newFace2 = _face.getEdgeIDsInRange(middleIntersection, intersect_2);
-
         newFace2.erase(newFace2.begin() + newFace2.size() - 1);
 
         newFace1.push_back(m_allEdges.size() - 2);
@@ -1363,16 +1398,26 @@ void EnglishFields::threeField(VoronoiFace &_face)
             midEdgeID2 = m_allEdges.size() - 1;
         }
 
-        if(splitEdge1->m_startPTR == m_allEdges[_face.getEdgeID(intersect_2) - 1]->m_startPTR ||
-           splitEdge1->m_startPTR == m_allEdges[_face.getEdgeID(intersect_2) - 1]->m_endPTR)
-        {
-            newFace1.push_back(midEdgeID);
-            newFace2.push_back(midEdgeID2);
-        }
-        else
+        //Get angle
+        QVector3D splitEdge1Vector(*(m_allEdges[_face.getEdgeID(intersect_2)]->m_startPTR) - *(fieldEdge2->m_endPTR));
+        QVector3D middleEdgeVector(*(edgeToUse->m_endPTR) - *(edgeToUse->m_startPTR));
+
+        splitEdge1Vector.normalize();
+        middleEdgeVector.normalize();
+
+        float dotValue = QVector3D::dotProduct(splitEdge1Vector, middleEdgeVector);
+
+        qInfo()<<"Dot: "<<dotValue;
+
+        if(dotValue < 0)
         {
             newFace1.push_back(midEdgeID2);
             newFace2.push_back(midEdgeID);
+        }
+        else
+        {
+            newFace1.push_back(midEdgeID);
+            newFace2.push_back(midEdgeID2);
         }
 
         if(isReversed)
