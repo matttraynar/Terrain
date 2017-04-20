@@ -89,9 +89,13 @@ public:
 private:
     void subdivide();
     void editEdges();
+
     void displaceEdge(VoronoiFace &_face);
     void midPointEdge(VoronoiEdge *edge, int iteration, std::vector<uint> &_newIDs);
+
     void threeField(VoronoiFace &_face);
+
+    void straightField(VoronoiFace &_face);
 
     void updateEdge(uint _oldID, std::vector<uint> _newIDs);
     void removeEdge(uint ID);
