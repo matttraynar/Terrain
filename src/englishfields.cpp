@@ -710,8 +710,10 @@ void EnglishFields::threeField(VoronoiFace &_face)
         m_allVerts.push_back(middleVert);
     }
 
+    //Create new vertex in the middle of the first edge on the face
     QVector3D* edgeMidPoint = new QVector3D(_face.getOriginalEdge(0)->getMidPoint());
 
+    //Next create an edge which goes from this new vertex to the center of the face
     VoronoiEdge* middleEdge = new VoronoiEdge(edgeMidPoint, middleVert);
 
     //Set up some variables we'll use in the loop below
@@ -719,6 +721,10 @@ void EnglishFields::threeField(VoronoiFace &_face)
     VoronoiEdge* edgeToUse = middleEdge;
     int edgeIndex = 0;
     bool usesStart = false;
+
+    //NOTE: Uses 'original' edges which are the edges of the face before it underwent
+    //midpoint displacement. This is because it is easier to do this way (acts sort've like
+    //an average of the subdivided edges)
 
     //Iterate through the face edges
     for(uint i = 0; i < _face.getOriginalEdgeCount() * 2; ++i)
@@ -784,6 +790,9 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
     qInfo()<<"Found a good edge at: "<<edgeIndex;
 
+    //Now we extend the start point of our midpoint to center edge. This is because
+    //we now need to intersect the edge with the actual displaced edges and these edges
+    //are likely to have different  positions/gradients than the original edges
     edgeToUse->m_startPTR = new QVector3D(*(edgeToUse->m_startPTR) - (10 * edgeToUse->getDirection()));
 
     int middleIntersection = -1;
@@ -813,7 +822,7 @@ void EnglishFields::threeField(VoronoiFace &_face)
     //Create our first new edge
     VoronoiEdge* fieldEdge = new VoronoiEdge(middleVert, newStartPoint);
 
-    //Move the end point of the edge so that it is likely to intersect with the edges of the face
+    //Move the end point of the edge in the direction of the edge so that it is likely to intersect with the edges of the face
     fieldEdge->m_endPTR = new QVector3D(*(fieldEdge->m_endPTR) + (fieldEdge->getDirection() * (m_width / 2.0f)));
 
     int intersect_1 = -1;
@@ -826,35 +835,47 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
         {
-            //This means there was an intersection. Because we're using
-            //line segments for edges this will be the only intersection (if at all)
+            //This means there was an intersection.
 
+            //Check we haven't edited this edge already (from another face)
             if(!checkContains(_face.getEdgeID(i), m_editedEdgeIDs))
             {
+                //Update our end point to this intersection and store the index
                 fieldEdge->m_endPTR = new QVector3D(intersection);
                 intersect_1 = i;
             }
             else
             {
+                //This means the edge was already updated. This means it was
+                //replaced with two new edges so check for intersection with the
+                //first of these edges
                 intersection = fieldEdge->intersectEdge(m_allEdges[m_newEdges[_face.getEdgeID(i)].first]);
 
                 if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
                 {
+                    //There was an intersection, update the end and index
                     fieldEdge->m_endPTR = new QVector3D(intersection);
                     intersect_1 = m_newEdges[i].first;
                 }
                 else
                 {
+                    //Otherwise we need to check for the second of the updated edges
                     intersection = fieldEdge->intersectEdge(m_allEdges[m_newEdges[_face.getEdgeID(i)].second]);
 
                     if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
                     {
+                        //There was an intersection, updated the end and index
                         fieldEdge->m_endPTR = new QVector3D(intersection);
                         intersect_1 = m_newEdges[_face.getEdgeID(i)].second;
                     }
+
+                    //WORTH NOTING THERE IS NO BRANCH FOR
+                    //NO INTERSECTION, IF THE MATHS ALL WORKS
+                    //THIS SHOULD BE FINE
                 }
             }
-            //Which means we can break out from our edge search
+            // Because we're using line segments for edges this will be the
+            //only intersection (if at all) so we can break out from our edge search
             break;
         }
     }
@@ -902,9 +923,13 @@ void EnglishFields::threeField(VoronoiFace &_face)
         }
     }
 
+    //Next we updated the edge our midpoint to center edge is coming from.
+    //We are going to remove the one edge and replace it with two edges
+    //which go from start->midpoint and midpoint->end
     VoronoiEdge* startSplit = new VoronoiEdge(m_allEdges[_face.getEdgeID(middleIntersection)]->m_startPTR, edgeToUse->m_startPTR);
     VoronoiEdge* endSplit = new VoronoiEdge(edgeToUse->m_startPTR, m_allEdges[_face.getEdgeID(middleIntersection)]->m_endPTR);
 
+    //Check for references
     int splitID = edgeExists(startSplit);
 
     if(splitID != -1)
@@ -929,24 +954,40 @@ void EnglishFields::threeField(VoronoiFace &_face)
         splitID2 = m_allEdges.size() - 1;
     }
 
+    //Mark that we've updated stuff
     updateEdge(_face.getEdgeID(middleIntersection), std::vector<uint>(splitID, splitID2));
     m_editedEdgeIDs.push_back(_face.getEdgeID(middleIntersection));
+
+    //Store the new edge IDs so that we can find them again (if we need to in another face)
     m_newEdges[_face.getEdgeID(middleIntersection)] = std::make_pair(splitID, splitID2);
 
+    //This is a boolean value which marks whether the edge the midpoint goes from
+    //goes start->end or end->start (reversed)
     bool isReversed = false;
 
+    //Get two vectors, one is from the face middle to our midpoint, the second goes from the middle
+    //to the start vertex of the edge our midpoint is on
     QVector3D centerToMiddleVector(*(edgeToUse->m_startPTR) - _face.getMiddle());
     QVector3D centerToVertVector(*(m_allEdges[_face.getEdgeID(middleIntersection)]->m_startPTR) - _face.getMiddle());
 
+    //Normalize the vectors (convert them to direction vectors)
     centerToMiddleVector.normalize();
     centerToVertVector.normalize();
 
+    //Now take the dot product
     float dotProduct = QVector3D::dotProduct(centerToMiddleVector, centerToVertVector);
 
+    //By checking the value we can see if the start vertex lies on the left or right
+    //of our midpoint->center edge. If it lies on the right (dot product > 0) then our
+    //edge is reversed (so we set the boolean to true)
     if(dotProduct >= 0)
     {
         isReversed = true;
     }
+
+    //WORTH NOTING THAT IF THE DOT PRODUCT == 0 THEN THE START VERTEX
+    //IS COLINEAR TO THE MIDPOINT->CENTER VECTOR. THIS IS UNLIKELY SO
+    //ISN'T DEALT WITH
 
     //Now check the middle edge for references
     int middleEdgeID = edgeExists(edgeToUse);
@@ -963,13 +1004,10 @@ void EnglishFields::threeField(VoronoiFace &_face)
     //Create a random switch value
     float threeFieldSwitch = 100.0f * (float)rand()/(float)RAND_MAX;
 
-    threeFieldSwitch = 20.0f;
-
     if(threeFieldSwitch < 40.0f)
     {
         //This switch is the most popular and adds
         //both new edges to the container
-
         ID = vertExists(fieldEdge->m_endPTR);
 
         if(ID != -1)
@@ -996,12 +1034,19 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         m_allEdges.push_back(fieldEdge2);
 
+        //This switch creates three new faces, this is the first
         std::vector<uint> newFace1;
 
+        //This face contains all edges in the region between the intersections
+        //on the opposite 'side' to the midpoint intersection. We need to do
+        //some if statements before we can figure out in which order
+        //we need to pass the two intersection indices in
         if(intersect_1 < intersect_2)
         {
             if(intersect_1 < middleIntersection && intersect_2 > middleIntersection)
             {
+                //But once it is done we ask the face for the edge IDs in that range (and
+                //store them in the face)
                 newFace1 = _face.getEdgeIDsInRange(intersect_2, intersect_1);
             }
             else
@@ -1021,8 +1066,11 @@ void EnglishFields::threeField(VoronoiFace &_face)
             }
         }
 
+        //We erase the last element as this will be the edge the final
+        //intersection lies on (and will need to be subdivided)
         newFace1.erase(newFace1.begin() + newFace1.size() - 1);
 
+        //Repeat the process for the other two faces
         std::vector<uint> newFace2;
 
         if(middleIntersection < intersect_1)
@@ -1077,31 +1125,25 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         newFace3.erase(newFace3.begin() + newFace3.size() - 1);
 
+
+        //Now add in the correct edge IDs, because we know in what
+        //order the edges were added to our container we can hard code
+        //the ID
+
+        //Add both 'field edges'
         newFace1.push_back(m_allEdges.size() - 2);
         newFace1.push_back(m_allEdges.size() - 1);
 
+        //Add the middle edge and field edge 1
         newFace2.push_back(m_allEdges.size() - 3);
         newFace2.push_back(m_allEdges.size() - 2);
 
+        //Add the middle edge and field edge 2
         newFace3.push_back(m_allEdges.size() - 3);
         newFace3.push_back(m_allEdges.size() - 1);
 
-        QVector3D* midpoint = new QVector3D(m_allEdges[_face.getEdgeID(intersect_2)]->getMidPoint());
-
-        int midpointID = vertExists(midpoint);
-
-        if(midpointID != -1)
-        {
-            midpoint = m_allVerts[midpointID];
-        }
-        else
-        {
-            m_allVerts.push_back(midpoint);
-        }
-
-        uint endID = (intersect_2 < 2) ? _face.getEdgeCount() - 2 + intersect_2 : intersect_2 - 2;
-        uint endID2 = (intersect_2 > _face.getEdgeCount() - 2) ? intersect_2 + 2 - _face.getEdgeCount() : intersect_2 + 2;
-
+        //This step is similar to the one where we replaced the middle intersection, we create two
+        //new edges start->intersection and intersection->end
         VoronoiEdge* splitEdge1 = new VoronoiEdge(m_allEdges[_face.getEdgeID(intersect_2)]->m_startPTR, fieldEdge2->m_endPTR);
         VoronoiEdge* splitEdge2 = new VoronoiEdge(fieldEdge2->m_endPTR, m_allEdges[_face.getEdgeID(intersect_2)]->m_endPTR);
 
@@ -1129,19 +1171,23 @@ void EnglishFields::threeField(VoronoiFace &_face)
             midEdgeID2 = m_allEdges.size() - 1;
         }
 
+        //Store the updated faces
         updateEdge(_face.getEdgeID(intersect_2), std::vector<uint>(midEdgeID, midEdgeID2));
         m_editedEdgeIDs.push_back(_face.getEdgeID(intersect_2));
         m_newEdges[_face.getEdgeID(intersect_2)] = std::make_pair(midEdgeID, midEdgeID2);
 
-        //Get angle
+        //Then create two vectors, one is our midpoint->center vector, the other is the vector from
+        //the intersection->start
         QVector3D splitEdge1Vector(*(m_allEdges[_face.getEdgeID(intersect_2)]->m_startPTR) - *(fieldEdge2->m_endPTR));
         QVector3D middleEdgeVector(*(edgeToUse->m_endPTR) - *(edgeToUse->m_startPTR));
 
         splitEdge1Vector.normalize();
         middleEdgeVector.normalize();
 
+        //Again we get the dot product
         float dotValue = QVector3D::dotProduct(splitEdge1Vector, middleEdgeVector);
 
+        //And use it to figure out what edges to add to the right faces
         if(dotValue < 0)
         {
             newFace1.push_back(midEdgeID2);
@@ -1153,6 +1199,7 @@ void EnglishFields::threeField(VoronoiFace &_face)
             newFace3.push_back(midEdgeID2);
         }
 
+        //Repeat the process  for the other edge intersection
         VoronoiEdge* splitEdge3 = new VoronoiEdge(m_allEdges[_face.getEdgeID(intersect_1)]->m_startPTR, fieldEdge->m_endPTR);
         VoronoiEdge* splitEdge4 = new VoronoiEdge(fieldEdge->m_endPTR, m_allEdges[_face.getEdgeID(intersect_1)]->m_endPTR);
 
@@ -1200,6 +1247,8 @@ void EnglishFields::threeField(VoronoiFace &_face)
             newFace2.push_back(midEdgeID2);
         }
 
+        //We need to add the edges which were created when we added the
+        //midpoint intersection
         if(isReversed)
         {
             newFace2.push_back(splitID);
@@ -1211,6 +1260,7 @@ void EnglishFields::threeField(VoronoiFace &_face)
             newFace3.push_back(splitID);
         }
 
+        //Finally add our new faces to the container
         m_regions.push_back(VoronoiFace(newFace1));
 
         m_regions.push_back(VoronoiFace(newFace2));
@@ -1219,9 +1269,10 @@ void EnglishFields::threeField(VoronoiFace &_face)
     }
     else if(threeFieldSwitch < 70.0f)
     {
-        //This switch is the most popular and adds
-        //both new edges to the container
+        //This switch creates two faces using
+        //field edge 1.
 
+        //The process is pretty much the same
         ID = vertExists(fieldEdge->m_endPTR);
 
         if(ID != -1)
@@ -1273,19 +1324,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         newFace2.push_back(m_allEdges.size() - 2);
         newFace2.push_back(m_allEdges.size() - 1);
-
-        QVector3D* midpoint = new QVector3D(m_allEdges[_face.getEdgeID(intersect_1)]->getMidPoint());
-
-        int midpointID = vertExists(midpoint);
-
-        if(midpointID != -1)
-        {
-            midpoint = m_allVerts[midpointID];
-        }
-        else
-        {
-            m_allVerts.push_back(midpoint);
-        }
 
         VoronoiEdge* splitEdge1 = new VoronoiEdge(m_allEdges[_face.getEdgeID(intersect_1)]->m_startPTR, fieldEdge->m_endPTR);
         VoronoiEdge* splitEdge2 = new VoronoiEdge(fieldEdge->m_endPTR, m_allEdges[_face.getEdgeID(intersect_1)]->m_endPTR);
@@ -1358,6 +1396,8 @@ void EnglishFields::threeField(VoronoiFace &_face)
     }
     else
     {
+        //Final switch which uses the middle edge
+        //and field edge 2. Again, the process is the same
         ID = vertExists(fieldEdge2->m_endPTR);
 
         if(ID != -1)
@@ -1408,19 +1448,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         newFace2.push_back(m_allEdges.size() - 2);
         newFace2.push_back(m_allEdges.size() - 1);
-
-        QVector3D* midpoint = new QVector3D(m_allEdges[_face.getEdgeID(intersect_2)]->getMidPoint());
-
-        int midpointID = vertExists(midpoint);
-
-        if(midpointID != -1)
-        {
-            midpoint = m_allVerts[midpointID];
-        }
-        else
-        {
-            m_allVerts.push_back(midpoint);
-        }
 
         VoronoiEdge* splitEdge1 = new VoronoiEdge(m_allEdges[_face.getEdgeID(intersect_2)]->m_startPTR, fieldEdge2->m_endPTR);
         VoronoiEdge* splitEdge2 = new VoronoiEdge(fieldEdge2->m_endPTR, m_allEdges[_face.getEdgeID(intersect_2)]->m_endPTR);
