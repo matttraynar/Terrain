@@ -22,6 +22,7 @@ typedef CGAL::HalfedgeDS_default< K, HDS_Item_extra > HDS;
 #include <memory>
 #include <math.h>
 #include <time.h>
+#include <unordered_map>
 
 #include "voronoiface.h"
 #include "perlinnoise.h"
@@ -100,6 +101,7 @@ private:
 
     int m_maxDisplacementIterations;
     std::vector<uint> m_editedEdgeIDs;
+    std::unordered_map<uint, std::pair< uint, uint> > m_newEdges;
 
 
 
