@@ -594,13 +594,14 @@ void EnglishFields::editEdges()
 
     qInfo()<<"Verts loaded";
 
+
     for(int i = 0; i < startFaceCount; ++i)
     {
-        if(i != 1)
+        float fieldTypeSwitch = 100.0f * (float)rand()/(float)RAND_MAX;
+        if(fieldTypeSwitch < 40.0f)
         {
-            continue;
+            threeField(m_regions[i]);
         }
-        threeField(m_regions[i]);
     }
 
     for(uint i = 0; i < m_editedEdgeIDs.size(); ++i)
