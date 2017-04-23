@@ -73,7 +73,7 @@ void GLWidget::initializeGL()
 
         for(uint i = 0; i < m_fieldGenerator.getVerts().size(); ++i)
         {
-            qInfo()<<"Adjusting edge: "<<i;
+//            qInfo()<<"Adjusting edge: "<<i;
             float minDistance = 1000000;
             float yValue = 0.0f;
 
@@ -105,6 +105,7 @@ void GLWidget::initializeGL()
             m_fieldGenerator.getVert(i)->setY(yValue);
         }
     }
+    m_vRegions = m_fieldGenerator.getRegions();
 
     for(uint i = 0; i < m_vRegions.size(); ++i)
     {

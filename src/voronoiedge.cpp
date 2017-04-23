@@ -35,7 +35,7 @@ QVector3D VoronoiEdge::intersectEdge(VoronoiEdge *_test)
     VoronoiEdge tmpTest = *_test;
 
     float denom = get2DCrossProduct(dir1, dir2);
-    float uNumer = get2DCrossProduct((tmpTest.m_start - *m_startPTR), dir1);
+    float uNumer = get2DCrossProduct((*(_test->m_startPTR) - *m_startPTR), dir1);
 
     if(denom == 0.0f && uNumer == 0.0f)
     {
@@ -48,7 +48,7 @@ QVector3D VoronoiEdge::intersectEdge(VoronoiEdge *_test)
         return QVector3D(1000000.0f, 0.0f, 1000000.0f);
     }
 
-    float tNumer = get2DCrossProduct((tmpTest.m_start - *m_startPTR), dir2);
+    float tNumer = get2DCrossProduct((*(_test->m_startPTR) - *m_startPTR), dir2);
 
     float tParam = tNumer / denom;
     float uParam = uNumer / denom;
@@ -56,7 +56,7 @@ QVector3D VoronoiEdge::intersectEdge(VoronoiEdge *_test)
     if(denom != 0.0f && (tParam >= 0.0f && tParam <= 1.0f) && (uParam >= 0.0f && uParam <= 1.0f))
     {
         //The lines interesect so return the intersection
-        return (QVector3D((tmpTest.m_start + (uParam * dir2))));
+        return (QVector3D((*(_test->m_startPTR) + (uParam * dir2))));
     }
 
     //Otherwise the lines aren't parallel but don't interesect

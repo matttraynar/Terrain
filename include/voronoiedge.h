@@ -92,11 +92,16 @@ public:
 
     inline QVector3D getMidPoint()
     {
-        if(m_midPoint == QVector3D(1000000,1000000,1000000))
+        if(m_startPTR != NULL && m_endPTR != NULL)
         {
-            m_midPoint = m_end + m_start;
-            m_midPoint /= 2.0f;
+            m_midPoint = *m_startPTR + *m_endPTR;
         }
+        else
+        {
+            m_midPoint = m_start + m_end;
+        }
+
+        m_midPoint /= 2.0f;
 
         return m_midPoint;
     }
@@ -130,6 +135,18 @@ public:
     float getAngle(VoronoiEdge*_test);
 
     QVector3D getDirection();
+
+    inline void print()
+    {
+        if(m_startPTR != NULL && m_endPTR != NULL)
+        {
+            qInfo()<<"Start: "<<*m_startPTR<<" End: "<<*m_endPTR;
+        }
+        else
+        {
+            qInfo()<<"Start: "<<m_start<<" End: "<<m_end;
+        }
+    }
 
     QVector3D m_start;
     QVector3D m_end;

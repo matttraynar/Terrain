@@ -97,7 +97,7 @@ private:
     void editEdges();
 
     void displaceEdge(VoronoiFace &_face);
-    void midPointEdge(VoronoiEdge *edge, int iteration, std::vector<uint> &_newIDs);
+    void midPointEdge(VoronoiEdge *edge, int iteration, std::vector<uint> &_newIDs, bool _displace);
 
     void threeField(VoronoiFace &_face);
 
@@ -115,6 +115,9 @@ private:
     int m_maxDisplacementIterations;
     std::vector<uint> m_editedEdgeIDs;
     std::unordered_map<uint, std::pair< uint, uint> > m_newEdges;
+
+
+    std::vector<uint> STRAIGHT;
 
 
 
