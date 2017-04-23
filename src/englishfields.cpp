@@ -5,7 +5,6 @@
 EnglishFields::EnglishFields()
 {
     //Blank constructor, does nothing
-
 }
 
 EnglishFields::EnglishFields(double _width)
@@ -22,6 +21,9 @@ EnglishFields::EnglishFields(double _width)
 
     subdivide();
     editEdges();
+
+    makeEdgesUsable();
+    qInfo()<<"Size: "<<m_allEdges.size();
 
 //    makeFieldFeatures();
 }
@@ -52,6 +54,9 @@ void EnglishFields::operator =(EnglishFields &toCopy)
     m_width =        toCopy.m_width;
     m_sites =        toCopy.m_sites;
     m_regions =     toCopy.m_regions;
+
+    m_allEdges = toCopy.m_allEdges;
+    m_allVerts = toCopy.m_allVerts;
 }
 
 //Field generation
@@ -81,7 +86,7 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
         srand(_seed);
         qInfo()<<"Seed: "<<_seed;
 
-        uint numPoints = 6;
+        uint numPoints = 7;
 
         points.reserve(numPoints);
 
@@ -603,15 +608,23 @@ void EnglishFields::editEdges()
 
         float fieldTypeSwitch = 100.0f * (float)rand()/(float)RAND_MAX;
 
+        qInfo()<<"Switch: "<<fieldTypeSwitch;
+
 //        fieldTypeSwitch = 70.0f;
 
-        if(fieldTypeSwitch < 20.0f)
+        if(fieldTypeSwitch < 40.0f)
         {
+            qInfo()<<"Three field";
             threeField(m_regions[i]);
         }
-        else if(fieldTypeSwitch < 60.0f)
+        else if(fieldTypeSwitch < 80.0f)
         {
+            qInfo()<<"Straight field";
             straightField(m_regions[i]);
+        }
+        else
+        {
+            qInfo()<<"Nothing";
         }
     }
 
@@ -634,8 +647,6 @@ void EnglishFields::editEdges()
     {
         m_regions[i].loadVerts(m_allEdges);
     }
-
-
 }
 
 void EnglishFields::displaceEdge(VoronoiFace &_face)
@@ -686,6 +697,17 @@ void EnglishFields::midPointEdge(VoronoiEdge* edge, int iteration, std::vector<u
     PerlinNoise noise;
 
     QVector3D* midPoint = new QVector3D(edge->getMidPoint());
+
+    int vertID = vertExists(midPoint);
+
+    if(vertID != -1)
+    {
+        midPoint = m_allVerts[vertID];
+    }
+    else
+    {
+        m_allVerts.push_back(midPoint);
+    }
 
     float yValue = float(_newIDs.size())/float(2.0f * m_maxDisplacementIterations);
 
@@ -818,7 +840,21 @@ void EnglishFields::threeField(VoronoiFace &_face)
         {
             //This means there was an intersection. Because we're using
             //line segments for edges this will be the only intersection (if at all)
-            edgeToUse->m_startPTR = new QVector3D(intersection);
+            QVector3D* pointerIntersection =new QVector3D(intersection);
+
+            int existID = vertExists(pointerIntersection);
+
+            if(existID != -1)
+            {
+                pointerIntersection = m_allVerts[existID];
+            }
+            else
+            {
+                m_allVerts.push_back(pointerIntersection);
+            }
+
+            edgeToUse->m_startPTR = pointerIntersection;
+
             middleIntersection = i;
 
             //Which means we can break out from our edge search
@@ -853,7 +889,21 @@ void EnglishFields::threeField(VoronoiFace &_face)
             if(!checkContains(_face.getEdgeID(i), m_editedEdgeIDs))
             {
                 //Update our end point to this intersection and store the index
-                fieldEdge->m_endPTR = new QVector3D(intersection);
+                QVector3D* pointerIntersection =new QVector3D(intersection);
+
+                int existID = vertExists(pointerIntersection);
+
+                if(existID != -1)
+                {
+                    pointerIntersection = m_allVerts[existID];
+                }
+                else
+                {
+                    m_allVerts.push_back(pointerIntersection);
+                }
+
+                fieldEdge->m_endPTR = pointerIntersection;
+
                 intersect_1 = i;
             }
             else
@@ -866,7 +916,21 @@ void EnglishFields::threeField(VoronoiFace &_face)
                 if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
                 {
                     //There was an intersection, update the end and index
-                    fieldEdge->m_endPTR = new QVector3D(intersection);
+                    QVector3D* pointerIntersection =new QVector3D(intersection);
+
+                    int existID = vertExists(pointerIntersection);
+
+                    if(existID != -1)
+                    {
+                        pointerIntersection = m_allVerts[existID];
+                    }
+                    else
+                    {
+                        m_allVerts.push_back(pointerIntersection);
+                    }
+
+                    fieldEdge->m_endPTR = pointerIntersection;
+
                     intersect_1 = m_newEdges[_face.getEdgeID(i)].first;
                 }
                 else
@@ -877,7 +941,21 @@ void EnglishFields::threeField(VoronoiFace &_face)
                     if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
                     {
                         //There was an intersection, updated the end and index
-                        fieldEdge->m_endPTR = new QVector3D(intersection);
+                        QVector3D* pointerIntersection =new QVector3D(intersection);
+
+                        int existID = vertExists(pointerIntersection);
+
+                        if(existID != -1)
+                        {
+                            pointerIntersection = m_allVerts[existID];
+                        }
+                        else
+                        {
+                            m_allVerts.push_back(pointerIntersection);
+                        }
+
+                        fieldEdge->m_endPTR = pointerIntersection;
+
                         intersect_1 = m_newEdges[_face.getEdgeID(i)].second;
                     }
 
@@ -907,7 +985,20 @@ void EnglishFields::threeField(VoronoiFace &_face)
         {
             if(!checkContains(_face.getEdgeID(i), m_editedEdgeIDs))
             {
-                fieldEdge2->m_endPTR = new QVector3D(intersection);
+                QVector3D* pointerIntersection =new QVector3D(intersection);
+
+                int existID = vertExists(pointerIntersection);
+
+                if(existID != -1)
+                {
+                    pointerIntersection = m_allVerts[existID];
+                }
+                else
+                {
+                    m_allVerts.push_back(pointerIntersection);
+                }
+
+                fieldEdge2->m_endPTR = pointerIntersection;
                 intersect_2 = i;
             }
             else
@@ -916,7 +1007,21 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
                 if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
                 {
-                    fieldEdge2->m_endPTR = new QVector3D(intersection);
+                    QVector3D* pointerIntersection =new QVector3D(intersection);
+
+                    int existID = vertExists(pointerIntersection);
+
+                    if(existID != -1)
+                    {
+                        pointerIntersection = m_allVerts[existID];
+                    }
+                    else
+                    {
+                        m_allVerts.push_back(pointerIntersection);
+                    }
+
+                    fieldEdge2->m_endPTR = pointerIntersection;
+
                     intersect_2 = m_newEdges[_face.getEdgeID(i)].first;
                 }
                 else
@@ -925,7 +1030,21 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
                     if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
                     {
-                        fieldEdge2->m_endPTR = new QVector3D(intersection);
+                        QVector3D* pointerIntersection =new QVector3D(intersection);
+
+                        int existID = vertExists(pointerIntersection);
+
+                        if(existID != -1)
+                        {
+                            pointerIntersection = m_allVerts[existID];
+                        }
+                        else
+                        {
+                            m_allVerts.push_back(pointerIntersection);
+                        }
+
+                        fieldEdge2->m_endPTR = pointerIntersection;
+
                         intersect_2 = m_newEdges[_face.getEdgeID(i)].second;
                     }
                 }
@@ -1378,8 +1497,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         float dotValue = QVector3D::dotProduct(splitEdge1Vector, middleEdgeVector);
 
-        qInfo()<<"Dot: "<<dotValue;
-
         if(dotValue < 0)
         {
             newFace1.push_back(midEdgeID2);
@@ -1501,8 +1618,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         float dotValue = QVector3D::dotProduct(splitEdge1Vector, middleEdgeVector);
 
-        qInfo()<<"Dot: "<<dotValue;
-
         if(dotValue < 0)
         {
             newFace1.push_back(midEdgeID2);
@@ -1584,7 +1699,7 @@ void EnglishFields::straightField(VoronoiFace &_face)
     perpVector.setY(0);
 
     float delta = 5.0f + (2.0f * (float)rand()/(float)RAND_MAX);
-    qInfo()<<"Delta: "<<delta;
+
     float xValue = delta;
 
     std::vector<uint> edgeIDs;
@@ -1769,12 +1884,116 @@ void EnglishFields::straightField(VoronoiFace &_face)
         xValue += delta;
     }
 
-
     if(edgeIDs.size() > 1)
     {
         m_regions.push_back(VoronoiFace(edgeIDs));
     }
 
+}
+
+void EnglishFields::makeEdgesUsable()
+{
+    m_editedEdgeIDs.clear();
+
+    int originalEdgeCount = m_allEdges.size();
+
+    for(int i = 0; i < originalEdgeCount; ++i)
+    {
+        subdivideEdge(i);
+    }
+
+    qInfo()<<"Edges edited: "<<m_editedEdgeIDs.size();
+
+    for(uint i = 0; i < m_editedEdgeIDs.size(); ++i)
+    {
+        removeEdge(m_editedEdgeIDs[i]);
+
+        for(uint j = 0; j < m_editedEdgeIDs.size(); ++j)
+        {
+            if(m_editedEdgeIDs[j] > m_editedEdgeIDs[i])
+            {
+                m_editedEdgeIDs[j]--;
+            }
+        }
+    }
+
+    m_editedEdgeIDs.clear();
+
+    for(uint i = 0; i < m_regions.size(); ++i)
+    {
+        m_regions[i].loadVerts(m_allEdges);
+    }
+}
+
+void EnglishFields::subdivideEdge(uint ID)
+{
+    std::vector<uint> newEdges;
+
+    QVector3D* midPoint = new QVector3D(m_allEdges[ID]->getMidPoint());
+
+    uint existID = vertExists(midPoint);
+
+    if(existID != -1)
+    {
+        midPoint = m_allVerts[existID];
+    }
+    else
+    {
+        m_allVerts.push_back(midPoint);
+    }
+
+    VoronoiEdge* newEdge1 = new VoronoiEdge(m_allEdges[ID]->m_startPTR, midPoint);
+
+    existID = edgeExists(newEdge1);
+
+    if(existID != -1)
+    {
+        newEdge1 = m_allEdges[existID];
+    }
+    else
+    {
+        m_allEdges.push_back(newEdge1);
+        existID = m_allEdges.size() - 1;
+    }
+
+    if(newEdge1->getLength() > 0.5f)
+    {
+        m_editedEdgeIDs.push_back(existID);
+        subdivideEdge(existID);
+    }
+    else
+    {
+        newEdges.push_back(existID);
+    }
+
+    VoronoiEdge* newEdge2 = new VoronoiEdge(midPoint, m_allEdges[ID]->m_endPTR);
+
+    existID = edgeExists(newEdge2);
+
+    if(existID != -1)
+    {
+        newEdge2 = m_allEdges[existID];
+    }
+    else
+    {
+        m_allEdges.push_back(newEdge2);
+        existID = m_allEdges.size() - 1;
+    }
+
+    if(newEdge2->getLength() > 0.5f)
+    {
+        m_editedEdgeIDs.push_back(existID);
+        subdivideEdge(existID);
+    }
+    else
+    {
+        newEdges.push_back(existID);
+    }
+
+    if(newEdges.size() == 2)
+    {
+        updateEdge(ID, newEdges);
+    }
 }
 
 void EnglishFields::updateEdge(uint _oldID, std::vector<uint> _newIDs)

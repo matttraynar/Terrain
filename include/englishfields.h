@@ -85,6 +85,12 @@ public:
 
     inline std::vector<VoronoiFace> getRegions() const { return m_regions; }
 
+    inline std::vector<VoronoiEdge*> getEdges() const{ return m_allEdges; }
+    inline VoronoiEdge* getEdge(int ID) const { return m_allEdges[ID]; }
+
+    inline std::vector<QVector3D* > getVerts() const { return m_allVerts; }
+    inline QVector3D* getVert(int ID) const { return m_allVerts[ID]; }
+
 
 private:
     void subdivide();
@@ -96,6 +102,9 @@ private:
     void threeField(VoronoiFace &_face);
 
     void straightField(VoronoiFace &_face);
+
+    void makeEdgesUsable();
+    void subdivideEdge(uint ID);
 
     void updateEdge(uint _oldID, std::vector<uint> _newIDs);
     void removeEdge(uint ID);

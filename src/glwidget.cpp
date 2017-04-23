@@ -65,13 +65,53 @@ void GLWidget::initializeGL()
     qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
 
-    bool adjustHeights = false;
+    bool adjustHeights = true;
+
     if(adjustHeights)
     {
         qInfo()<<"Adjusting heights";
+
+        for(uint i = 0; i < m_fieldGenerator.getVerts().size(); ++i)
+        {
+            qInfo()<<"Adjusting edge: "<<i;
+            float minDistance = 1000000;
+            float yValue = 0.0f;
+
+            for(int k = 0; k < m_verts.size(); ++k)
+            {
+                QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
+                QVector3D flatVector2(m_fieldGenerator.getVert(i)->x(), 0.0f, m_fieldGenerator.getVert(i)->z());
+
+                if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+                {
+                    if((flatVector1 - flatVector2).length() < minDistance)
+                    {
+                        minDistance = (flatVector1 - flatVector2).length();
+                        yValue = m_verts[k].y();
+                    }
+                }
+            }
+
+//            if(yValue < m_waterLevel)
+//            {
+//                yValue = m_waterLevel - 0.25;
+//            }
+//            else
+//            {
+//                yValue += 0.3f;
+//            }
+             yValue += 0.3f;
+
+            m_fieldGenerator.getVert(i)->setY(yValue);
+        }
     }
 
     for(uint i = 0; i < m_vRegions.size(); ++i)
+    {
+            m_vRegions[i].passVBOToShader(m_pgm);
+    }
+
+/*    for(uint i = 0; i < m_vRegions.size(); ++i)
     {
         if(adjustHeights)
         {
@@ -110,7 +150,7 @@ void GLWidget::initializeGL()
 
         m_vRegions[i].passVBOToShader(m_pgm);
     }
-
+*/
     //Finished creating regions
 
     m_pgm.bind();
@@ -152,7 +192,7 @@ void GLWidget::paintGL()
 
     loadMatricesToShader(QVector3D(0,0,0));
 
-//    drawTerrain();
+    drawTerrain();
 
     vao_water.bind();
     m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,1.0f,0.5f));
@@ -181,7 +221,7 @@ void GLWidget::paintGL()
 
     for(uint i = 0; i < m_vRegions.size(); ++i)
     {
-        if(i != m_vRegions.size() - 2)
+        if(i != m_vRegions.size() - 1)
         {
 //            continue;
         }
