@@ -176,7 +176,12 @@ private:
 
     QOpenGLVertexArrayObject m_vao;
     QOpenGLBuffer m_vbo;
+    QOpenGLBuffer m_nbo;
+    QOpenGLBuffer m_ibo;
+
     std::vector<QVector3D> m_verts;
+    std::vector<QVector3D> m_norms;
+    std::vector<uint> m_indices;
 
 };
 

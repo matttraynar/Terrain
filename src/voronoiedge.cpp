@@ -96,10 +96,83 @@ QVector3D VoronoiEdge::getDirection()
 
 void VoronoiEdge::makeWall()
 {
-    m_verts.push_back(*m_startPTR);
-    m_verts.push_back(*m_startPTR + QVector3D(0,1.0,0));
-    m_verts.push_back(*m_endPTR + QVector3D(0,1.0, 0));
-    m_verts.push_back(*m_endPTR);
+    QVector3D perpVector = QVector3D::crossProduct(getDirection(), QVector3D(0.0f, 1.0f, 0.0f));
+    perpVector.normalize();
+
+    perpVector /= 4.0f;
+
+    m_verts.push_back(*m_startPTR + perpVector);
+    m_verts.push_back(*m_startPTR - perpVector);
+    m_verts.push_back(*m_endPTR - perpVector);
+    m_verts.push_back(*m_endPTR + perpVector);
+
+    m_verts.push_back(*m_startPTR + QVector3D(0,0.5f,0) + perpVector);
+    m_verts.push_back(*m_startPTR + QVector3D(0,0.5f,0) - perpVector);
+    m_verts.push_back(*m_endPTR + QVector3D(0,0.5f, 0) - perpVector);
+    m_verts.push_back(*m_endPTR + QVector3D(0,0.5f,0) + perpVector);
+
+    m_norms.push_back((perpVector.normalized()) / 2.0f);
+    m_norms[m_norms.size() - 1].normalize();
+    m_norms.push_back((-perpVector.normalized()) / 2.0f);
+    m_norms[m_norms.size() - 1].normalize();
+    m_norms.push_back((-perpVector.normalized()) / 2.0f);
+    m_norms[m_norms.size() - 1].normalize();
+    m_norms.push_back((perpVector.normalized()) / 2.0f);
+    m_norms[m_norms.size() - 1].normalize();
+
+    m_norms.push_back((QVector3D(0, 1, 0) + perpVector.normalized()) / 2.0f);
+    m_norms[m_norms.size() - 1].normalize();
+    m_norms.push_back((QVector3D(0, 1, 0) - perpVector.normalized()) / 2.0f);
+    m_norms[m_norms.size() - 1].normalize();
+    m_norms.push_back((QVector3D(0, 1, 0) - perpVector.normalized()) / 2.0f);
+    m_norms[m_norms.size() - 1].normalize();
+    m_norms.push_back((QVector3D(0, 1, 0) + perpVector.normalized()) / 2.0f);
+    m_norms[m_norms.size() - 1].normalize();
+
+//    m_norms.push_back(perpVector.normalized());
+//    m_norms.push_back(-1.0f * perpVector.normalized());
+//    m_norms.push_back(-1.0f * perpVector.normalized());
+//    m_norms.push_back(perpVector.normalized());
+
+//    m_norms.push_back(QVector3D(0, 1, 0));
+//    m_norms.push_back(QVector3D(0, 1, 0));
+//    m_norms.push_back(QVector3D(0, 1, 0));
+//    m_norms.push_back(QVector3D(0, 1, 0));
+
+//    m_norms.push_back(QVector3D(0, 1, 0));
+//    m_norms.push_back(QVector3D(0, 1, 0));
+//    m_norms.push_back(QVector3D(0, 1, 0));
+//    m_norms.push_back(QVector3D(0, 1, 0));
+
+    m_indices.push_back(0);
+    m_indices.push_back(1);
+    m_indices.push_back(2);
+    m_indices.push_back(3);
+
+    m_indices.push_back(0);
+    m_indices.push_back(1);
+    m_indices.push_back(5);
+    m_indices.push_back(4);
+
+    m_indices.push_back(3);
+    m_indices.push_back(0);
+    m_indices.push_back(4);
+    m_indices.push_back(7);
+
+    m_indices.push_back(1);
+    m_indices.push_back(2);
+    m_indices.push_back(6);
+    m_indices.push_back(5);
+
+    m_indices.push_back(5);
+    m_indices.push_back(6);
+    m_indices.push_back(7);
+    m_indices.push_back(4);
+
+    m_indices.push_back(2);
+    m_indices.push_back(3);
+    m_indices.push_back(7);
+    m_indices.push_back(6);
 }
 
 void VoronoiEdge::makeVBO(QOpenGLShaderProgram &_pgm)
@@ -118,6 +191,20 @@ void VoronoiEdge::makeVBO(QOpenGLShaderProgram &_pgm)
         _pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
 
         m_vbo.release();
+
+        m_nbo.create();
+        m_nbo.bind();
+        m_nbo.allocate(&m_norms[0], (int)m_norms.size() * sizeof(GLfloat) * 3);
+
+        _pgm.enableAttributeArray("vertexNorm");
+        _pgm.setAttributeArray("vertexNorm", GL_FLOAT, 0, 3);
+
+        m_nbo.release();
+
+        m_ibo.create();
+        m_ibo.bind();
+        m_ibo.allocate(&m_indices[0], (int)m_indices.size() * sizeof(uint));
+
         m_vao.release();
 
         _pgm.release();
@@ -127,7 +214,8 @@ void VoronoiEdge::makeVBO(QOpenGLShaderProgram &_pgm)
 void VoronoiEdge::drawWall()
 {
     m_vao.bind();
-    glDrawArrays(GL_QUADS, 0, (int)m_verts.size());
+//    glDrawArrays(GL_QUADS, 0, (int)m_verts.size());
+    glDrawElements(GL_QUADS, (int)m_indices.size(), GL_UNSIGNED_INT, &m_indices[0]);
     m_vao.release();
 }
 
