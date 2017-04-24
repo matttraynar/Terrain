@@ -105,6 +105,9 @@ void GLWidget::initializeGL()
             m_fieldGenerator.getVert(i)->setY(yValue);
         }
     }
+
+    m_fieldGenerator.createWalls(m_pgm);
+
     m_vRegions = m_fieldGenerator.getRegions();
 
     for(uint i = 0; i < m_vRegions.size(); ++i)
@@ -216,19 +219,21 @@ void GLWidget::paintGL()
 
     vao_trees.release();
 
-    m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f ,1.0f, 1.0f));
+    m_pgm.setUniformValue("mCol",QVector4D(0.7f, 0.0f ,0.0f, 1.0f));
 
     loadMatricesToShader(QVector3D(0,0,0));
 
-    for(uint i = 0; i < m_vRegions.size(); ++i)
-    {
-        if(i != m_vRegions.size() - 1)
-        {
-//            continue;
-        }
+    m_fieldGenerator.drawWalls();
 
-        m_vRegions[i].draw();
-    }
+//    for(uint i = 0; i < m_vRegions.size(); ++i)
+//    {
+//        if(i != m_vRegions.size() - 1)
+//        {
+////            continue;
+//        }
+
+//        m_vRegions[i].draw();
+//    }
 
     m_pgm.release();
 }

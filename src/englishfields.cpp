@@ -2122,6 +2122,24 @@ bool EnglishFields::isBoundaryEdge(VoronoiEdge *_edge)
 
     return false;
 }
+//-----------------------
+
+void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
+{
+    for(uint i = 0; i < m_allEdges.size(); ++i)
+    {
+        m_allEdges[i]->makeWall();
+        m_allEdges[i]->makeVBO(_pgm);
+    }
+}
+
+void EnglishFields::drawWalls()
+{
+    for(uint i = 0; i < m_allEdges.size(); ++i)
+    {
+        m_allEdges[i]->drawWall();
+    }
+}
 
 //----------------------------------------------- OLD? -----------------------------------------------//
 

@@ -91,6 +91,9 @@ public:
     inline std::vector<QVector3D* > getVerts() const { return m_allVerts; }
     inline QVector3D* getVert(int ID) const { return m_allVerts[ID]; }
 
+    void createWalls(QOpenGLShaderProgram &_pgm);
+    void drawWalls();
+
 
 private:
     void subdivide();
