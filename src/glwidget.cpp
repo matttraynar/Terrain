@@ -219,7 +219,7 @@ void GLWidget::paintGL()
 
     vao_trees.release();
 
-    m_pgm.setUniformValue("mCol",QVector4D(0.7f, 0.0f ,0.0f, 1.0f));
+    m_pgm.setUniformValue("mCol",QVector4D(0.25f, 0.1f ,0.1f, 1.0f));
 
     loadMatricesToShader(QVector3D(0,0,0));
 
@@ -260,14 +260,23 @@ void GLWidget::timerEvent(QTimerEvent *e)
 //        colour = 0.0f;
 //    }
 
-//    if(m_x > 20)
-//    {
-//        moveDown = true;
-//    }
-//    else if(m_x < -20)
-//    {
-//        moveDown = false;
-//    }
+    if(m_x > 20)
+    {
+        moveDown = true;
+    }
+    else if(m_x < -20)
+    {
+        moveDown = false;
+    }
+
+    if(moveDown)
+    {
+        m_x -= 0.01f;
+    }
+    else
+    {
+        m_x += 0.01f;
+    }
 
     update();
 }
