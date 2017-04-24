@@ -42,37 +42,37 @@ void main()
 
 			float waterHeight = (waterLevel - min) / range;
 
-			if(colourHeight < waterHeight * 0.7f)
-			{
-				colour = vec4(0.0f, 0.0f, 0.2f, 1.0f);
-			}
-			else if(colourHeight < waterHeight * 1.0f)
-			{
-				float start = waterHeight * 0.7f;
+//			if(colourHeight < waterHeight * 0.7f)
+//			{
+//				colour = vec4(0.0f, 0.0f, 0.2f, 1.0f);
+//			}
+//			else if(colourHeight < waterHeight * 1.0f)
+//			{
+//				float start = waterHeight * 0.7f;
 
-				float colourRange = waterHeight * 0.3f;
+//				float colourRange = waterHeight * 0.3f;
 
-				float colourScale = (colourHeight - start) / colourRange;
+//				float colourScale = (colourHeight - start) / colourRange;
 
-				colour = vec4(0.0f, 0.0f, 0.2f, 1.0f) * (1 - colourScale);
-				colour += texture2D(sandTexture, out_uv) * colourScale;
-			}
-			else if(colourHeight < waterHeight * 1.1f)
-			{
-				colour = texture2D(sandTexture, out_uv);
-			}
-			else if(colourHeight < waterHeight * 1.2f)
-			{
-				float start = waterHeight * 1.1f;
+//				colour = vec4(0.0f, 0.0f, 0.2f, 1.0f) * (1 - colourScale);
+//				colour += texture2D(sandTexture, out_uv) * colourScale;
+//			}
+//			else if(colourHeight < waterHeight * 1.1f)
+//			{
+//				colour = texture2D(sandTexture, out_uv);
+//			}
+//			else if(colourHeight < waterHeight * 1.2f)
+//			{
+//				float start = waterHeight * 1.1f;
 
-				float colourRange = waterHeight * 0.1f;
+//				float colourRange = waterHeight * 0.1f;
 
-				float colourScale = (colourHeight - start) / colourRange;
+//				float colourScale = (colourHeight - start) / colourRange;
 
-				colour = texture2D(sandTexture, out_uv) * (1 - colourScale);
-				colour += texture2D(grassTexture, out_uv) * colourScale;
-			}
-			else if(colourHeight < waterHeight * 2.0f)
+//				colour = texture2D(sandTexture, out_uv) * (1 - colourScale);
+//				colour += texture2D(grassTexture, out_uv) * colourScale;
+//			}
+			if(colourHeight < waterHeight * 2.0f)
 			{
 				colour = texture2D(grassTexture, out_uv);
 			}
@@ -135,7 +135,9 @@ void main()
 		}
 		else
 		{
-			fragColour = mCol;
+			float brightness = clamp(dot(out_norm,normalize(lPosA)), 0.0, 1.0);
+
+			fragColour = vec4(brightness * lCol.rgb * mCol.rgb, 1.0);
 		}
 	}
 	else
@@ -168,7 +170,9 @@ void main()
 		}
 		else
 		{
-			fragColour = mCol;
+			float brightness = clamp(dot(out_norm,normalize(lPosA)), 0.0, 1.0);
+
+			fragColour = vec4(brightness * lCol.rgb * mCol.rgb, 1.0);
 		}
 	}
 
