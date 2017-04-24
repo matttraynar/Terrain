@@ -17,6 +17,12 @@ public:
         m_end = _end;
         m_midPoint = QVector3D(1000000,1000000,1000000);
 
+        m_startNormal = QVector3D(10000, 10000, 10000);
+        m_startNormal2 = QVector3D(10000, 10000, 10000);
+
+        m_endNormal = QVector3D(10000, 10000, 10000);
+        m_endNormal2 = QVector3D(10000, 10000, 10000);
+
         if(m_end.x() - m_start.x() == 0)
         {
             m_gradient = 0;
@@ -41,6 +47,12 @@ public:
 
         m_start = *m_startPTR;
         m_end = *m_endPTR;
+
+        m_startNormal = QVector3D(10000, 10000, 10000);
+        m_startNormal2 = QVector3D(10000, 10000, 10000);
+
+        m_endNormal = QVector3D(10000, 10000, 10000);
+        m_endNormal2 = QVector3D(10000, 10000, 10000);
 
         if(m_end.x() - m_start.x() == 0)
         {
@@ -160,13 +172,22 @@ public:
     int usesVert(QVector3D* _vert);
 
     inline void setStartNormal(QVector3D _normal) { m_startNormal = _normal; }
+    inline void setStartNormal2(QVector3D _normal) { m_startNormal2 = _normal; }
     inline void setEndNormal(QVector3D _normal) { m_endNormal = _normal; }
+    inline void setEndNormal2(QVector3D _normal) { m_endNormal2 = _normal; }
+
+    inline QVector3D getStartNormal1() const { return m_startNormal; }
+    inline QVector3D getStartNormal2() const { return m_startNormal2; }
+
+    inline QVector3D getEndNormal1() const { return m_endNormal; }
+    inline QVector3D getEndNormal2() const { return m_endNormal2; }
 
     QVector3D m_start;
     QVector3D m_end;
 
     QVector3D* m_startPTR;
     QVector3D* m_endPTR;
+
 
 private:
     VoronoiEdge();
@@ -180,7 +201,10 @@ private:
     float m_c;
 
     QVector3D m_startNormal;
+    QVector3D m_startNormal2;
+
     QVector3D m_endNormal;
+    QVector3D m_endNormal2;
 
     QOpenGLVertexArrayObject m_vao;
     QOpenGLBuffer m_vbo;

@@ -225,15 +225,12 @@ void GLWidget::paintGL()
 
     m_fieldGenerator.drawWalls();
 
-//    for(uint i = 0; i < m_vRegions.size(); ++i)
-//    {
-//        if(i != m_vRegions.size() - 1)
-//        {
-////            continue;
-//        }
+    m_pgm.setUniformValue("mCol",QVector4D(1.0f,1.0f,1.0f,1.0f));
 
+    for(uint i = 0; i < m_vRegions.size(); ++i)
+    {
 //        m_vRegions[i].draw();
-//    }
+    }
 
     m_pgm.release();
 }

@@ -67,6 +67,14 @@ struct SortIntersection
     }
 };
 
+struct SortAnglePair
+{
+    bool operator () (const std::pair<float, uint> &a, const std::pair<float, uint> &b)
+    {
+        return(a.first < b.first);
+    }
+};
+
 class EnglishFields
 {
 public:

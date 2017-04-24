@@ -2144,11 +2144,6 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
             }
         }
 
-//        if(thisVert.size() < 2)
-//        {
-//            qInfo()<<"Vertex "<<i<<" is used by "<<thisVert.size()<<" edges";
-//        }
-
         sharedVerts.push_back(thisVert);
     }
 
