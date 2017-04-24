@@ -1963,6 +1963,8 @@ void EnglishFields::makeEdgesUsable()
 
     std::vector<uint> updatedEdgeIDs;
 
+    m_maxDisplacementIterations = 10;
+
     for(int i = 0; i < originalEdgeCount; ++i)
     {
         if(m_allEdges[i]->getLength() < 2.0f)
@@ -2126,6 +2128,68 @@ bool EnglishFields::isBoundaryEdge(VoronoiEdge *_edge)
 
 void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
 {
+    std::vector< std::vector< std::pair<uint, int> > > sharedVerts;
+
+    for(uint i = 0; i < m_allVerts.size(); ++i)
+    {
+        std::vector< std::pair<uint, int> > thisVert;
+
+        for(uint j = 0; j < m_allEdges.size(); ++j)
+        {
+            int isVertUsed = m_allEdges[j]->usesVert(m_allVerts[i]);
+
+            if(isVertUsed != -1)
+            {
+                thisVert.push_back(std::make_pair(j, isVertUsed));
+            }
+        }
+
+//        if(thisVert.size() < 2)
+//        {
+//            qInfo()<<"Vertex "<<i<<" is used by "<<thisVert.size()<<" edges";
+//        }
+
+        sharedVerts.push_back(thisVert);
+    }
+
+    for(uint i = 0; i < sharedVerts.size(); ++i)
+    {
+        if(sharedVerts[i].size() == 2)
+        {
+            QVector3D perpVector1 = QVector3D::crossProduct(m_allEdges[sharedVerts[i][0].first]->getDirection(), QVector3D(0,1,0));
+            QVector3D perpVector2 = QVector3D::crossProduct(m_allEdges[sharedVerts[i][1].first]->getDirection(), QVector3D(0,1,0));
+
+            perpVector1.normalize();
+            perpVector2.normalize();
+
+            if(QVector3D::dotProduct(perpVector1, perpVector2) < 0)
+            {
+                perpVector1 *= -1.0f;
+            }
+
+            QVector3D newNormal = (perpVector1 + perpVector2) / 2.0f;
+            newNormal.normalize();
+
+            if(sharedVerts[i][0].second == 0)
+            {
+                m_allEdges[sharedVerts[i][0].first]->setStartNormal(newNormal);
+            }
+            else
+            {
+                m_allEdges[sharedVerts[i][0].first]->setEndNormal(newNormal);
+            }
+
+            if(sharedVerts[i][1].second == 0)
+            {
+                m_allEdges[sharedVerts[i][1].first]->setStartNormal(newNormal);
+            }
+            else
+            {
+                m_allEdges[sharedVerts[i][1].first]->setEndNormal(newNormal);
+            }
+        }
+    }
+
     for(uint i = 0; i < m_allEdges.size(); ++i)
     {
         m_allEdges[i]->makeWall();

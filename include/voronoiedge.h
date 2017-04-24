@@ -157,6 +157,11 @@ public:
     void makeVBO(QOpenGLShaderProgram &_pgm);
     void drawWall();
 
+    int usesVert(QVector3D* _vert);
+
+    inline void setStartNormal(QVector3D _normal) { m_startNormal = _normal; }
+    inline void setEndNormal(QVector3D _normal) { m_endNormal = _normal; }
+
     QVector3D m_start;
     QVector3D m_end;
 
@@ -173,6 +178,9 @@ private:
     float m_gradient;
     float m_invGradient;
     float m_c;
+
+    QVector3D m_startNormal;
+    QVector3D m_endNormal;
 
     QOpenGLVertexArrayObject m_vao;
     QOpenGLBuffer m_vbo;

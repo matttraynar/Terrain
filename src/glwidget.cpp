@@ -100,7 +100,7 @@ void GLWidget::initializeGL()
 //            {
 //                yValue += 0.3f;
 //            }
-             yValue += 0.3f;
+//             yValue += 0.3f;
 
             m_fieldGenerator.getVert(i)->setY(yValue);
         }
