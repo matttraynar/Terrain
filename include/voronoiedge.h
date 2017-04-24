@@ -2,6 +2,9 @@
 #define VORONOIEDGE_H
 
 #include <QVector3D>
+#include <QOpenGLShaderProgram>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLBuffer>
 
 #include <QDebug>
 
@@ -51,6 +54,8 @@ public:
         m_invGradient = -1.0f/m_gradient;
         m_c = m_start.z() - (m_gradient * m_start.x());
     }
+
+    VoronoiEdge(const VoronoiEdge &toCopy);
 
     ~VoronoiEdge();
 
@@ -146,7 +151,11 @@ public:
         {
             qInfo()<<"Start: "<<m_start<<" End: "<<m_end;
         }
-    }
+    };
+
+    void makeWall();
+    void makeVBO(QOpenGLShaderProgram &_pgm);
+    void drawWall();
 
     QVector3D m_start;
     QVector3D m_end;
@@ -164,6 +173,10 @@ private:
     float m_gradient;
     float m_invGradient;
     float m_c;
+
+    QOpenGLVertexArrayObject m_vao;
+    QOpenGLBuffer m_vbo;
+    std::vector<QVector3D> m_verts;
 
 };
 

@@ -10,6 +10,14 @@ VoronoiEdge::VoronoiEdge()
 
 }
 
+VoronoiEdge::VoronoiEdge(const VoronoiEdge &toCopy)
+{
+    m_start = toCopy.m_start;
+    m_startPTR = toCopy.m_startPTR;
+    m_end = toCopy.m_end;
+    m_endPTR = toCopy.m_endPTR;
+}
+
 float VoronoiEdge::getLength()
 {
     if(m_startPTR != NULL && m_endPTR != NULL)
@@ -31,8 +39,6 @@ QVector3D VoronoiEdge::intersectEdge(VoronoiEdge *_test)
 
     QVector3D dir2 = *(_test->m_endPTR) - *(_test->m_startPTR);
     dir2.setY(0);
-
-    VoronoiEdge tmpTest = *_test;
 
     float denom = get2DCrossProduct(dir1, dir2);
     float uNumer = get2DCrossProduct((*(_test->m_startPTR) - *m_startPTR), dir1);
@@ -87,3 +93,41 @@ QVector3D VoronoiEdge::getDirection()
     direction.normalize();
     return direction;
 }
+
+void VoronoiEdge::makeWall()
+{
+    m_verts.push_back(*m_startPTR);
+    m_verts.push_back(*m_startPTR + QVector3D(0,1.0,0));
+    m_verts.push_back(*m_endPTR + QVector3D(0,1.0, 0));
+    m_verts.push_back(*m_endPTR);
+}
+
+void VoronoiEdge::makeVBO(QOpenGLShaderProgram &_pgm)
+{
+    if(m_verts.size() > 0)
+    {
+        _pgm.bind();
+        m_vao.create();
+        m_vao.bind();
+
+        m_vbo.create();
+        m_vbo.bind();
+        m_vbo.allocate(&m_verts[0], (int)m_verts.size() * sizeof(GLfloat) * 3);
+
+        _pgm.enableAttributeArray("vertexPos");
+        _pgm.setAttributeArray("vertexPos", GL_FLOAT, 0, 3);
+
+        m_vbo.release();
+        m_vao.release();
+
+        _pgm.release();
+    }
+}
+
+void VoronoiEdge::drawWall()
+{
+    m_vao.bind();
+    glDrawArrays(GL_QUADS, 0, (int)m_verts.size());
+    m_vao.release();
+}
+
