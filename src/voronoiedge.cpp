@@ -443,10 +443,13 @@ void VoronoiEdge::makeVBO(QOpenGLShaderProgram &_pgm)
 
 void VoronoiEdge::drawWall()
 {
-    m_vao.bind();
-//    glDrawArrays(GL_QUADS, 0, (int)m_verts.size());
-    glDrawElements(GL_QUADS, (int)m_indices.size(), GL_UNSIGNED_INT, &m_indices[0]);
-    m_vao.release();
+    if(m_vao.isCreated())
+    {
+        m_vao.bind();
+        //    glDrawArrays(GL_QUADS, 0, (int)m_verts.size());
+        glDrawElements(GL_QUADS, (int)m_indices.size(), GL_UNSIGNED_INT, &m_indices[0]);
+        m_vao.release();
+    }
 }
 
 int VoronoiEdge::usesVert(QVector3D *_vert)

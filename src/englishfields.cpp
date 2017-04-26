@@ -1963,7 +1963,7 @@ void EnglishFields::makeEdgesUsable()
 
     std::vector<uint> updatedEdgeIDs;
 
-    m_maxDisplacementIterations = 10;
+    m_maxDisplacementIterations = 20;
 
     for(int i = 0; i < originalEdgeCount; ++i)
     {
@@ -2187,8 +2187,15 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
 
     for(uint i = 0; i < m_allEdges.size(); ++i)
     {
-        m_allEdges[i]->makeWall();
-        m_allEdges[i]->makeVBO(_pgm);
+
+        float turnEdgeOff = 10.0f * (float)rand()/(float)RAND_MAX;
+
+        if(turnEdgeOff > 0.5f || isBoundaryEdge(m_allEdges[i]))
+        {
+            m_allEdges[i]->makeWall();
+            m_allEdges[i]->makeVBO(_pgm);
+        }
+
     }
 }
 
