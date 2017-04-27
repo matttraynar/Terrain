@@ -229,6 +229,10 @@ void GLWidget::paintGL()
 
     for(uint i = 0; i < m_vRegions.size(); ++i)
     {
+//        if(i != 1)
+//        {
+//            continue;
+//        }
 //        m_vRegions[i].draw();
     }
 

@@ -14,7 +14,7 @@ EnglishFields::EnglishFields(double _width)
     m_maxDisplacementIterations = 3;
 
 //    makeVoronoiDiagram(time(NULL));
-    makeVoronoiDiagram(1493301802);
+    makeVoronoiDiagram(1493322135);
 
     subdivide();
     editEdges();
@@ -560,21 +560,6 @@ void EnglishFields::subdivide()
 
 void EnglishFields::editEdges()
 {
-    qInfo()<<"ONE";
-    for(uint i = 0; i < m_regions.size(); ++i)
-    {
-        qInfo()<<"Face: "<<i;
-        m_regions[i].updateEdgeCount();
-
-        qInfo()<<"Edge Count: "<<m_regions[i].getEdgeCount();
-
-        for(uint j = 0; j < m_regions[i].getEdgeCount(); ++j)
-        {
-            qInfo()<<j<<":"<<m_regions[i].getEdgeID(j);
-        }
-        qInfo()<<"----------";
-    }
-
     int startFaceCount = m_regions.size();
 
     for(int i = 0; i < startFaceCount; ++i)
@@ -609,6 +594,8 @@ void EnglishFields::editEdges()
 
     qInfo()<<"Verts loaded";
 
+    std::vector<uint> threeFieldRemoval;
+
     for(int i = 0; i < startFaceCount; ++i)
     {
         float fieldTypeSwitch = 100.0f * (float)rand()/(float)RAND_MAX;
@@ -619,6 +606,7 @@ void EnglishFields::editEdges()
         {
             qInfo()<<"Three field"<<i;
             threeField(m_regions[i]);
+            threeFieldRemoval.push_back(i);
         }
         else if(fieldTypeSwitch < 80.0f)
         {
@@ -631,54 +619,37 @@ void EnglishFields::editEdges()
         }
     }
 
-    for(uint i = 0; i < m_editedEdgeIDs.size(); ++i)
+    for(uint i = 0; i < threeFieldRemoval.size(); ++i)
     {
-        removeEdge(m_editedEdgeIDs[i]);
+        m_regions.erase(m_regions.begin() + threeFieldRemoval[i]);
 
-        for(uint j = 0; j < m_editedEdgeIDs.size(); ++j)
+        for(uint j = 0; j < threeFieldRemoval.size(); ++j)
         {
-            if(m_editedEdgeIDs[j] > m_editedEdgeIDs[i])
+            if(threeFieldRemoval[j] > threeFieldRemoval[i])
             {
-                m_editedEdgeIDs[j]--;
+                threeFieldRemoval[j]--;
             }
         }
     }
 
-    m_editedEdgeIDs.clear();
+//    for(uint i = 0; i < m_editedEdgeIDs.size(); ++i)
+//    {
+//        removeEdge(m_editedEdgeIDs[i]);
 
-    qInfo()<<"TWO";
-    for(uint i = 0; i < m_regions.size(); ++i)
-    {
-        qInfo()<<"Face: "<<i;
-        m_regions[i].updateEdgeCount();
+//        for(uint j = 0; j < m_editedEdgeIDs.size(); ++j)
+//        {
+//            if(m_editedEdgeIDs[j] > m_editedEdgeIDs[i])
+//            {
+//                m_editedEdgeIDs[j]--;
+//            }
+//        }
+//    }
 
-        qInfo()<<"Edge Count: "<<m_regions[i].getEdgeCount();
-
-        for(uint j = 0; j < m_regions[i].getEdgeCount(); ++j)
-        {
-            qInfo()<<j<<":"<<m_regions[i].getEdgeID(j);
-        }
-        qInfo()<<"----------";
-    }
+//    m_editedEdgeIDs.clear();
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
         m_regions[i].loadVerts(m_allEdges);
-    }
-
-    qInfo()<<"THREE";
-    for(uint i = 0; i < m_regions.size(); ++i)
-    {
-        qInfo()<<"Face: "<<i;
-        m_regions[i].updateEdgeCount();
-
-        qInfo()<<"Edge Count: "<<m_regions[i].getEdgeCount();
-
-        for(uint j = 0; j < m_regions[i].getEdgeCount(); ++j)
-        {
-            qInfo()<<j<<":"<<m_regions[i].getEdgeID(j);
-        }
-        qInfo()<<"----------";
     }
 }
 
@@ -2127,7 +2098,7 @@ void EnglishFields::updateEdge(uint _oldID, std::vector<uint> _newIDs)
 void EnglishFields::removeEdge(uint ID)
 {
     for(uint i = 0; i < m_regions.size(); ++i)
-    {
+    {        
         m_regions[i].removeEdge(ID);
     }
 
@@ -2189,21 +2160,10 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
         sharedVerts.push_back(thisVert);
     }
 
-//    for(uint i = 0; i < 1; ++i)
-//    {
-//        qInfo()<<"Face: "<<i;
-//        m_regions[i].updateEdgeCount();
-
-//        qInfo()<<"Edge Count: "<<m_regions[i].getEdgeCount();
-
-//        for(uint j = 0; j < m_regions[i].getEdgeCount(); ++j)
-//        {
-//            qInfo()<<j<<":"<<m_regions[i].getEdgeID(j);
-//        }
-//        qInfo()<<"----------";
-
-//        getSegments(m_regions[i]);
-//    }
+    for(uint i = 0; i < 1; ++i)
+    {
+        getSegments(m_regions[i]);
+    }
 
     for(uint i = 0; i < sharedVerts.size(); ++i)
     {
@@ -2245,11 +2205,12 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
 
     for(uint i = 0; i < m_allEdges.size(); ++i)
     {
-        float turnEdgeOff = 10.0f * (float)rand()/(float)RAND_MAX;
+//        float turnEdgeOff = 10.0f * (float)rand()/(float)RAND_MAX;
 
-        if(turnEdgeOff > 0.5f || isBoundaryEdge(m_allEdges[i]))
-        {
-        }
+//        if(turnEdgeOff > 0.5f || isBoundaryEdge(m_allEdges[i]))
+//        {
+//        }
+
         m_allEdges[i]->makeWall();
         m_allEdges[i]->makeVBO(_pgm);
 
@@ -2258,9 +2219,18 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
 
 void EnglishFields::drawWalls()
 {
+    for(uint i = 0; i < m_regions.size(); ++i)
+    {
+        if(i != 0)
+        {
+//            continue;
+        }
+        m_regions[i].draw();
+    }
+
     for(uint i = 0; i < m_allEdges.size(); ++i)
     {
-        m_allEdges[i]->drawWall();
+//        m_allEdges[i]->drawWall();
     }
 }
 
@@ -2312,103 +2282,74 @@ void EnglishFields::getSegments(VoronoiFace &_face)
     std::vector< std::vector<uint> > vertexIndices;
     std::vector<uint> nextSegment;
 
-    uint i = 0;
-    uint currentIndex = _face.getEdgeID(0);
-    uint firstIndex = currentIndex;
+   std::vector<std::pair<QVector3D, std::pair<uint, uint>>> vertexPositions;
 
-    int vertexCount = 0;
+   _face.updateEdgeCount();
+   qInfo()<<_face.getEdgeCount();
 
-    do
-    {
-        if(i % 2 == 0)
-        {
-            nextSegment.push_back(currentIndex);
+   for(uint i = 0; i < _face.getEdgeCount() * 2; ++i)
+   {
+//       qInfo()<<i;
+       if(i % 2 == 0)
+       {
+           if(isVertex(currentEdge->m_startPTR))
+           {
+               bool alreadyAdded = false;
 
-            if(isVertex(currentEdge->m_startPTR))
-            {
-                vertexCount++;
-            }
-        }
-        else
-        {
-            if((nextSegment.size() > 0 && nextSegment[nextSegment.size() - 1] != currentIndex) ||
-                nextSegment.size() == 0)
-            {
-                nextSegment.push_back(currentIndex);
-            }
+               for(uint j = 0; j < vertexPositions.size(); ++j)
+               {
+                   if(vertexPositions[j].first == *(currentEdge->m_startPTR) && vertexPositions[j].second.second == 0)
+                   {
+                       alreadyAdded = true;
+                   }
+               }
 
+               if(!alreadyAdded)
+               {
+                   vertexPositions.push_back(std::make_pair(*(currentEdge->m_startPTR), std::make_pair(i/2, 0)));
+               }
+           }
+       }
+       else
+       {
+           if(isVertex(currentEdge->m_endPTR))
+           {
+               bool alreadyAdded = false;
 
-            if(isVertex(currentEdge->m_endPTR))
-            {
-                vertexCount++;
+               for(uint j = 0; j < vertexPositions.size(); ++j)
+               {
+                   if(vertexPositions[j].first == *(currentEdge->m_endPTR) && vertexPositions[j].second.second == 1)
+                   {
+                       alreadyAdded = true;
+                   }
+               }
 
-                if(vertexCount == 1 && vertexIndices.size() == 0)
-                {
-                    vertexIndices.push_back(nextSegment);
-                    vertexCount = 0;
-                    nextSegment.clear();
-                }
-            }
+               if(!alreadyAdded)
+               {
+                   vertexPositions.push_back(std::make_pair(*(currentEdge->m_endPTR), std::make_pair(i/2, 1)));
+               }
+           }
 
-            int newIndex = _face.getNextEdge(currentIndex);
-
-            if(newIndex == -1)
-            {
-                if(nextSegment.size() > 1)
-                {
-                    if(nextSegment[nextSegment.size() - 2] < currentIndex)
-                    {
-                        currentIndex = _face.getNextUnnconnectedEdge(currentIndex, true);
-                    }
-                    else
-                    {
-                        currentIndex = _face.getNextUnnconnectedEdge(currentIndex, false);
-                    }
-                }
-                else
-                {
-                    if(vertexIndices[vertexIndices.size() - 1][vertexIndices[vertexIndices.size() - 1].size() - 2] < currentIndex)
-                    {
-                        currentIndex = _face.getNextUnnconnectedEdge(currentIndex, true);
-                    }
-                    else
-                    {
-                        currentIndex = _face.getNextUnnconnectedEdge(currentIndex, false);
-                    }
-                }
-//                qInfo()<<firstIndex;
-//                qInfo()<<vertexIndices[vertexIndices.size() - 1][vertexIndices[vertexIndices.size() - 1].size() - 2];
-//                qInfo()<<currentIndex;
-            }
-            else
-            {
-                currentIndex = newIndex;
-            }
-
-            currentEdge = m_allEdges[currentIndex];
-        }
-
-        if(vertexCount == 2)
-        {
-//            qInfo()<<"----------- SEGMENT FINISHED ------------";
-            vertexIndices.push_back(nextSegment);
-            vertexCount = 0;
-            nextSegment.clear();
-        }
-        ++i;
+           currentEdge = m_allEdges[_face.getEdgeID(i / 2)];
+       }
 
 
-    } while(firstIndex != currentIndex || i < 2);
+   }
 
-    if(nextSegment.size() == 1)
-    {
-        vertexIndices[0].push_back(nextSegment[0]);
-    }
-
-    qInfo()<<"Segment size: "<<vertexIndices.size();
-
-    _face.setSegments(vertexIndices);
-
+   for(uint i = 0; i < vertexPositions.size(); ++i)
+   {
+       qInfo()<<"Position: "<<i<<vertexPositions[i].first;
+       if(vertexPositions[i].second.second == 0)
+       {
+           m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_startPTR->setY(m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_startPTR->y() + 1);
+//           m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_endPTR->setY(m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_endPTR->y() + 1);
+       }
+       else
+       {
+//           m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_startPTR->setY(m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_startPTR->y() + 1);
+           m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_endPTR->setY(m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_endPTR->y() + 1);
+       }
+   }
 
 }
 

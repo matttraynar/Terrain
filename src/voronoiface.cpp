@@ -419,11 +419,17 @@ void VoronoiFace::passVBOToShader(QOpenGLShaderProgram &_pgm)
 
 void VoronoiFace::draw()
 {
-    m_vao.bind();
+//    m_vao.bind();
 
-    glDrawArrays(GL_LINES, 0, (int)m_edgeVerts.size());
+//    glDrawArrays(GL_LINES, 0, (int)m_edgeVerts.size());
 
-    m_vao.release();
+//    m_vao.release();
+
+    for(uint i = 0; i < m_edges.size(); ++i)
+    {
+//        if(i != 17 && i != 16 && i != 20) {continue;}
+        m_edges[i]->drawWall();
+    }
 }
 
 void VoronoiFace::checkUsable()
