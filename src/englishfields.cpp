@@ -612,7 +612,6 @@ void EnglishFields::editEdges()
         {
             qInfo()<<"Straight field";
             straightField(m_regions[i]);
-            STRAIGHT.push_back(i);
         }
         else
         {
@@ -2128,10 +2127,15 @@ bool EnglishFields::isBoundaryEdge(VoronoiEdge *_edge)
 
 void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
 {
+    m_vertexInformation.resize(m_allVerts.size(), std::make_pair(0, false));
+
     std::vector< std::vector< std::pair<uint, int> > > sharedVerts;
 
+    std::vector<bool> verts;
     for(uint i = 0; i < m_allVerts.size(); ++i)
     {
+        verts.push_back(isVertex(m_allVerts[i]));
+
         std::vector< std::pair<uint, int> > thisVert;
 
         for(uint j = 0; j < m_allEdges.size(); ++j)
@@ -2146,6 +2150,7 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
 
         sharedVerts.push_back(thisVert);
     }
+
 
     for(uint i = 0; i < sharedVerts.size(); ++i)
     {
@@ -2187,7 +2192,6 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
 
     for(uint i = 0; i < m_allEdges.size(); ++i)
     {
-
         float turnEdgeOff = 10.0f * (float)rand()/(float)RAND_MAX;
 
         if(turnEdgeOff > 0.5f || isBoundaryEdge(m_allEdges[i]))
@@ -2205,6 +2209,101 @@ void EnglishFields::drawWalls()
     {
         m_allEdges[i]->drawWall();
     }
+}
+
+bool EnglishFields::isVertex(QVector3D *_point)
+{
+    auto iter = std::find(m_allVerts.begin(), m_allVerts.end(), _point);
+    int pointPosition = -1;
+
+    if(iter != m_allVerts.end())
+    {
+        pointPosition = distance(m_allVerts.begin(), iter);
+    }
+
+    if(pointPosition != -1)
+    {
+        if(m_vertexInformation[pointPosition].first == 1)
+        {
+            return m_vertexInformation[pointPosition].second;
+        }
+        else
+        {
+            int usageCount = 0;
+
+            for(uint i = 0; i < m_allEdges.size(); ++i)
+            {
+                if(m_allEdges[i]->usesVert(_point) != -1)
+                {
+                    usageCount++;
+                }
+
+                if(usageCount > 2)
+                {
+                    m_vertexInformation[pointPosition] = std::make_pair(1, true);
+                    return true;
+                }
+            }
+
+            m_vertexInformation[pointPosition] = std::make_pair(1, false);
+        }
+    }
+
+    return false;
+}
+
+void EnglishFields::getSegments(VoronoiFace &_face)
+{
+    VoronoiEdge* currentEdge = m_allEdges[_face.getEdgeID(0)];
+
+    std::vector< std::vector<uint> > vertexIndices;
+    std::vector<uint> nextSegment;
+
+    uint i = 0;
+    uint currentIndex = _face.getEdgeID(0);
+    uint firstIndex = currentIndex;
+
+    do
+    {
+        if(i % 2 == 0)
+        {
+            if(isVertex(currentEdge->m_startPTR))
+            {
+                nextSegment.push_back(currentIndex);
+            }
+        }
+        else
+        {
+            if(isVertex(currentEdge->m_endPTR))
+            {
+                nextSegment.push_back(currentIndex);
+
+                if(vertexIndices.size() == 0 && nextSegment.size() == 1)
+                {
+                    vertexIndices.push_back(nextSegment);
+                    nextSegment.clear();
+                }
+            }
+
+            currentIndex = _face.getNextEdge(currentIndex);
+            currentEdge = m_allEdges[_face.getEdgeID(currentIndex)];
+        }
+
+        if(nextSegment.size() == 2)
+        {
+            vertexIndices.push_back(nextSegment);
+            nextSegment.clear();
+        }
+        ++i;
+
+    } while(firstIndex != currentIndex || i < 2);
+
+    if(nextSegment.size() == 1)
+    {
+        vertexIndices[0].push_back(nextSegment[0]);
+    }
+
+
 }
 
 //----------------------------------------------- OLD? -----------------------------------------------//

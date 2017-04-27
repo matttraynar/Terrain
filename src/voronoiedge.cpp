@@ -154,7 +154,6 @@ void VoronoiEdge::makeWall()
 
         perpVector /= 8.0f;
 
-//        qInfo()<<"Edge vert";
         m_startNormal /= 8.0f;
 
         m_verts.push_back(*m_startPTR + m_startNormal);
@@ -195,7 +194,6 @@ void VoronoiEdge::makeWall()
     }
     else if(m_startNormal != QVector3D(10000, 10000, 10000) && m_endNormal != QVector3D(10000, 10000, 10000) && m_startNormal2 == QVector3D(10000, 10000, 10000) && m_endNormal2 == QVector3D(10000, 10000, 10000))
     {
-        qInfo()<<"Normal vert";
         m_startNormal /= 8.0f;
         m_endNormal /= 8.0f;
 
@@ -235,144 +233,6 @@ void VoronoiEdge::makeWall()
         m_norms.push_back((QVector3D(0, 1, 0) + m_endNormal.normalized()) / 2.0f);
         m_norms[m_norms.size() - 1].normalize();
     }
-    else if(m_startNormal2 != QVector3D(10000, 10000, 10000) && m_endNormal2 == QVector3D(10000, 10000, 10000))
-    {
-//        QVector3D perpVector = QVector3D::crossProduct(getDirection(), QVector3D(0.0f, 1.0f, 0.0f));
-//        perpVector.normalize();
-
-//        perpVector /= 8.0f;
-
-////        qInfo()<<"Edge vert";
-//        m_startNormal /= 8.0f;
-
-//        m_verts.push_back(*m_startPTR + m_startNormal);
-//        m_verts.push_back(*m_startPTR + m_startNormal2);
-//        m_verts.push_back(*m_endPTR - perpVector);
-//        m_verts.push_back(*m_endPTR + perpVector);
-
-//        m_verts.push_back(*m_startPTR + QVector3D(0,0.25f,0) + m_startNormal);
-//        m_verts.push_back(*m_startPTR + QVector3D(0,0.25f,0) + m_startNormal2);
-//        m_verts.push_back(*m_endPTR + QVector3D(0,0.25f, 0) - perpVector);
-//        m_verts.push_back(*m_endPTR + QVector3D(0,0.25f,0) + perpVector);
-
-//        //Bottom
-//        m_norms.push_back((m_startNormal.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((m_startNormal2.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((-perpVector.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((perpVector.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        //Top
-//        m_norms.push_back((QVector3D(0, 1, 0) + m_startNormal.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((QVector3D(0, 1, 0) + m_startNormal2.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((QVector3D(0, 1, 0) - perpVector.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((QVector3D(0, 1, 0) + perpVector.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-    }
-    else if(m_startNormal2 == QVector3D(10000, 10000, 10000) && m_endNormal2 != QVector3D(10000, 10000, 10000))
-    {
-//        QVector3D perpVector = QVector3D::crossProduct(getDirection(), QVector3D(0.0f, 1.0f, 0.0f));
-//        perpVector.normalize();
-
-//        perpVector /= 8.0f;
-
-//        m_endNormal /= 8.0f;
-
-//        m_verts.push_back(*m_startPTR + perpVector);
-//        m_verts.push_back(*m_startPTR - perpVector);
-//        m_verts.push_back(*m_endPTR + m_endNormal);
-//        m_verts.push_back(*m_endPTR + m_endNormal2);
-
-//        m_verts.push_back(*m_startPTR + QVector3D(0,0.25f,0) + perpVector);
-//        m_verts.push_back(*m_startPTR + QVector3D(0,0.25f,0) - perpVector);
-//        m_verts.push_back(*m_endPTR + QVector3D(0,0.25f, 0) + m_endNormal);
-//        m_verts.push_back(*m_endPTR + QVector3D(0,0.25f,0) + m_endNormal2);
-
-//        //Bottom
-//        m_norms.push_back((perpVector.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((-perpVector.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((m_endNormal.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((m_endNormal2.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        //Top
-//        m_norms.push_back((QVector3D(0, 1, 0) + perpVector.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((QVector3D(0, 1, 0) - perpVector.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((QVector3D(0, 1, 0) + m_endNormal.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-
-//        m_norms.push_back((QVector3D(0, 1, 0) + m_endNormal2.normalized()) / 2.0f);
-//        m_norms[m_norms.size() - 1].normalize();
-    }
-    /*    else
-    {
-        qInfo()<<"Corner vert";
-        m_startNormal /= 8.0f;
-        m_startNormal2 /= 8.0f;
-        m_endNormal /= 8.0f;
-        m_endNormal2 /= 8.0f;
-
-        m_verts.push_back(*m_startPTR + m_startNormal);
-        m_verts.push_back(*m_startPTR + m_startNormal2);
-        m_verts.push_back(*m_endPTR + m_endNormal);
-        m_verts.push_back(*m_endPTR + m_endNormal2);
-
-        m_verts.push_back(*m_startPTR + QVector3D(0,0.25f,0) + m_startNormal);
-        m_verts.push_back(*m_startPTR + QVector3D(0,0.25f,0) + m_startNormal2);
-        m_verts.push_back(*m_endPTR + QVector3D(0,0.25f, 0) + m_endNormal);
-        m_verts.push_back(*m_endPTR + QVector3D(0,0.25f,0) + m_endNormal2);
-
-        //Bottom
-        m_norms.push_back((m_startNormal.normalized()) / 2.0f);
-        m_norms[m_norms.size() - 1].normalize();
-
-        m_norms.push_back((m_startNormal2.normalized()) / 2.0f);
-        m_norms[m_norms.size() - 1].normalize();
-
-        m_norms.push_back((m_endNormal.normalized()) / 2.0f);
-        m_norms[m_norms.size() - 1].normalize();
-
-        m_norms.push_back((m_endNormal2.normalized()) / 2.0f);
-        m_norms[m_norms.size() - 1].normalize();
-
-        //Top
-        m_norms.push_back((QVector3D(0, 1, 0) + m_startNormal.normalized()) / 2.0f);
-        m_norms[m_norms.size() - 1].normalize();
-
-        m_norms.push_back((QVector3D(0, 1, 0) + m_startNormal2.normalized()) / 2.0f);
-        m_norms[m_norms.size() - 1].normalize();
-
-        m_norms.push_back((QVector3D(0, 1, 0) + m_endNormal.normalized()) / 2.0f);
-        m_norms[m_norms.size() - 1].normalize();
-
-        m_norms.push_back((QVector3D(0, 1, 0) + m_endNormal2.normalized()) / 2.0f);
-        m_norms[m_norms.size() - 1].normalize();
-
-    }
-*/
-
 
     m_indices.push_back(0);
     m_indices.push_back(1);

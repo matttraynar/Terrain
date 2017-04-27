@@ -127,8 +127,8 @@ private:
     std::vector<uint> m_editedEdgeIDs;
     std::unordered_map<uint, std::pair< uint, uint> > m_newEdges;
 
-
-    std::vector<uint> STRAIGHT;
+    bool isVertex(QVector3D* _point);
+    std::vector<std::pair<uint, bool>> m_vertexInformation;
 
 
 
