@@ -128,6 +128,8 @@ private:
     std::unordered_map<uint, std::pair< uint, uint> > m_newEdges;
 
     bool isVertex(QVector3D* _point);
+    void getSegments(VoronoiFace &_face);
+
     std::vector<std::pair<uint, bool>> m_vertexInformation;
 
 

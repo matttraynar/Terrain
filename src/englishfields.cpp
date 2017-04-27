@@ -13,11 +13,8 @@ EnglishFields::EnglishFields(double _width)
     m_width = _width;
     m_maxDisplacementIterations = 3;
 
-    makeVoronoiDiagram(time(NULL));
-//    makeVoronoiDiagram(1492950977);
-//    makeVoronoiDiagram(1492629112);
-
-//    makeVoronoiDiagram(1492598967);
+//    makeVoronoiDiagram(time(NULL));
+    makeVoronoiDiagram(1493301802);
 
     subdivide();
     editEdges();
@@ -563,6 +560,21 @@ void EnglishFields::subdivide()
 
 void EnglishFields::editEdges()
 {
+    qInfo()<<"ONE";
+    for(uint i = 0; i < m_regions.size(); ++i)
+    {
+        qInfo()<<"Face: "<<i;
+        m_regions[i].updateEdgeCount();
+
+        qInfo()<<"Edge Count: "<<m_regions[i].getEdgeCount();
+
+        for(uint j = 0; j < m_regions[i].getEdgeCount(); ++j)
+        {
+            qInfo()<<j<<":"<<m_regions[i].getEdgeID(j);
+        }
+        qInfo()<<"----------";
+    }
+
     int startFaceCount = m_regions.size();
 
     for(int i = 0; i < startFaceCount; ++i)
@@ -605,17 +617,17 @@ void EnglishFields::editEdges()
 
         if(fieldTypeSwitch < 40.0f)
         {
-            qInfo()<<"Three field";
+            qInfo()<<"Three field"<<i;
             threeField(m_regions[i]);
         }
         else if(fieldTypeSwitch < 80.0f)
         {
-            qInfo()<<"Straight field";
+            qInfo()<<"Straight field"<<i;
             straightField(m_regions[i]);
         }
         else
         {
-            qInfo()<<"Nothing";
+            qInfo()<<"Nothing"<<i;
         }
     }
 
@@ -634,9 +646,39 @@ void EnglishFields::editEdges()
 
     m_editedEdgeIDs.clear();
 
+    qInfo()<<"TWO";
+    for(uint i = 0; i < m_regions.size(); ++i)
+    {
+        qInfo()<<"Face: "<<i;
+        m_regions[i].updateEdgeCount();
+
+        qInfo()<<"Edge Count: "<<m_regions[i].getEdgeCount();
+
+        for(uint j = 0; j < m_regions[i].getEdgeCount(); ++j)
+        {
+            qInfo()<<j<<":"<<m_regions[i].getEdgeID(j);
+        }
+        qInfo()<<"----------";
+    }
+
     for(uint i = 0; i < m_regions.size(); ++i)
     {
         m_regions[i].loadVerts(m_allEdges);
+    }
+
+    qInfo()<<"THREE";
+    for(uint i = 0; i < m_regions.size(); ++i)
+    {
+        qInfo()<<"Face: "<<i;
+        m_regions[i].updateEdgeCount();
+
+        qInfo()<<"Edge Count: "<<m_regions[i].getEdgeCount();
+
+        for(uint j = 0; j < m_regions[i].getEdgeCount(); ++j)
+        {
+            qInfo()<<j<<":"<<m_regions[i].getEdgeID(j);
+        }
+        qInfo()<<"----------";
     }
 }
 
@@ -818,7 +860,7 @@ void EnglishFields::threeField(VoronoiFace &_face)
         }
     }
 
-    qInfo()<<"Found a good edge at: "<<edgeIndex;
+//    qInfo()<<"Found a good edge at: "<<edgeIndex;
 
     //Now we extend the start point of our midpoint to center edge. This is because
     //we now need to intersect the edge with the actual displaced edges and these edges
@@ -1755,13 +1797,9 @@ void EnglishFields::straightField(VoronoiFace &_face)
         int intersectStart = -1;
         int intersectEnd = -1;
 
-        qInfo()<<"Count: "<<_face.getEdgeCount();
-
         for(uint i = 0; i < _face.getEdgeCount(); ++i)
         {
             QVector3D intersection = newEdge->intersectEdge(m_allEdges[_face.getEdgeID(i)]);
-
-            qInfo()<<"Intersection: "<<intersection;
 
             if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
             {
@@ -1904,7 +1942,7 @@ void EnglishFields::straightField(VoronoiFace &_face)
             }
         }
 
-        qInfo()<<"---------------------------";
+//        qInfo()<<"---------------------------";
 
         if(newEdge->getLength() > 5.0f && (newEdge->m_startPTR != newStart) && (newEdge->m_endPTR != newEnd))
         {
@@ -2151,6 +2189,21 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
         sharedVerts.push_back(thisVert);
     }
 
+//    for(uint i = 0; i < 1; ++i)
+//    {
+//        qInfo()<<"Face: "<<i;
+//        m_regions[i].updateEdgeCount();
+
+//        qInfo()<<"Edge Count: "<<m_regions[i].getEdgeCount();
+
+//        for(uint j = 0; j < m_regions[i].getEdgeCount(); ++j)
+//        {
+//            qInfo()<<j<<":"<<m_regions[i].getEdgeID(j);
+//        }
+//        qInfo()<<"----------";
+
+//        getSegments(m_regions[i]);
+//    }
 
     for(uint i = 0; i < sharedVerts.size(); ++i)
     {
@@ -2196,9 +2249,9 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
 
         if(turnEdgeOff > 0.5f || isBoundaryEdge(m_allEdges[i]))
         {
-            m_allEdges[i]->makeWall();
-            m_allEdges[i]->makeVBO(_pgm);
         }
+        m_allEdges[i]->makeWall();
+        m_allEdges[i]->makeVBO(_pgm);
 
     }
 }
@@ -2263,38 +2316,87 @@ void EnglishFields::getSegments(VoronoiFace &_face)
     uint currentIndex = _face.getEdgeID(0);
     uint firstIndex = currentIndex;
 
+    int vertexCount = 0;
+
     do
     {
         if(i % 2 == 0)
         {
+            nextSegment.push_back(currentIndex);
+
             if(isVertex(currentEdge->m_startPTR))
             {
-                nextSegment.push_back(currentIndex);
+                vertexCount++;
             }
         }
         else
         {
-            if(isVertex(currentEdge->m_endPTR))
+            if((nextSegment.size() > 0 && nextSegment[nextSegment.size() - 1] != currentIndex) ||
+                nextSegment.size() == 0)
             {
                 nextSegment.push_back(currentIndex);
+            }
 
-                if(vertexIndices.size() == 0 && nextSegment.size() == 1)
+
+            if(isVertex(currentEdge->m_endPTR))
+            {
+                vertexCount++;
+
+                if(vertexCount == 1 && vertexIndices.size() == 0)
                 {
                     vertexIndices.push_back(nextSegment);
+                    vertexCount = 0;
                     nextSegment.clear();
                 }
             }
 
-            currentIndex = _face.getNextEdge(currentIndex);
-            currentEdge = m_allEdges[_face.getEdgeID(currentIndex)];
+            int newIndex = _face.getNextEdge(currentIndex);
+
+            if(newIndex == -1)
+            {
+                if(nextSegment.size() > 1)
+                {
+                    if(nextSegment[nextSegment.size() - 2] < currentIndex)
+                    {
+                        currentIndex = _face.getNextUnnconnectedEdge(currentIndex, true);
+                    }
+                    else
+                    {
+                        currentIndex = _face.getNextUnnconnectedEdge(currentIndex, false);
+                    }
+                }
+                else
+                {
+                    if(vertexIndices[vertexIndices.size() - 1][vertexIndices[vertexIndices.size() - 1].size() - 2] < currentIndex)
+                    {
+                        currentIndex = _face.getNextUnnconnectedEdge(currentIndex, true);
+                    }
+                    else
+                    {
+                        currentIndex = _face.getNextUnnconnectedEdge(currentIndex, false);
+                    }
+                }
+//                qInfo()<<firstIndex;
+//                qInfo()<<vertexIndices[vertexIndices.size() - 1][vertexIndices[vertexIndices.size() - 1].size() - 2];
+//                qInfo()<<currentIndex;
+            }
+            else
+            {
+                currentIndex = newIndex;
+            }
+
+            currentEdge = m_allEdges[currentIndex];
         }
 
-        if(nextSegment.size() == 2)
+        if(vertexCount == 2)
         {
+//            qInfo()<<"----------- SEGMENT FINISHED ------------";
             vertexIndices.push_back(nextSegment);
+            vertexCount = 0;
             nextSegment.clear();
         }
         ++i;
+
 
     } while(firstIndex != currentIndex || i < 2);
 
@@ -2302,6 +2404,10 @@ void EnglishFields::getSegments(VoronoiFace &_face)
     {
         vertexIndices[0].push_back(nextSegment[0]);
     }
+
+    qInfo()<<"Segment size: "<<vertexIndices.size();
+
+    _face.setSegments(vertexIndices);
 
 
 }

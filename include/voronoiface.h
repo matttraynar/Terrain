@@ -23,6 +23,7 @@ public:
     VoronoiFace(const VoronoiFace & _toCopy);
 
     void loadVerts(std::vector<VoronoiEdge*> &_edges);
+    void removeDuplicates();
 
     inline int getEdgeCount() const                                    { return m_edgeCount; }
     inline int getOriginalEdgeCount() const                         { return m_originalEdges.size(); }
@@ -39,6 +40,7 @@ public:
 
     std::vector<uint> getEdgeIDsInRange(uint start, uint end);
     uint getNextEdge(uint index);
+    uint getNextUnnconnectedEdge(uint index, bool up);
     bool m_reversedEdge;
 
     void organiseEdgeIDs();
@@ -76,10 +78,13 @@ public:
     inline VoronoiEdge* getEdge(int index) const { return m_edges[index]; }
     inline int getNumEdges() const {return m_edges.size(); }
 
+    void setSegments(std::vector< std::vector<uint> > _segments) { m_segmentIndices = _segments; }
+
     bool m_isUsable;
 
 private:
     std::vector<uint> m_indices;
+    std::vector< std::vector<uint> > m_segmentIndices;
     std::vector<VoronoiEdge*> m_originalEdges;
 
     std::vector<VoronoiEdge*> m_edges;
@@ -89,6 +94,7 @@ private:
 
     QOpenGLVertexArrayObject m_vao;
     QOpenGLBuffer m_verts;
+
 
 //    std::vector<VoronoiFace*> m_neighbours;
 

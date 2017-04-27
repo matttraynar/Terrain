@@ -51,8 +51,29 @@ void VoronoiFace::loadVerts(std::vector<VoronoiEdge *> &_edges)
 
     updateEdgeCount();
 
-    qInfo()<<"Organising edges";
-//    organiseEdgeIDs();
+    removeDuplicates();
+}
+
+void VoronoiFace::removeDuplicates()
+{
+    for(uint i = 0; i < m_indices.size(); ++i)
+    {
+        uint index = m_indices[i];
+
+        auto iter = std::find(m_indices.begin(),  m_indices.end(), index);
+        int length = distance(m_indices.begin(), iter);
+
+        auto duplicateIter = std::find(iter + 1, m_indices.end(), index);
+
+        while(duplicateIter != m_indices.end())
+        {
+            length = distance(m_indices.begin(), duplicateIter);
+            m_indices.erase(m_indices.begin() + length);
+
+            duplicateIter = std::find(iter + 1, m_indices.end(), index);
+        }
+
+    }
 }
 
 bool VoronoiFace::usesEdge(uint ID)
@@ -159,12 +180,9 @@ uint VoronoiFace::getNextEdge(uint index)
 
     uint i = -1;
 
-//    qInfo()<<"Local: "<<localEdgeID;
-
     if(localEdgeID != -1)
     {
         VoronoiEdge* currentEdge = m_edges[localEdgeID];
-//        qInfo()<<"Current Edge: "<<*(currentEdge->m_startPTR)<<" -----> "<<*(currentEdge->m_endPTR);
 
         for(i = 0; i < m_edges.size(); ++i)
         {
@@ -172,8 +190,6 @@ uint VoronoiFace::getNextEdge(uint index)
             {
                 continue;
             }
-
-//            qInfo()<<"Edge "<<i<<": "<<*(m_edges[i]->m_startPTR)<<" -----> "<<*(m_edges[i]->m_endPTR);
 
             if(m_reversedEdge)
             {
@@ -222,13 +238,37 @@ uint VoronoiFace::getNextEdge(uint index)
         }
     }
 
-    if(i != m_edges.size())
+    if(i == m_edges.size())
     {
-//        qInfo()<<"Found Edge: "<<*(m_edges[i]->m_startPTR)<<" -----> "<<*(m_edges[i]->m_endPTR);
+        return -1;
     }
-//    qInfo()<<"First: "<<i;
 
     return m_indices[i];
+}
+
+uint VoronoiFace::getNextUnnconnectedEdge(uint index, bool up)
+{
+    int localEdgeID = -1;
+
+    auto indexPosition = std::find(m_indices.begin(), m_indices.end(), index);
+
+    if(indexPosition != m_indices.end())
+    {
+        if (up)
+        {
+            localEdgeID = distance(m_indices.begin(), indexPosition + 1);
+        }
+        else
+        {
+            localEdgeID = distance(m_indices.begin(), indexPosition - 1);
+        }
+    }
+
+    if(localEdgeID == m_indices.size())
+    {
+        localEdgeID -=2;
+    }
+    return m_indices[localEdgeID];
 }
 
 void VoronoiFace::organiseEdgeIDs()
