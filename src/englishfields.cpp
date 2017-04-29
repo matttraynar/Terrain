@@ -14,7 +14,7 @@ EnglishFields::EnglishFields(double _width)
     m_maxDisplacementIterations = 3;
 
 //    makeVoronoiDiagram(time(NULL));
-    makeVoronoiDiagram(1493322135);
+    makeVoronoiDiagram(1493489676);
 
     subdivide();
     editEdges();
@@ -2268,6 +2268,15 @@ bool EnglishFields::isVertex(QVector3D *_point)
                 }
             }
 
+            if((_point->x() == m_width / 2.0f && _point->z() == m_width / 2.0f) ||
+               (_point->x() == m_width / 2.0f && _point->z() == -m_width / 2.0f) ||
+               (_point->x() == -m_width / 2.0f && _point->z() == m_width / 2.0f) ||
+               (_point->x() == -m_width / 2.0f && _point->z() == -m_width / 2.0f))
+            {
+                m_vertexInformation[pointPosition] = std::make_pair(1, true);
+                return true;
+            }
+
             m_vertexInformation[pointPosition] = std::make_pair(1, false);
         }
     }
@@ -2289,7 +2298,6 @@ void EnglishFields::getSegments(VoronoiFace &_face)
 
    for(uint i = 0; i < _face.getEdgeCount() * 2; ++i)
    {
-//       qInfo()<<i;
        if(i % 2 == 0)
        {
            if(isVertex(currentEdge->m_startPTR))
@@ -2298,7 +2306,7 @@ void EnglishFields::getSegments(VoronoiFace &_face)
 
                for(uint j = 0; j < vertexPositions.size(); ++j)
                {
-                   if(vertexPositions[j].first == *(currentEdge->m_startPTR) && vertexPositions[j].second.second == 0)
+                   if(vertexPositions[j].first == *(currentEdge->m_startPTR))
                    {
                        alreadyAdded = true;
                    }
@@ -2318,7 +2326,7 @@ void EnglishFields::getSegments(VoronoiFace &_face)
 
                for(uint j = 0; j < vertexPositions.size(); ++j)
                {
-                   if(vertexPositions[j].first == *(currentEdge->m_endPTR) && vertexPositions[j].second.second == 1)
+                   if(vertexPositions[j].first == *(currentEdge->m_endPTR))
                    {
                        alreadyAdded = true;
                    }
@@ -2330,26 +2338,43 @@ void EnglishFields::getSegments(VoronoiFace &_face)
                }
            }
 
-           currentEdge = m_allEdges[_face.getEdgeID(i / 2)];
+           if((i / 2) + 1 < _face.getEdgeCount())
+           {
+               currentEdge = m_allEdges[_face.getEdgeID((i / 2) + 1)];
+           }
        }
 
 
    }
+
 
    for(uint i = 0; i < vertexPositions.size(); ++i)
    {
-       qInfo()<<"Position: "<<i<<vertexPositions[i].first;
-       if(vertexPositions[i].second.second == 0)
+       uint currentPointIndex = vertexPositions[i].second.first;
+
+       uint nextVectorIndex = i + 1;
+
+       if(nextVectorIndex == vertexPositions.size())
        {
-           m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_startPTR->setY(m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_startPTR->y() + 1);
-//           m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_endPTR->setY(m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_endPTR->y() + 1);
+           nextVectorIndex = 0;
        }
-       else
+
+       while(currentPointIndex != vertexPositions[nextVectorIndex].second.first)
        {
-//           m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_startPTR->setY(m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_startPTR->y() + 1);
-           m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_endPTR->setY(m_allEdges[_face.getEdgeID(vertexPositions[i].second.first)]->m_endPTR->y() + 1);
+           nextSegment.push_back(currentPointIndex);
+           currentPointIndex++;
+
+           if(currentPointIndex > _face.getEdgeCount() - 1)
+           {
+               currentPointIndex = 0;
+           }
        }
+
+       vertexIndices.push_back(nextSegment);
+       nextSegment.clear();
    }
+
+   _face.setSegments(vertexIndices);
 
 }
 
