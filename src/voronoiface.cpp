@@ -419,28 +419,34 @@ void VoronoiFace::passVBOToShader(QOpenGLShaderProgram &_pgm)
 
 void VoronoiFace::draw()
 {
-    if(m_segmentIndices.empty())
-    {
-        m_vao.bind();
-        glDrawArrays(GL_LINES, 0, (int)m_edgeVerts.size());
+//    if(m_segmentIndices.empty())
+//    {
+//        m_vao.bind();
+//        glDrawArrays(GL_LINES, 0, (int)m_edgeVerts.size());
 
-        m_vao.release();
+//        m_vao.release();
 
-        for(uint i = 0; i < m_edges.size(); ++i)
-        {
-            m_edges[i]->drawWall();
-        }
-    }
-    else
-    {
+//        for(uint i = 0; i < m_edges.size(); ++i)
+//        {
+//            m_edges[i]->drawWall();
+//        }
+//    }
+//    else
+//    {
         for(uint i = 0; i < m_segmentIndices.size(); ++i)
         {
             for(uint j = 0; j < m_segmentIndices[i].size(); ++j)
             {
+//                qInfo()<<"Drawing: "<<m_segmentIndices[i][j];
+                if(j == m_skips[i])
+                {
+                    continue;
+                }
+
                 m_edges[m_segmentIndices[i][j]]->drawWall();
             }
         }
-    }
+//    }
 }
 
 void VoronoiFace::checkUsable()

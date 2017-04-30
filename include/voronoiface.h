@@ -79,12 +79,14 @@ public:
     inline int getNumEdges() const {return m_edges.size(); }
 
     void setSegments(std::vector< std::vector<uint> > _segments) { m_segmentIndices = _segments; }
+    void makeSkips(std::vector<int> _skips) { m_skips = _skips; }
 
     bool m_isUsable;
 
 private:
     std::vector<uint> m_indices;
     std::vector< std::vector<uint> > m_segmentIndices;
+    std::vector<int> m_skips;
     std::vector<VoronoiEdge*> m_originalEdges;
 
     std::vector<VoronoiEdge*> m_edges;

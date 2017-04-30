@@ -2160,7 +2160,8 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
         sharedVerts.push_back(thisVert);
     }
 
-    for(uint i = 0; i < 1; ++i)
+    qInfo()<<m_regions.size();
+    for(uint i = 0; i < m_regions.size(); ++i)
     {
         getSegments(m_regions[i]);
     }
@@ -2227,11 +2228,6 @@ void EnglishFields::drawWalls()
         }
         m_regions[i].draw();
     }
-
-    for(uint i = 0; i < m_allEdges.size(); ++i)
-    {
-//        m_allEdges[i]->drawWall();
-    }
 }
 
 bool EnglishFields::isVertex(QVector3D *_point)
@@ -2294,7 +2290,6 @@ void EnglishFields::getSegments(VoronoiFace &_face)
    std::vector<std::pair<QVector3D, std::pair<uint, uint>>> vertexPositions;
 
    _face.updateEdgeCount();
-   qInfo()<<_face.getEdgeCount();
 
    for(uint i = 0; i < _face.getEdgeCount() * 2; ++i)
    {
@@ -2347,7 +2342,6 @@ void EnglishFields::getSegments(VoronoiFace &_face)
 
    }
 
-
    for(uint i = 0; i < vertexPositions.size(); ++i)
    {
        uint currentPointIndex = vertexPositions[i].second.first;
@@ -2375,6 +2369,42 @@ void EnglishFields::getSegments(VoronoiFace &_face)
    }
 
    _face.setSegments(vertexIndices);
+
+   std::vector<int> switchers;
+
+   for(uint i = 0; i < vertexIndices.size(); ++i)
+   {
+       if(vertexIndices[i].size() > 0)
+       {
+           int switcher = (vertexIndices[i].size() - 1) * (float)rand()/(float)RAND_MAX;
+           int count = 0;
+           while(isBoundaryEdge(m_allEdges[vertexIndices[i][switcher]]))
+           {
+               if(count > 50)
+               {
+                   break;
+               }
+
+               switcher = vertexIndices[i].size() * (float)rand()/(float)RAND_MAX;
+               count++;
+           }
+
+           if(count > 50)
+           {
+               switchers.push_back(-1);
+           }
+           else
+           {
+               switchers.push_back(switcher);
+           }
+       }
+       else
+       {
+           switchers.push_back(-1);
+       }
+   }
+
+   _face.makeSkips(switchers);
 
 }
 
