@@ -2163,6 +2163,11 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
     qInfo()<<m_regions.size();
     for(uint i = 0; i < m_regions.size(); ++i)
     {
+        if(i != 0)
+        {
+            continue;
+        }
+
         getSegments(m_regions[i]);
     }
 
@@ -2224,8 +2229,9 @@ void EnglishFields::drawWalls()
     {
         if(i != 0)
         {
-//            continue;
+            continue;
         }
+
         m_regions[i].draw();
     }
 }
@@ -2378,10 +2384,12 @@ void EnglishFields::getSegments(VoronoiFace &_face)
        {
            int switcher = (vertexIndices[i].size() - 1) * (float)rand()/(float)RAND_MAX;
            int count = 0;
+
            while(isBoundaryEdge(m_allEdges[vertexIndices[i][switcher]]))
            {
                if(count > 50)
                {
+                   qInfo()<<"Hit break";
                    break;
                }
 
@@ -2391,7 +2399,7 @@ void EnglishFields::getSegments(VoronoiFace &_face)
 
            if(count > 50)
            {
-               switchers.push_back(-1);
+               switchers.push_back(-100000);
            }
            else
            {
@@ -2403,6 +2411,53 @@ void EnglishFields::getSegments(VoronoiFace &_face)
            switchers.push_back(-1);
        }
    }
+
+   for(uint i = 0; i < switchers.size(); ++i)
+   {
+        if(i != 4)
+        {
+            switchers[i] = -1;
+        }
+        else
+        {
+            qInfo()<<m_width;
+           m_allEdges[vertexIndices[i][switchers[i]]]->m_startPTR->setY(-50);
+           m_allEdges[vertexIndices[i][switchers[i]]]->m_endPTR->setY(-50);
+            qInfo()<<"Index "<<i<<": "<<*(m_allEdges[vertexIndices[i][switchers[i]]]->m_startPTR);
+            qInfo()<<"Index "<<i<<": "<<*(m_allEdges[vertexIndices[i][switchers[i]]]->m_endPTR);
+
+            switchers[i] = -1;
+        }
+
+//       if(switchers[i] > -1 && switchers[i] < m_allEdges.size())
+//       {
+//           if(i == 1)
+//           {
+//               m_allEdges[vertexIndices[i][switchers[i]]]->m_startPTR->setY(-50);
+//               m_allEdges[vertexIndices[i][switchers[i]]]->m_endPTR->setY(-50);
+//           }
+
+//           float percentage = 0.1;
+
+//           if(m_allEdges[vertexIndices[i][switchers[i]]]->m_startPTR->x() > (m_width/2.0f) * percentage||
+//                m_allEdges[vertexIndices[i][switchers[i]]]->m_startPTR->z() > (m_width/2.0f) * percentage ||
+//                m_allEdges[vertexIndices[i][switchers[i]]]->m_startPTR->x() < (-m_width/2.0f)  * percentage||
+//                m_allEdges[vertexIndices[i][switchers[i]]]->m_startPTR->x() < (-m_width/2.0f) * percentage ||
+//                   m_allEdges[vertexIndices[i][switchers[i]]]->m_endPTR->x() > (m_width/2.0f)  * percentage||
+//                   m_allEdges[vertexIndices[i][switchers[i]]]->m_endPTR->z() > (m_width/2.0f)  * percentage||
+//                   m_allEdges[vertexIndices[i][switchers[i]]]->m_endPTR->x() < (-m_width/2.0f) * percentage ||
+//                   m_allEdges[vertexIndices[i][switchers[i]]]->m_endPTR->x() < (-m_width/2.0f) * percentage)
+//           {
+//               qInfo()<<"Index "<<i<<": "<<*(m_allEdges[vertexIndices[i][switchers[i]]]->m_startPTR);
+//               qInfo()<<"Index "<<i<<": "<<*(m_allEdges[vertexIndices[i][switchers[i]]]->m_endPTR);
+//           }
+//       }
+//       else
+//       {
+//           qInfo()<<"Index "<<i;
+//       }
+   }
+   qInfo()<<"----------------------";
 
    _face.makeSkips(switchers);
 
