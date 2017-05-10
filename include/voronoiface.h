@@ -81,6 +81,8 @@ public:
     void setSegments(std::vector< std::vector<uint> > _segments) { m_segmentIndices = _segments; }
     void makeSkips(std::vector<int> _skips) { m_skips = _skips; }
 
+    std::vector<QVector3D> createTreePositions();
+
     bool m_isUsable;
 
 private:

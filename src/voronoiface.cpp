@@ -311,6 +311,125 @@ void VoronoiFace::organiseEdgeIDs()
 
 }
 
+std::vector<QVector3D> VoronoiFace::createTreePositions()
+{
+    std::vector<QVector3D> positions;
+
+    for(uint j = 0; j < m_segmentIndices.size(); ++j)
+    {
+        if(m_segmentIndices[j].size() == 0)
+        {
+            continue;
+        }
+
+        int firstValidIndex = 0;
+
+        if( m_segmentIndices[j][firstValidIndex] < 0)
+        {
+            for(uint i = 1; i < m_segmentIndices[j].size(); ++i)
+            {
+                if(m_segmentIndices[j][i] > -1)
+                {
+                    firstValidIndex = i;
+                    break;
+                }
+            }
+        }
+
+        int lastValidIndex = m_segmentIndices[j].size() - 1;
+
+        if( m_segmentIndices[j][m_segmentIndices[j].size() - 1] < 0)
+        {
+            for(uint i = 1; i < m_segmentIndices[j].size(); ++i)
+            {
+                if(m_segmentIndices[j].size() - 1 - i < 0)
+                {
+                    lastValidIndex = -1;
+                    break;
+                }
+
+                if(m_segmentIndices[j][m_segmentIndices[j].size() - 1 - i] > -1)
+                {
+                    lastValidIndex = m_segmentIndices[j].size() - 1 - i;
+                    break;
+                }
+            }
+        }
+
+        QVector3D startPoint = *(m_edges[m_segmentIndices[j][firstValidIndex]]->m_startPTR);
+
+        if(startPoint.y() > m_edges[m_segmentIndices[j][firstValidIndex]]->m_endPTR->y())
+        {
+            startPoint = *(m_edges[m_segmentIndices[j][firstValidIndex]]->m_endPTR);
+        }
+
+        QVector3D endPoint = *(m_edges[m_segmentIndices[j][lastValidIndex]]->m_startPTR);
+
+        if(endPoint.y() < m_edges[m_segmentIndices[j][lastValidIndex]]->m_endPTR->y())
+        {
+            endPoint = *(m_edges[m_segmentIndices[j][lastValidIndex]]->m_endPTR);
+        }
+
+
+        QVector3D tmp1 = startPoint;
+        QVector3D tmp2 = endPoint;
+
+        tmp1.setY(0);
+        tmp2.setY(0);
+
+        float floorDisp = 20.0f;// (tmp2 - tmp1).length();
+        float yDisp = 20.0f;//endPoint.y() - startPoint.y();
+
+        qInfo()<<"Done";
+        if(yDisp / 3.0f > floorDisp)
+        {
+            m_segmentIndices[j].clear();
+        }
+        else
+        {
+            float switcher = (float)rand() / (float)RAND_MAX;
+
+            if(switcher > 0.5f)
+            {
+                for(uint i = 0; i < m_segmentIndices[j].size(); ++i)
+                {
+                    VoronoiEdge* currentEdge = m_edges[m_segmentIndices[j][i]];
+
+                    QVector3D dir = currentEdge->getDirection();
+
+                    QVector3D perpVector = QVector3D::crossProduct(dir, QVector3D(0,1,0));
+
+                    perpVector.normalize();
+
+                    float adjust = (float)rand()/(float)RAND_MAX;
+                    adjust -= 0.5f;
+
+                    QVector3D p1 = *(currentEdge->m_startPTR) + ((1.0f/4.0f) * dir) + (perpVector * adjust);
+
+                    adjust = (float)rand()/(float)RAND_MAX;
+                    adjust -= 0.5f;
+
+                    QVector3D p2 = *(currentEdge->m_startPTR) + ((2.0f/4.0f) * dir) + (perpVector * adjust);
+
+                    adjust = (float)rand()/(float)RAND_MAX;
+                    adjust -= 0.5f;
+
+                    QVector3D p3 = *(currentEdge->m_startPTR) + ((3.0f/4.0f) * dir) + (perpVector * adjust);
+
+                    positions.push_back(p1);
+                    positions.push_back(p2);
+                    positions.push_back(p3);
+
+                }
+
+                m_segmentIndices[j].clear();
+            }
+        }
+    }
+
+    return positions;
+}
+
 //-----------------------
 VoronoiFace::~VoronoiFace()
 {
