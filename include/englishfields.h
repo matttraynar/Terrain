@@ -102,6 +102,7 @@ public:
     void createWalls(QOpenGLShaderProgram &_pgm);
     void drawWalls();
 
+    inline std::vector<QVector3D> getTreePositions() const { return m_treePositions; }
 
 private:
     void subdivide();
@@ -132,6 +133,7 @@ private:
 
     std::vector<std::pair<uint, bool>> m_vertexInformation;
 
+    std::vector<QVector3D> m_treePositions;
 
 
     //--------------------------------------------------------------------------------------//
