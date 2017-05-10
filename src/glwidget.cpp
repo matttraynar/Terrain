@@ -50,12 +50,11 @@ void GLWidget::initializeGL()
 
 
     qInfo()<<"Generating terrain";
-    generateHeightMap(6, 8.f);
+    generateHeightMap(6, 10.f);
 
     qInfo()<<"Preparing VAOs";
     prepareTerrain();
     prepareWater();
-    prepareTrees();
 
     double width = 50.0;
 
@@ -114,6 +113,9 @@ void GLWidget::initializeGL()
     {
             m_vRegions[i].passVBOToShader(m_pgm);
     }
+
+    m_treePositions = m_fieldGenerator.getTreePositions();
+    prepareTrees();
 
 /*    for(uint i = 0; i < m_vRegions.size(); ++i)
     {
@@ -214,7 +216,7 @@ void GLWidget::paintGL()
         loadMatricesToShader(m_treePositions[i]);
 
         (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//        glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
+        glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
     }
 
     vao_trees.release();
@@ -919,15 +921,15 @@ void GLWidget::prepareWater()
 void GLWidget::prepareTrees()
 {
     //Hard code some vertices which represent a 'tree'
-    m_treeVerts.push_back(QVector3D(0.1f, 0.0f, 0.1f));   //0
-    m_treeVerts.push_back(QVector3D(-0.1f, 0.0f, 0.1f));  //1
-    m_treeVerts.push_back(QVector3D(-0.1f, 0.0f, -0.1f)); //2
-    m_treeVerts.push_back(QVector3D(0.1f, 0.0f, -0.1f));  //3
+    m_treeVerts.push_back(QVector3D(0.2f, 0.0f, 0.2f));   //0
+    m_treeVerts.push_back(QVector3D(-0.2f, 0.0f, 0.2f));  //1
+    m_treeVerts.push_back(QVector3D(-0.2f, 0.0f, -0.2f)); //2
+    m_treeVerts.push_back(QVector3D(0.2f, 0.0f, -0.2f));  //3
 
-    m_treeVerts.push_back(QVector3D(0.01f, 0.4f, 0.01f));   //4
-    m_treeVerts.push_back(QVector3D(-0.01f, 0.4f, 0.01f));  //5
-    m_treeVerts.push_back(QVector3D(-0.01f, 0.4f, -0.01f)); //6
-    m_treeVerts.push_back(QVector3D(0.01f, 0.4f, -0.01f));  //7
+    m_treeVerts.push_back(QVector3D(0.01f, 0.75f, 0.01f));   //4
+    m_treeVerts.push_back(QVector3D(-0.01f, 0.75f, 0.01f));  //5
+    m_treeVerts.push_back(QVector3D(-0.01f, 0.75f, -0.01f)); //6
+    m_treeVerts.push_back(QVector3D(0.01f, 0.75f, -0.01f));  //7
 
     //Hard code the face indices
     //Bottom
@@ -991,55 +993,54 @@ void GLWidget::prepareTrees()
         //Get the normal of the current face
         QVector3D faceNorm = m_norms[i] + m_norms[i + 1] + m_norms[i + 2] + m_norms[i + 3];
         faceNorm /= 4.0f;
+        faceNorm.normalize();
 
-        if(faceNorm.y() > 0.8f)
-        {
-            QVector3D middle = (m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3]) / 4.0f;
+//        if(faceNorm.y() > 0.8f)
+//        {
+//            QVector3D middle = (m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3]) / 4.0f;
 
-            bool addSite = true;
+//            bool addSite = true;
 
-            if(middle.y() < m_waterLevel * 1.25)
-            {
-                addSite = false;
-            }
-            else
-            {
-                for(uint j = 0; j < m_sitePoints.size(); ++j)
-                {
-                    if((m_sitePoints[j] - middle).length() < 10.0)
-                    {
-                        addSite = false;
-                        break;
-                    }
-                }
-            }
+//            if(middle.y() < m_waterLevel * 1.25)
+//            {
+//                addSite = false;
+//            }
+//            else
+//            {
+//                for(uint j = 0; j < m_sitePoints.size(); ++j)
+//                {
+//                    if((m_sitePoints[j] - middle).length() < 10.0)
+//                    {
+//                        addSite = false;
+//                        break;
+//                    }
+//                }
+//            }
 
-            if(addSite)
-            {
-                if(m_sitePoints.size() > 19)
-                {
-                    m_sitePoints.push_back(middle);
+//            if(addSite)
+//            {
+//                if(m_sitePoints.size() > 19)
+//                {
+//                    m_sitePoints.push_back(middle);
 
-                    std::sort(m_sitePoints.begin(), m_sitePoints.end(), SortVector());
+//                    std::sort(m_sitePoints.begin(), m_sitePoints.end(), SortVector());
 
-                    m_sitePoints.pop_back();
-                }
-                else
-                {
-                    m_sitePoints.push_back(middle);
-                }
-            }
-        }
+//                    m_sitePoints.pop_back();
+//                }
+//                else
+//                {
+//                    m_sitePoints.push_back(middle);
+//                }
+//            }
+//        }
 
         //We can now just see what the y value of the face normal is. If it is large we know
         //the face points mostly upward, making it relatively flat. A check is also done to see
         //if the current vert is above the water level or not
-        if((faceNorm.y() > 0.75f) && (m_verts[i].y() > (m_waterLevel + ((m_terrainMax - m_terrainMin) * 0.1f))))
+        if((faceNorm.y() < 0.95f) && (m_verts[i].y() > (m_waterLevel + ((m_terrainMax - m_terrainMin) * 0.1f))))
         {
             //Create a variable for storing the middle of the face
             QVector3D midFace;
-
-
 
             //To introduce some pseudo-random placement (to ensure the trees aren't all added in a uniform
             //grid) use various methods to calulate the new position.
