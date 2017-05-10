@@ -2214,7 +2214,6 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
     {
         float switcher = (float)rand() / (float)RAND_MAX;
 
-        switcher = 0.75f;
         if(switcher > 0.5f)
         {
             std::vector<QVector3D> trees = m_regions[i].createTreePositions();
@@ -2348,7 +2347,41 @@ void EnglishFields::getSegments(VoronoiFace &_face)
            }
        }
 
+   }
 
+   for(uint i = 0; i < vertexPositions.size(); ++i)
+   {
+
+       float switcher = (float)rand() / (float)RAND_MAX;
+
+       if(switcher > 0.5f)
+       {
+           float angleSize = 10.0f;
+
+           for(float j = 0; j < 360 - angleSize; j += angleSize)
+           {
+               float radius = 3.0f * (float)rand()/(float)RAND_MAX;
+
+               float x = radius * sin(j);
+               float y = radius * cos(j);
+
+               QVector3D vertex = vertexPositions[i].first;
+
+               for(float k = 1; k < 4; ++k)
+               {
+                   QVector3D p1 = vertex;
+                   p1.setX(vertex.x() + (x * (k / 3.0f)));
+                   p1.setZ(vertex.z() + (y * (k / 3.0f)));
+
+                   if(p1.x() > -m_width/2.0f && p1.x() < m_width/2.0f &&
+                           p1.z() > -m_width/2.0f && p1.z() < m_width/2.0f)
+                   {
+                       m_treePositions.push_back(p1);
+                   }
+               }
+
+           }
+       }
    }
 
    for(uint i = 0; i < vertexPositions.size(); ++i)
