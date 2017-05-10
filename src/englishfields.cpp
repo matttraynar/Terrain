@@ -2226,14 +2226,29 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
                     m_treePositions.push_back(trees[j]);
                 }
             }
+
+            m_colours.push_back(0);
+        }
+        else
+        {
+            m_colours.push_back(1);
         }
     }
 }
 
-void EnglishFields::drawWalls()
+void EnglishFields::drawWalls(QOpenGLShaderProgram &_pgm)
 {
     for(uint i = 0; i < m_regions.size(); ++i)
     {
+        if(m_colours[i] == 1)
+        {
+            _pgm.setUniformValue("mCol",QVector4D(0.05f, 0.1f,0.01f,0.5f));
+        }
+        else
+        {
+            _pgm.setUniformValue("mCol",QVector4D(0.15f, 0.1f ,0.1f, 1.0f));
+        }
+
         m_regions[i].draw();
     }
 }

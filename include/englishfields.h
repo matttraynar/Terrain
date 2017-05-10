@@ -100,7 +100,7 @@ public:
     inline QVector3D* getVert(int ID) const { return m_allVerts[ID]; }
 
     void createWalls(QOpenGLShaderProgram &_pgm);
-    void drawWalls();
+    void drawWalls(QOpenGLShaderProgram &_pgm);
 
     inline std::vector<QVector3D> getTreePositions() const { return m_treePositions; }
 
@@ -134,6 +134,7 @@ private:
     std::vector<std::pair<uint, bool>> m_vertexInformation;
 
     std::vector<QVector3D> m_treePositions;
+    std::vector<int> m_colours;
 
 
     //--------------------------------------------------------------------------------------//

@@ -276,7 +276,7 @@ void GLWidget::paintGL()
 
     loadMatricesToShader(QVector3D(0,0,0));
 
-    m_fieldGenerator.drawWalls();
+    m_fieldGenerator.drawWalls(m_pgm);
 
     m_pgm.setUniformValue("mCol",QVector4D(1.0f,1.0f,1.0f,1.0f));
 
