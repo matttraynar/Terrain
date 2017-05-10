@@ -50,13 +50,31 @@ void GLWidget::initializeGL()
 
 
     qInfo()<<"Generating terrain";
-    generateHeightMap(6, 7.f);
+    generateHeightMap(6, 10.f);
 
     qInfo()<<"Preparing VAOs";
     prepareTerrain();
     prepareWater();
 
     double width = 50.0;
+
+    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree1.obj")));
+    m_treeMeshes[0]->prepareMesh(m_pgm);
+
+    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree2.obj")));
+    m_treeMeshes[1]->prepareMesh(m_pgm);
+
+    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree3.obj")));
+    m_treeMeshes[2]->prepareMesh(m_pgm);
+
+    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree4.obj")));
+    m_treeMeshes[3]->prepareMesh(m_pgm);
+
+    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree5.obj")));
+    m_treeMeshes[4]->prepareMesh(m_pgm);
+
+    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree6.obj")));
+    m_treeMeshes[5]->prepareMesh(m_pgm);
 
     qInfo()<<"Creating Voronoi";
     m_fieldGenerator = EnglishFields(width);
@@ -116,6 +134,37 @@ void GLWidget::initializeGL()
 
     m_treePositions = m_fieldGenerator.getTreePositions();
     prepareTrees();
+
+    for(uint i = 0; i < m_treePositions.size(); ++i)
+    {
+        int treeIndex = 5 * (float)rand()/(float)RAND_MAX;
+
+        m_treeMeshesToUse.push_back(treeIndex);
+    }
+
+    for(uint i = 0; i < m_treePositions.size(); ++i)
+    {
+//            qInfo()<<"Adjusting edge: "<<i;
+        float minDistance = 1000000;
+        float yValue = 0.0f;
+
+        for(int k = 0; k < m_verts.size(); ++k)
+        {
+            QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
+            QVector3D flatVector2(m_treePositions[i].x(), 0.0f, m_treePositions[i].z());
+
+            if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+            {
+                if((flatVector1 - flatVector2).length() < minDistance)
+                {
+                    minDistance = (flatVector1 - flatVector2).length();
+                    yValue = m_verts[k].y();
+                }
+            }
+        }
+
+        m_treePositions[i].setY(yValue);
+    }
 
 /*    for(uint i = 0; i < m_vRegions.size(); ++i)
     {
@@ -215,8 +264,10 @@ void GLWidget::paintGL()
     {
         loadMatricesToShader(m_treePositions[i]);
 
-        (m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
+        //(m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        //glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
+
+        m_treeMeshes[m_treeMeshesToUse[i]]->draw();
     }
 
     vao_trees.release();

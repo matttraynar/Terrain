@@ -21,6 +21,7 @@
 
 #include "perlinnoise.h"
 #include "englishfields.h"
+#include "mesh.h"
 
 #define PI 3.14159265
 
@@ -76,6 +77,9 @@ private:
     QOpenGLShaderProgram m_pgm;
 
     EnglishFields m_fieldGenerator;
+
+    std::vector<std::shared_ptr<Mesh>> m_treeMeshes;
+    std::vector<int> m_treeMeshesToUse;
 
      //-------------------------------------------------------
     //Terrain generation functions
