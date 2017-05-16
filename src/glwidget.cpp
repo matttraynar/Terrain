@@ -76,6 +76,60 @@ void GLWidget::initializeGL()
     m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree6.obj")));
     m_treeMeshes[5]->prepareMesh(m_pgm);
 
+    //Load the farm meshes
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/mainhouse.obj")));
+    m_farmMeshes[0]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse1.obj")));
+    m_farmMeshes[1]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse2.obj")));
+    m_farmMeshes[2]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse3.obj")));
+    m_farmMeshes[3]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse4.obj")));
+    m_farmMeshes[4]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse5.obj")));
+    m_farmMeshes[5]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse6.obj")));
+    m_farmMeshes[6]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse7.obj")));
+    m_farmMeshes[7]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree1.obj")));
+    m_farmMeshes[8]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree2.obj")));
+    m_farmMeshes[9]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree3.obj")));
+    m_farmMeshes[10]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree4.obj")));
+    m_farmMeshes[11]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree5.obj")));
+    m_farmMeshes[12]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree6.obj")));
+    m_farmMeshes[13]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree7.obj")));
+    m_farmMeshes[14]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree8.obj")));
+    m_farmMeshes[15]->prepareMesh(m_pgm);
+
+    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree9.obj")));
+    m_farmMeshes[16]->prepareMesh(m_pgm);
+
+    qInfo()<<"Farm at "<<farmPosition;
+
     qInfo()<<"Creating Voronoi";
     m_fieldGenerator = EnglishFields(width);
 
@@ -142,70 +196,34 @@ void GLWidget::initializeGL()
         m_treeMeshesToUse.push_back(treeIndex);
     }
 
-    for(uint i = 0; i < m_treePositions.size(); ++i)
+    bool adjustTreeHeights = false;
+
+    if(adjustTreeHeights)
     {
-//            qInfo()<<"Adjusting edge: "<<i;
-        float minDistance = 1000000;
-        float yValue = 0.0f;
-
-        for(int k = 0; k < m_verts.size(); ++k)
+        for(uint i = 0; i < m_treePositions.size(); ++i)
         {
-            QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
-            QVector3D flatVector2(m_treePositions[i].x(), 0.0f, m_treePositions[i].z());
+            float minDistance = 1000000;
+            float yValue = 0.0f;
 
-            if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+            for(int k = 0; k < m_verts.size(); ++k)
             {
-                if((flatVector1 - flatVector2).length() < minDistance)
+                QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
+                QVector3D flatVector2(m_treePositions[i].x(), 0.0f, m_treePositions[i].z());
+
+                if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
                 {
-                    minDistance = (flatVector1 - flatVector2).length();
-                    yValue = m_verts[k].y();
-                }
-            }
-        }
-
-        m_treePositions[i].setY(yValue);
-    }
-
-/*    for(uint i = 0; i < m_vRegions.size(); ++i)
-    {
-        if(adjustHeights)
-        {
-            for(int j = 0; j < m_vRegions[i].getEdges().size(); ++j)
-            {
-                float minDistance = 1000000;
-                float yValue = 0;
-
-                for(int k = 0; k < m_verts.size(); ++k)
-                {
-                    QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
-                    QVector3D flatVector2(m_vRegions[i].getEdges()[j]->m_startPTR->x(), 0, m_vRegions[i].getEdges()[j]->m_startPTR->z());
-
-                    if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+                    if((flatVector1 - flatVector2).length() < minDistance)
                     {
-                        if((flatVector1 - flatVector2).length() < minDistance)
-                        {
-                            minDistance = (flatVector1 - flatVector2).length();
-                            yValue = m_verts[k].y();
-                        }
+                        minDistance = (flatVector1 - flatVector2).length();
+                        yValue = m_verts[k].y();
                     }
                 }
-
-                if(yValue < m_waterLevel)
-                {
-                    yValue = m_waterLevel - 0.25;
-                }
-                else
-                {
-                    yValue += 0.3f;
-                }
-
-                m_vRegions[i].adjustHeight(j, yValue);
             }
-        }
 
-        m_vRegions[i].passVBOToShader(m_pgm);
+            m_treePositions[i].setY(yValue);
+        }
     }
-*/
+
     //Finished creating regions
 
     m_pgm.bind();
@@ -268,6 +286,13 @@ void GLWidget::paintGL()
         //glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
 
         m_treeMeshes[m_treeMeshesToUse[i]]->draw();
+
+    }
+
+    loadMatricesToShader(farmPosition);
+    for(uint i = 0; i < m_farmMeshes.size(); ++i)
+    {
+        m_farmMeshes[i]->draw();
     }
 
     vao_trees.release();
@@ -288,6 +313,7 @@ void GLWidget::paintGL()
 //        }
 //        m_vRegions[i].draw();
     }
+
 
     m_pgm.release();
 }
@@ -1039,6 +1065,8 @@ void GLWidget::prepareTrees()
     //Finally we need to place the trees so iterate through the list of normals
     int switchCounter = 0;
 
+    farmPosition = QVector3D(-1,-1,-1);
+
     for(int i = 0; i < m_norms.size(); i += 4)
     {
         //Get the normal of the current face
@@ -1139,6 +1167,10 @@ void GLWidget::prepareTrees()
             //to create visual interest
             switchCounter++;
 
+        }
+        else if(farmPosition.x() < 5 || farmPosition.y() < 5 || farmPosition.z() < 5)
+        {
+            farmPosition = m_verts[i];
         }
     }
 }
