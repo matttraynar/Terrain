@@ -171,6 +171,9 @@ public:
 
     int usesVert(QVector3D* _vert);
 
+    std::vector<QVector3D> getVerts() const { return m_verts; }
+    std::vector<QVector3D> getNorms() const { return m_norms; }
+
     inline void setStartNormal(QVector3D _normal) { m_startNormal = _normal; }
     inline void setStartNormal2(QVector3D _normal) { m_startNormal2 = _normal; }
     inline void setEndNormal(QVector3D _normal) { m_endNormal = _normal; }

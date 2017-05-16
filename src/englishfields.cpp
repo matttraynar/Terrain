@@ -43,6 +43,21 @@ EnglishFields::~EnglishFields()
 //    }
 }
 
+void EnglishFields::exportFields()
+{
+
+    std::stringstream stream;
+
+    for(uint i = 0; i < m_regions.size(); ++i)
+    {
+        qInfo()<<"Exporting region "<<i;
+        stream<<i;
+        m_regions[i].exportRegion("../Output/region" + stream.str() + ".obj");
+        stream.str("");
+        qInfo()<<"Finished region";
+    }
+}
+
 void EnglishFields::operator =(EnglishFields &toCopy)
 {
     //Copy the data

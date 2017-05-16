@@ -245,6 +245,12 @@ void GLWidget::initializeGL()
     m_pgm.setUniformValue("snowTexture", 3);
 
     m_pgm.release();
+
+    qInfo()<<"Exporting terrain";
+    ExportScene::sendTo("obj", "../Output/Terrain.obj", m_verts, m_norms, m_uvs);
+
+    qInfo()<<"Exporting fields";
+    m_fieldGenerator.exportFields();
 }
 
 void GLWidget::resizeGL(int w, int h)

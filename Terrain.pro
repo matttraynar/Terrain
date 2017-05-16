@@ -12,7 +12,8 @@ SOURCES += src/main.cpp \
 					src/englishfields.cpp \
     src/voronoiface.cpp \
     src/voronoiedge.cpp \
-    src/mesh.cpp
+    src/mesh.cpp \
+    src/exportscene.cpp
 
 
 HEADERS  += include/MainWindow.h \
@@ -21,7 +22,8 @@ HEADERS  += include/MainWindow.h \
 					include/englishfields.h \
     include/voronoiface.h \
     include/voronoiedge.h \
-    include/mesh.h
+    include/mesh.h \
+    include/exportscene.h
 
 
 FORMS    += MainWindow.ui

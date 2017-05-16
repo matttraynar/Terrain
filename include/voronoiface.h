@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "voronoiedge.h"
+#include "exportscene.h"
 
 class VoronoiFace
 {
@@ -55,6 +56,8 @@ public:
 
     void passVBOToShader(QOpenGLShaderProgram &_pgm);
     void draw();
+
+    void exportRegion(std::string filepath);
 
     void checkUsable();
 

@@ -22,6 +22,7 @@
 #include "perlinnoise.h"
 #include "englishfields.h"
 #include "mesh.h"
+#include "exportscene.h"
 
 #define PI 3.14159265
 

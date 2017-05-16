@@ -84,6 +84,8 @@ public:
 
     ~EnglishFields();
 
+    void exportFields();
+
     void operator = (EnglishFields &toCopy);
 
     void makeVoronoiDiagram(int _seed);

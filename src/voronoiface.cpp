@@ -538,34 +538,48 @@ void VoronoiFace::passVBOToShader(QOpenGLShaderProgram &_pgm)
 
 void VoronoiFace::draw()
 {
-//    if(m_segmentIndices.empty())
-//    {
-//        m_vao.bind();
-//        glDrawArrays(GL_LINES, 0, (int)m_edgeVerts.size());
-
-//        m_vao.release();
-
-//        for(uint i = 0; i < m_edges.size(); ++i)
-//        {
-//            m_edges[i]->drawWall();
-//        }
-//    }
-//    else
-//    {
-        for(uint i = 0; i < m_segmentIndices.size(); ++i)
+    for(uint i = 0; i < m_segmentIndices.size(); ++i)
+    {
+        for(uint j = 0; j < m_segmentIndices[i].size(); ++j)
         {
-            for(uint j = 0; j < m_segmentIndices[i].size(); ++j)
+            if(j == m_skips[i])
             {
-//                qInfo()<<"Drawing: "<<m_segmentIndices[i][j];
-                if(j == m_skips[i])
-                {
-                    continue;
-                }
+                continue;
+            }
 
-                m_edges[m_segmentIndices[i][j]]->drawWall();
+            m_edges[m_segmentIndices[i][j]]->drawWall();
+        }
+    }
+}
+
+void VoronoiFace::exportRegion(std::string filepath)
+{
+    std::string type = "obj";
+
+    std::vector<QVector3D> tmpVerts;
+    std::vector<QVector3D> tmpNorms;
+    std::vector<QVector2D> tmpUVs;
+
+    for(uint i = 0; i < m_segmentIndices.size(); ++i)
+    {
+        for(uint j = 0; j < m_segmentIndices[i].size(); ++j)
+        {
+            if(j == m_skips[i])
+            {
+                continue;
+            }
+
+            for(uint k = 0; k < m_edges[m_segmentIndices[i][j]]->getVerts().size(); ++k)
+            {
+                tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[k]);
+                tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[k]);
             }
         }
-//    }
+    }
+
+    qInfo()<<"Data loaded, exporting";
+    ExportScene::sendTo(type, filepath, tmpVerts, tmpNorms, tmpUVs);
+    qInfo()<<"Finished exporting";
 }
 
 void VoronoiFace::checkUsable()
