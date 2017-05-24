@@ -126,6 +126,9 @@ private:
     bool checkContains(uint ID, std::vector<uint> IDs);
     bool isBoundaryEdge(VoronoiEdge* _edge);
 
+    uint findFarmRegion(QVector3D _pos);
+    uint m_farmRegion;
+
     int m_maxDisplacementIterations;
     std::vector<uint> m_editedEdgeIDs;
     std::unordered_map<uint, std::pair< uint, uint> > m_newEdges;

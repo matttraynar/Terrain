@@ -43,10 +43,26 @@ VoronoiFace::VoronoiFace(std::vector<uint> _indices)
 void VoronoiFace::loadVerts(std::vector<VoronoiEdge *> &_edges)
 {
     m_edges.clear();
+    m_edgeVerts.clear();
 
     for(uint i = 0; i < m_indices.size(); ++i)
     {
         m_edges.push_back(_edges[m_indices[i]]);
+
+        auto iter = std::find(m_edgeVerts.begin(), m_edgeVerts.end(), *(_edges[m_indices[i]]->m_startPTR));
+
+        if(iter == m_edgeVerts.end())
+        {
+            m_edgeVerts.push_back(*(_edges[m_indices[i]]->m_startPTR));
+        }
+
+        iter = std::find(m_edgeVerts.begin(), m_edgeVerts.end(), *(_edges[m_indices[i]]->m_endPTR));
+
+        if(iter == m_edgeVerts.end())
+        {
+            m_edgeVerts.push_back(*(_edges[m_indices[i]]->m_endPTR));
+        }
+
     }
 
     updateEdgeCount();
@@ -538,18 +554,23 @@ void VoronoiFace::passVBOToShader(QOpenGLShaderProgram &_pgm)
 
 void VoronoiFace::draw()
 {
-    for(uint i = 0; i < m_segmentIndices.size(); ++i)
+    for(uint i = 0; i < m_edges.size(); ++i)
     {
-        for(uint j = 0; j < m_segmentIndices[i].size(); ++j)
-        {
-            if(j == m_skips[i])
-            {
-                continue;
-            }
-
-            m_edges[m_segmentIndices[i][j]]->drawWall();
-        }
+        m_edges[i]->drawWall();
     }
+
+//    for(uint i = 0; i < m_segmentIndices.size(); ++i)
+//    {
+//        for(uint j = 0; j < m_segmentIndices[i].size(); ++j)
+//        {
+//            if(j == m_skips[i])
+//            {
+//                continue;
+//            }
+
+//            m_edges[m_segmentIndices[i][j]]->drawWall();
+//        }
+//    }
 }
 
 void VoronoiFace::exportRegion(std::string filepath)
@@ -683,4 +704,37 @@ QVector3D VoronoiFace::getWeightedMiddle2(int vert, float weight)
     wMiddle += (wVector * weight);
 
     return wMiddle;
+}
+
+positionCase VoronoiFace::containsPoint(QVector3D _pos)
+{
+    std::vector< CGALPoint > points;
+
+    for(uint i = 0; i < m_edgeVerts.size(); ++i)
+    {
+        points.push_back(CGALPoint(m_edgeVerts[i].x(), m_edgeVerts[i].z()));
+    }
+
+
+    CGALPoint testPoint(_pos.x(), _pos.z());
+
+    CGAL::Bounded_side pointPos = CGAL::bounded_side_2(points.begin(), points.end(), testPoint, K());
+
+    switch(pointPos)
+    {
+    case CGAL::ON_BOUNDED_SIDE :
+        return inside;
+
+    case CGAL::ON_BOUNDARY:
+        return edge;
+
+    case CGAL::ON_UNBOUNDED_SIDE:
+        return outside;
+
+    default:
+        break;
+    }
+
+
+    return outside;
 }

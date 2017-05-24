@@ -136,7 +136,7 @@ void GLWidget::initializeGL()
     qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
 
-    bool adjustHeights = true;
+    bool adjustHeights = false;
 
     if(adjustHeights)
     {
@@ -186,7 +186,7 @@ void GLWidget::initializeGL()
             m_vRegions[i].passVBOToShader(m_pgm);
     }
 
-    m_treePositions = m_fieldGenerator.getTreePositions();
+//    m_treePositions = m_fieldGenerator.getTreePositions();
     prepareTrees();
 
     for(uint i = 0; i < m_treePositions.size(); ++i)
@@ -247,10 +247,12 @@ void GLWidget::initializeGL()
     m_pgm.release();
 
     qInfo()<<"Exporting terrain";
-    ExportScene::sendTo("obj", "../Output/Terrain.obj", m_verts, m_norms, m_uvs);
+//    ExportScene::sendTo("obj", "../Output/Terrain.obj", m_verts, m_norms, m_uvs);
 
     qInfo()<<"Exporting fields";
-    m_fieldGenerator.exportFields();
+//    m_fieldGenerator.exportFields();
+
+//    farmPosition = QVector3D(0,m_heights[m_heights.size() / 2.0f][m_heights.size() / 2.0f ],0);
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -271,7 +273,7 @@ void GLWidget::paintGL()
 
     loadMatricesToShader(QVector3D(0,0,0));
 
-    drawTerrain();
+//    drawTerrain();
 
     vao_water.bind();
     m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,1.0f,0.5f));
@@ -291,21 +293,29 @@ void GLWidget::paintGL()
         //(m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         //glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
 
-        m_treeMeshes[m_treeMeshesToUse[i]]->draw();
+//        m_treeMeshes[m_treeMeshesToUse[i]]->draw();
 
     }
 
     loadMatricesToShader(farmPosition);
     for(uint i = 0; i < m_farmMeshes.size(); ++i)
     {
-        m_farmMeshes[i]->draw();
+//        m_farmMeshes[i]->draw();
     }
 
     vao_trees.release();
 
+
     m_pgm.setUniformValue("mCol",QVector4D(0.25f, 0.1f ,0.1f, 1.0f));
 
     loadMatricesToShader(QVector3D(0,0,0));
+
+    glLineWidth(2.5);
+    glColor3f(1.0, 0.0, 0.0);
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(-25, 0.0, -25);
+    glEnd();
 
     m_fieldGenerator.drawWalls(m_pgm);
 

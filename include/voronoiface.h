@@ -9,8 +9,20 @@
 
 #include <algorithm>
 
+#include <CGAL/Polygon_2_algorithms.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef K::Point_2 CGALPoint;
+
 #include "voronoiedge.h"
 #include "exportscene.h"
+
+enum positionCase
+{
+    inside,
+    edge,
+    outside
+};
 
 class VoronoiFace
 {
@@ -45,6 +57,8 @@ public:
     bool m_reversedEdge;
 
     void organiseEdgeIDs();
+
+    positionCase containsPoint(QVector3D _pos);
 
     int m_edgeCount;
 

@@ -13,14 +13,20 @@ EnglishFields::EnglishFields(double _width)
     m_width = _width;
     m_maxDisplacementIterations = 3;
 
-    makeVoronoiDiagram(time(NULL));
-//    makeVoronoiDiagram(1494411664);
+//    makeVoronoiDiagram(time(NULL));
+    makeVoronoiDiagram(1495635853);
+
+    bool skipFarmField = true;
+
+    if(!skipFarmField)
+    {
+        m_farmRegion = 1000000;
+    }
 
     subdivide();
     editEdges();
 
     makeEdgesUsable();
-    qInfo()<<"Size: "<<m_allEdges.size();
 }
 
 EnglishFields::EnglishFields(double _width,
@@ -67,6 +73,8 @@ void EnglishFields::operator =(EnglishFields &toCopy)
 
     m_allEdges = toCopy.m_allEdges;
     m_allVerts = toCopy.m_allVerts;
+
+    m_farmRegion = toCopy.m_farmRegion;
 }
 
 //Field generation
@@ -96,7 +104,8 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
         srand(_seed);
         qInfo()<<"Seed: "<<_seed;
 
-        uint numPoints = 10;
+        //CHECK WHY 7 RETURNS FARM IN REGION 1000
+        uint numPoints = 7;
 
         points.reserve(numPoints);
 
@@ -105,6 +114,8 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
             points.push_back(K::Point_2((m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0), (m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0)));
         }
     }
+
+    points.push_back(K::Point_2(0, 0));
 
     //A new half-edge data structure to store the Voronoi
     //edges in
@@ -214,6 +225,9 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
         m_regions[i].loadVerts(m_allEdges);
         m_regions[i].storeOriginalEdges(m_allEdges);
     }
+
+    m_farmRegion = findFarmRegion(QVector3D(0,0,0));
+    qInfo()<<"Farm is in region "<<m_farmRegion;
 }
 
 void EnglishFields::subdivide()
@@ -225,6 +239,11 @@ void EnglishFields::subdivide()
 
     for(uint i = 0; i < startFaceCount; ++i)
     {
+        if(i == m_farmRegion)
+        {
+            continue;
+        }
+
         if((m_regions[i].getEdgeCount()) > 3)
         {
             float subdivideSwitch = 100.0f * (float)rand() / (float)RAND_MAX;
@@ -551,9 +570,18 @@ void EnglishFields::subdivide()
 
     if(subdividedFaces.size() > 0)
     {
+        qInfo()<<"region: "<<m_farmRegion;
+        float tmpFarmRegion = m_farmRegion;
+
         for(uint i = 0; i < subdividedFaces.size(); ++i)
         {
             m_regions.erase(m_regions.begin() + subdividedFaces[i]);
+
+            if(subdividedFaces[i] < m_farmRegion && m_farmRegion != 1000000)
+            {
+                tmpFarmRegion--;
+                qInfo()<<"Face "<<subdividedFaces[i]<<" was subdivided";
+            }
 
             for(uint j = 0; j < subdividedFaces.size(); ++j)
             {
@@ -564,7 +592,13 @@ void EnglishFields::subdivide()
             }
 
         }
+
+        if(tmpFarmRegion < m_farmRegion && m_farmRegion != 1000000)
+        {
+            m_farmRegion = tmpFarmRegion;
+        }
     }
+
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
@@ -580,6 +614,11 @@ void EnglishFields::editEdges()
     for(int i = 0; i < startFaceCount; ++i)
     {
         qInfo()<<"Current Face: "<<i;
+
+        if(i == m_farmRegion)
+        {
+            continue;
+        }
 
         displaceEdge(m_regions[i]);
     }
@@ -612,7 +651,12 @@ void EnglishFields::editEdges()
     std::vector<uint> threeFieldRemoval;
 
     for(int i = 0; i < startFaceCount; ++i)
-    {
+    {        
+        if(i == m_farmRegion)
+        {
+            continue;
+        }
+
         float fieldTypeSwitch = 100.0f * (float)rand()/(float)RAND_MAX;
 
 //        fieldTypeSwitch = 60.0f;
@@ -634,9 +678,16 @@ void EnglishFields::editEdges()
         }
     }
 
+    float tmpFarmRegion = m_farmRegion;
+
     for(uint i = 0; i < threeFieldRemoval.size(); ++i)
     {
-        m_regions.erase(m_regions.begin() + threeFieldRemoval[i]);
+        m_regions.erase(m_regions.begin() + threeFieldRemoval[i]);        
+
+        if(threeFieldRemoval[i] < m_farmRegion && m_farmRegion != 1000000)
+        {
+            tmpFarmRegion--;
+        }
 
         for(uint j = 0; j < threeFieldRemoval.size(); ++j)
         {
@@ -645,6 +696,11 @@ void EnglishFields::editEdges()
                 threeFieldRemoval[j]--;
             }
         }
+    }
+
+    if(tmpFarmRegion < m_farmRegion && m_farmRegion != 1000000)
+    {
+        m_farmRegion = tmpFarmRegion;
     }
 
 //    for(uint i = 0; i < m_editedEdgeIDs.size(); ++i)
@@ -2147,6 +2203,48 @@ bool EnglishFields::isBoundaryEdge(VoronoiEdge *_edge)
 
     return false;
 }
+
+uint EnglishFields::findFarmRegion(QVector3D _pos)
+{
+    uint farmRegion = 1000;
+    bool edgeCase = false;
+
+    for(uint i = 0; i < m_regions.size(); ++i)
+    {
+        switch(m_regions[i].containsPoint(_pos))
+        {
+        case inside:
+            farmRegion = i;
+
+            if(edgeCase)
+            {
+                edgeCase = false;
+            }
+
+            break;
+
+        case edge:
+            if(farmRegion == 1000)
+            {
+                farmRegion = i;
+                edgeCase = true;
+            }
+
+            break;
+
+        default:
+            break;
+        }
+
+        if(farmRegion != 1000 && !edgeCase)
+        {
+            break;
+        }
+    }
+
+    return farmRegion;
+}
+
 //-----------------------
 
 void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
@@ -2262,6 +2360,11 @@ void EnglishFields::drawWalls(QOpenGLShaderProgram &_pgm)
         else
         {
             _pgm.setUniformValue("mCol",QVector4D(0.15f, 0.1f ,0.1f, 1.0f));
+        }
+
+        if(m_farmRegion < 1000001 && i != m_farmRegion)
+        {
+//            continue;
         }
 
         m_regions[i].draw();
@@ -2449,17 +2552,17 @@ void EnglishFields::getSegments(VoronoiFace &_face)
        if(vertexIndices[i].size() > 0)
        {
            int switcher = (vertexIndices[i].size() - 1) * (float)rand()/(float)RAND_MAX;
+
            int count = 0;
 
            while(isBoundaryEdge(m_allEdges[vertexIndices[i][switcher]]))
            {
                if(count > 50)
                {
-                   qInfo()<<"Hit break";
                    break;
                }
 
-               switcher = vertexIndices[i].size() * (float)rand()/(float)RAND_MAX;
+               switcher = (vertexIndices[i].size() - 1) * (float)rand()/(float)RAND_MAX;
                count++;
            }
 
@@ -2477,7 +2580,6 @@ void EnglishFields::getSegments(VoronoiFace &_face)
            switchers.push_back(-1);
        }
    }
-
 
    _face.makeSkips(switchers);
 
