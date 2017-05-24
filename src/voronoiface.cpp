@@ -55,12 +55,14 @@ void VoronoiFace::loadVerts(std::vector<VoronoiEdge *> &_edges)
         {
             m_edgeVerts.push_back(*(_edges[m_indices[i]]->m_startPTR));
         }
-
-        iter = std::find(m_edgeVerts.begin(), m_edgeVerts.end(), *(_edges[m_indices[i]]->m_endPTR));
-
-        if(iter == m_edgeVerts.end())
+        else
         {
-            m_edgeVerts.push_back(*(_edges[m_indices[i]]->m_endPTR));
+            iter = std::find(m_edgeVerts.begin(), m_edgeVerts.end(), *(_edges[m_indices[i]]->m_endPTR));
+
+            if(iter == m_edgeVerts.end())
+            {
+                m_edgeVerts.push_back(*(_edges[m_indices[i]]->m_endPTR));
+            }
         }
 
     }
@@ -714,6 +716,7 @@ positionCase VoronoiFace::containsPoint(QVector3D _pos)
     {
         points.push_back(CGALPoint(m_edgeVerts[i].x(), m_edgeVerts[i].z()));
     }
+    qInfo()<<"Points size: "<<m_edgeVerts.size();
 
 
     CGALPoint testPoint(_pos.x(), _pos.z());

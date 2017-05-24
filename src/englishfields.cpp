@@ -13,8 +13,8 @@ EnglishFields::EnglishFields(double _width)
     m_width = _width;
     m_maxDisplacementIterations = 3;
 
-//    makeVoronoiDiagram(time(NULL));
-    makeVoronoiDiagram(1495635853);
+    makeVoronoiDiagram(time(NULL));
+//    makeVoronoiDiagram(1495635853);
 
     bool skipFarmField = true;
 
@@ -104,7 +104,6 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
         srand(_seed);
         qInfo()<<"Seed: "<<_seed;
 
-        //CHECK WHY 7 RETURNS FARM IN REGION 1000
         uint numPoints = 7;
 
         points.reserve(numPoints);
@@ -570,18 +569,25 @@ void EnglishFields::subdivide()
 
     if(subdividedFaces.size() > 0)
     {
-        qInfo()<<"region: "<<m_farmRegion;
         float tmpFarmRegion = m_farmRegion;
 
         for(uint i = 0; i < subdividedFaces.size(); ++i)
         {
-            m_regions.erase(m_regions.begin() + subdividedFaces[i]);
-
             if(subdividedFaces[i] < m_farmRegion && m_farmRegion != 1000000)
             {
                 tmpFarmRegion--;
-                qInfo()<<"Face "<<subdividedFaces[i]<<" was subdivided";
             }
+        }
+
+        if(tmpFarmRegion < m_farmRegion && m_farmRegion != 1000000)
+        {
+            m_farmRegion = tmpFarmRegion;
+        }
+
+        //--------
+        for(uint i = 0; i < subdividedFaces.size(); ++i)
+        {
+            m_regions.erase(m_regions.begin() + subdividedFaces[i]);
 
             for(uint j = 0; j < subdividedFaces.size(); ++j)
             {
@@ -593,12 +599,7 @@ void EnglishFields::subdivide()
 
         }
 
-        if(tmpFarmRegion < m_farmRegion && m_farmRegion != 1000000)
-        {
-            m_farmRegion = tmpFarmRegion;
-        }
     }
-
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
@@ -611,10 +612,9 @@ void EnglishFields::editEdges()
 {
     int startFaceCount = m_regions.size();
 
+
     for(int i = 0; i < startFaceCount; ++i)
     {
-        qInfo()<<"Current Face: "<<i;
-
         if(i == m_farmRegion)
         {
             continue;
@@ -682,12 +682,15 @@ void EnglishFields::editEdges()
 
     for(uint i = 0; i < threeFieldRemoval.size(); ++i)
     {
-        m_regions.erase(m_regions.begin() + threeFieldRemoval[i]);        
-
         if(threeFieldRemoval[i] < m_farmRegion && m_farmRegion != 1000000)
         {
             tmpFarmRegion--;
         }
+    }
+
+    for(uint i = 0; i < threeFieldRemoval.size(); ++i)
+    {
+        m_regions.erase(m_regions.begin() + threeFieldRemoval[i]);        
 
         for(uint j = 0; j < threeFieldRemoval.size(); ++j)
         {
@@ -698,7 +701,7 @@ void EnglishFields::editEdges()
         }
     }
 
-    if(tmpFarmRegion < m_farmRegion && m_farmRegion != 1000000)
+    if(tmpFarmRegion != m_farmRegion && m_farmRegion != 1000000)
     {
         m_farmRegion = tmpFarmRegion;
     }
@@ -2211,6 +2214,7 @@ uint EnglishFields::findFarmRegion(QVector3D _pos)
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
+        qInfo()<<"Region "<<i;
         switch(m_regions[i].containsPoint(_pos))
         {
         case inside:
