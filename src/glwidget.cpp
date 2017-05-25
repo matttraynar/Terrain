@@ -252,7 +252,7 @@ void GLWidget::initializeGL()
     qInfo()<<"Exporting fields";
 //    m_fieldGenerator.exportFields();
 
-//    farmPosition = QVector3D(0,m_heights[m_heights.size() / 2.0f][m_heights.size() / 2.0f ],0);
+    farmPosition = m_fieldGenerator.getFarmPosition();//QVector3D(0,m_heights[m_heights.size() / 2.0f][m_heights.size() / 2.0f ],0);
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -297,14 +297,14 @@ void GLWidget::paintGL()
 
     }
 
+    vao_trees.release();
+
+
     loadMatricesToShader(farmPosition);
     for(uint i = 0; i < m_farmMeshes.size(); ++i)
     {
-//        m_farmMeshes[i]->draw();
+        m_farmMeshes[i]->draw();
     }
-
-    vao_trees.release();
-
 
     m_pgm.setUniformValue("mCol",QVector4D(0.25f, 0.1f ,0.1f, 1.0f));
 

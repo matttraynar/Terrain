@@ -291,19 +291,11 @@ uint VoronoiFace::getNextUnnconnectedEdge(uint index, bool up)
 
 void VoronoiFace::organiseEdgeIDs()
 {
-//    qInfo()<<"------------- NEW FACE -------------";
     std::vector<uint> newIDOrder;
 
-//    for(uint i = 0; i < m_indices.size(); ++i)
-//    {
-//        qInfo()<<"Index "<<i<<": "<<m_indices[i];
-//    }
-
     uint startID = m_indices[0];
-//    qInfo()<<"Start ID: "<<startID;
 
     uint nextID = getNextEdge(startID);
-//    qInfo()<<"ID: "<<nextID;
 
     newIDOrder.push_back(startID);
     newIDOrder.push_back(nextID);
@@ -315,15 +307,19 @@ void VoronoiFace::organiseEdgeIDs()
             break;
         }
         nextID = getNextEdge(nextID);
-//        qInfo()<<"ID: "<<nextID;
-        newIDOrder.push_back(nextID);
+
+        if(nextID < 1000000)
+        {
+            newIDOrder.push_back(nextID);
+        }
+        else
+        {
+            break;
+        }
     }
+
      newIDOrder.erase(newIDOrder.begin() + newIDOrder.size() - 1);
 
-//    for(uint i = 0; i < newIDOrder.size(); ++i)
-//    {
-//        qInfo()<<"Index "<<i<<": "<<newIDOrder[i];
-//    }
 
      m_indices = newIDOrder;
 

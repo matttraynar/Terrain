@@ -106,6 +106,8 @@ public:
 
     inline std::vector<QVector3D> getTreePositions() const { return m_treePositions; }
 
+    QVector3D getFarmPosition() { return m_regions[m_farmRegion].getMiddle(); }
+
 private:
     void subdivide();
     void editEdges();
@@ -127,6 +129,7 @@ private:
     bool isBoundaryEdge(VoronoiEdge* _edge);
 
     uint findFarmRegion(QVector3D _pos);
+    void farmFieldEdges();
     uint m_farmRegion;
 
     int m_maxDisplacementIterations;
