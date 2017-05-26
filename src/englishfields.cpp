@@ -749,14 +749,18 @@ void EnglishFields::farmFieldEdges()
 
     float minDistance = 10000;
     float maxDistance = -10000;
+    float maxDistance2 = -10000;
 
     uint minEdge = 1000;
     uint maxEdge = 1000;
+    uint maxEdge2 = 1000;
 
     QVector3D startPointMin;
     QVector3D closestPointMin;
     QVector3D startPointMax;
     QVector3D closestPointMax;
+    QVector3D startPointMax2;
+    QVector3D closestPointMax2;
 
     m_regions[m_farmRegion].updateEdgeCount();
 
@@ -798,6 +802,23 @@ void EnglishFields::farmFieldEdges()
 
                 startPointMax = regionCenter + (2.5 * ((tmpClosestPoint - regionCenter).normalized()));
                 closestPointMax = tmpClosestPoint;
+            }
+        }
+        else if(distance > maxDistance2)
+        {
+            if(maxEdge != 1000 && (closestPointMax - tmpClosestPoint).length() > 15)
+            {
+                maxDistance2 = distance;
+
+                float projectedLength = (tmpClosestPoint - *(currentEdge->m_startPTR)).length();
+
+                if(distance > 2.5 && projectedLength <= edgeVector.length())
+                {
+                    maxEdge2 = i;
+
+                    startPointMax2 = regionCenter + (2.5 * ((tmpClosestPoint - regionCenter).normalized()));
+                    closestPointMax2 = tmpClosestPoint;
+                }
             }
         }
     }
@@ -891,24 +912,43 @@ void EnglishFields::farmFieldEdges()
 
         VoronoiEdge* largeEdge = new VoronoiEdge(start, end);
 
-        ID = edgeExists(largeEdge);
+        midPointEdge(largeEdge, 1, newEdges, true);
+    }
+
+    if(maxEdge2 != 1000 && maxEdge2 != minEdge && maxEdge2 != maxEdge)
+    {
+        QVector3D* start = new QVector3D(startPointMax2);
+
+        int ID = vertExists(start);
 
         if(ID != -1)
         {
-            largeEdge = m_allEdges[ID];
+            start = m_allVerts[ID];
         }
         else
         {
-            //ONLY NEED THIS??
-//            m_allEdges.push_back(largeEdge);
-//            ID = m_allEdges.size() - 1;
+            m_allVerts.push_back(start);
+            ID = m_allVerts.size() - 1;
         }
 
-//        newEdges.push_back(ID);
+        QVector3D* end = new QVector3D(closestPointMax2);
 
-        qInfo()<<"ID: "<<ID;
+        ID = vertExists(end);
+
+        if(ID != -1)
+        {
+            end = m_allVerts[ID];
+        }
+        else
+        {
+            m_allVerts.push_back(end);
+            ID = m_allVerts.size() - 1;
+        }
+
+        VoronoiEdge* largeEdge = new VoronoiEdge(start, end);
 
         midPointEdge(largeEdge, 1, newEdges, true);
+
     }
 
     if(!newEdges.empty())
