@@ -310,12 +310,12 @@ void GLWidget::paintGL()
 
     loadMatricesToShader(QVector3D(0,0,0));
 
-    glLineWidth(2.5);
-    glColor3f(1.0, 0.0, 0.0);
-    glBegin(GL_LINES);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(-25, 0.0, -25);
-    glEnd();
+//    glLineWidth(2.5);
+//    glColor3f(1.0, 0.0, 0.0);
+//    glBegin(GL_LINES);
+//    glVertex3f(0.0, 0.0, 0.0);
+//    glVertex3f(-25, 0.0, -25);
+//    glEnd();
 
     m_fieldGenerator.drawWalls(m_pgm);
 

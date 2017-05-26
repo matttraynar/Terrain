@@ -468,10 +468,8 @@ VoronoiFace::VoronoiFace(const VoronoiFace &_toCopy)
 
     m_midPointIsCalculated = _toCopy.m_midPointIsCalculated;
 
-    if(!m_midPointIsCalculated)
-    {
-        m_midPoint = _toCopy.m_midPoint;
-    }
+    m_midPoint = _toCopy.m_midPoint;
+
 }
 
 void VoronoiFace::operator =(const VoronoiFace &_toCopy)
@@ -492,10 +490,7 @@ void VoronoiFace::operator =(const VoronoiFace &_toCopy)
 
     m_midPointIsCalculated = _toCopy.m_midPointIsCalculated;
 
-    if(!m_midPointIsCalculated)
-    {
-        m_midPoint = _toCopy.m_midPoint;
-    }
+    m_midPoint = _toCopy.m_midPoint;
 }
 
 void VoronoiFace::updateVerts()

@@ -14,7 +14,7 @@ EnglishFields::EnglishFields(double _width)
     m_maxDisplacementIterations = 3;
 
     makeVoronoiDiagram(time(NULL));
-//    makeVoronoiDiagram(1495736562);
+//    makeVoronoiDiagram(1495790767);
 
     bool skipFarmField = true;
 
@@ -23,9 +23,9 @@ EnglishFields::EnglishFields(double _width)
         m_farmRegion = 1000000;
     }
 
-
     subdivide();
     editEdges();
+
     if(m_farmRegion != 1000)
     {
         farmFieldEdges();
@@ -33,6 +33,7 @@ EnglishFields::EnglishFields(double _width)
 
     qInfo()<<"Subdividing edges";
     makeEdgesUsable();
+
 }
 
 EnglishFields::EnglishFields(double _width,
@@ -759,59 +760,47 @@ void EnglishFields::farmFieldEdges()
 
     m_regions[m_farmRegion].updateEdgeCount();
 
-    qInfo()<<"Edge count: "<<m_allEdges.size();
-    qInfo()<<"Finding closest edge of "<<m_regions[m_farmRegion].getEdgeCount();
     for(uint i = 0; i < m_regions[m_farmRegion].getEdgeCount(); ++i)
     {
-        qInfo()<<"Edge: "<<m_regions[m_farmRegion].getEdgeID(i);
-
         VoronoiEdge* currentEdge = m_allEdges[m_regions[m_farmRegion].getEdgeID(i)];
 
-        qInfo()<<"Making vectors";
         QVector3D edgeVector = *(currentEdge->m_endPTR) - *(currentEdge->m_startPTR);
         QVector3D midVector = regionCenter - *(currentEdge->m_startPTR);
 
-        qInfo()<<"Getting closest point";
 //        QVector3D tmpClosestPoint = *(currentEdge->m_startPTR) + ((QVector3D::dotProduct(edgeVector, midVector) / edgeVector.length()) * edgeVector.normalized());
         QVector3D tmpClosestPoint = currentEdge->getMidPoint();
 
-        qInfo()<<"Distance calculation";
         float distance = (tmpClosestPoint - regionCenter).length();
 
         if(distance < minDistance)
         {
-            qInfo()<<"Min distance";
             minDistance = distance;
 
            float projectedLength = (tmpClosestPoint - *(currentEdge->m_startPTR)).length();
 
-            if(distance > 3 && projectedLength <= edgeVector.length())
+            if(distance > 2.5 && projectedLength <= edgeVector.length())
             {
                 minEdge = i;
-                startPointMin = regionCenter + (3 * ((tmpClosestPoint - regionCenter).normalized()));
+                startPointMin = regionCenter + (2.5 * ((tmpClosestPoint - regionCenter).normalized()));
                 closestPointMin = tmpClosestPoint;
             }
         }
 
         if(distance > maxDistance)
         {
-            qInfo()<<"Max distance";
             maxDistance = distance;
 
             float projectedLength = (tmpClosestPoint - *(currentEdge->m_startPTR)).length();
 
-            if(distance > 3 && projectedLength <= edgeVector.length())
+            if(distance > 2.5 && projectedLength <= edgeVector.length())
             {
                 maxEdge = i;
 
-                startPointMax = regionCenter + (3 * ((tmpClosestPoint - regionCenter).normalized()));
+                startPointMax = regionCenter + (2.5 * ((tmpClosestPoint - regionCenter).normalized()));
                 closestPointMax = tmpClosestPoint;
             }
         }
-        qInfo()<<"Done";
     }
-
-    qInfo()<<"Creating min edge";
 
     std::vector<uint> newEdges;
 
@@ -860,10 +849,16 @@ void EnglishFields::farmFieldEdges()
             ID = m_allEdges.size() - 1;
         }
 
-        newEdges.push_back(ID);
+        if(smallEdge->getLength() > 2)
+        {
+            midPointEdge(smallEdge, 1, newEdges, true);
+        }
+        else
+        {
+            newEdges.push_back(ID);
+        }
     }
 
-    qInfo()<<"Creating max edge";
     if(maxEdge != 1000 && maxEdge != minEdge)
     {
         QVector3D* start = new QVector3D(startPointMax);
@@ -905,15 +900,15 @@ void EnglishFields::farmFieldEdges()
         else
         {
             //ONLY NEED THIS??
-            m_allEdges.push_back(largeEdge);
-            ID = m_allEdges.size() - 1;
+//            m_allEdges.push_back(largeEdge);
+//            ID = m_allEdges.size() - 1;
         }
 
-        newEdges.push_back(ID);
+//        newEdges.push_back(ID);
 
         qInfo()<<"ID: "<<ID;
 
-//        midPointEdge(m_allEdges[ID], 1, newEdges, true);
+        midPointEdge(largeEdge, 1, newEdges, true);
     }
 
     if(!newEdges.empty())
@@ -997,10 +992,10 @@ void EnglishFields::midPointEdge(VoronoiEdge* edge, int iteration, std::vector<u
 
         float noiseValue = (noise.noise(float(iteration) / float(m_maxDisplacementIterations), yValue, 0.0f) - 0.5f);
 
-        midPoint->setX((((4.0f / float(iteration)) * (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->x());
+        midPoint->setX((((3.0f / float(iteration)) * (double)rand()/(double)RAND_MAX) - (3.0f / float(iteration))/2.0f) + midPoint->x());
         midPoint->setX(((2.0f * midPoint->x()) + noiseValue) / 2.0f);
 
-        midPoint->setZ((((4.0f  / float(iteration))* (double)rand()/(double)RAND_MAX) - (4.0f / float(iteration))/2.0f) + midPoint->z());
+        midPoint->setZ((((3.0f  / float(iteration))* (double)rand()/(double)RAND_MAX) - (3.0f / float(iteration))/2.0f) + midPoint->z());
         midPoint->setZ(((2.0f *midPoint->z()) + noiseValue) / 2.0f);
     }
 
