@@ -18,6 +18,7 @@ GLWidget::GLWidget( QWidget* parent ) :
 
     m_ortho = false;
     doOnce = true;
+    shading = true;
 
     m_x = -0;
     moveDown = false;
@@ -37,8 +38,6 @@ GLWidget::GLWidget( QWidget* parent ) :
 
     double width = 50.0;
 
-    qInfo()<<"Texturing";
-    makeTexture();
     qInfo()<<"Farm at "<<farmPosition;
 
     qInfo()<<"Creating Voronoi";
@@ -167,8 +166,6 @@ void GLWidget::initializeGL()
         m_pgm.bind();
 
         //Next pass the minimum and height range values to the shader
-        m_pgm.setUniformValue("min", m_terrainMin);
-        m_pgm.setUniformValue("range", m_terrainMax - m_terrainMin);
 
         m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree1.obj")));
         m_treeMeshes[0]->prepareMesh(m_pgm);
@@ -329,6 +326,16 @@ void GLWidget::paintGL()
     qInfo()<<"Painting";
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+    m_pgm.bind();
+    m_pgm.setUniformValue("min", m_terrainMin);
+    m_pgm.setUniformValue("range", m_terrainMax - m_terrainMin);
+    m_pgm.setUniformValue("waterLevel", m_waterLevel);
+
+    m_pgm.setUniformValue("useShading", shading);
+
+    m_pgm.release();
+
     m_pgm.bind();
 
     changeOrtho();
@@ -341,40 +348,43 @@ void GLWidget::paintGL()
     qInfo()<<"Terrain";
     drawTerrain();
 
-    if(!m_ortho)
+    if(shading)
     {
-        qInfo()<<"Trees";
-        vao_trees.bind();
-
-        m_pgm.setUniformValue("mCol",QVector4D(0.05f, 0.24f,0.01f,0.5f));
-
-        qInfo()<<m_treePositions.size();
-        qInfo()<<m_treeMeshesToUse.size();
-        for(uint i = 0; i < m_treePositions.size(); ++i)
+        if(!m_ortho)
         {
-            loadMatricesToShader(m_treePositions[i]);
-            m_treeMeshes[m_treeMeshesToUse[i]]->draw();
+            qInfo()<<"Trees";
+            vao_trees.bind();
+
+            m_pgm.setUniformValue("mCol",QVector4D(0.05f, 0.24f,0.01f,0.5f));
+
+            qInfo()<<m_treePositions.size();
+            qInfo()<<m_treeMeshesToUse.size();
+            for(uint i = 0; i < m_treePositions.size(); ++i)
+            {
+                loadMatricesToShader(m_treePositions[i]);
+                m_treeMeshes[m_treeMeshesToUse[i]]->draw();
+            }
+
+            vao_trees.release();
         }
 
-        vao_trees.release();
+        m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
+
+        loadMatricesToShader(farmPosition);
+
+        for(uint i = 0; i < m_farmMeshes.size(); ++i)
+        {
+            qInfo()<<"Farm building "<<i;
+            m_farmMeshes[i]->draw();
+        }
+
+        m_pgm.setUniformValue("mCol",QVector4D(0.25f, 0.1f ,0.1f, 1.0f));
+
+        loadMatricesToShader(QVector3D(0,0,0));
+
+        qInfo()<<"Walls";
+        m_fieldGenerator.drawWalls(m_pgm);
     }
-
-    m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
-
-    loadMatricesToShader(farmPosition);
-
-    for(uint i = 0; i < m_farmMeshes.size(); ++i)
-    {
-        qInfo()<<"Farm building "<<i;
-        m_farmMeshes[i]->draw();
-    }
-
-    m_pgm.setUniformValue("mCol",QVector4D(0.25f, 0.1f ,0.1f, 1.0f));
-
-    loadMatricesToShader(QVector3D(0,0,0));
-
-    qInfo()<<"Walls";
-    m_fieldGenerator.drawWalls(m_pgm);
 
     m_pgm.release();
 }
@@ -1282,59 +1292,6 @@ void GLWidget::prepareTrees()
 
         }
     }
-}
-
-void GLWidget::makeTexture()
-{
-    qInfo()<<m_heights.size();
-
-    int nPixels = m_heights.size() * m_heights[0].size();
-    int samples = 512;
-
-    uchar* framebuffer = new uchar[nPixels * samples * samples * 3];
-
-    for(uint i = 0; i < nPixels * samples * samples * 3; ++i)
-    {
-        framebuffer[i] = 255;
-    }
-
-    QImage grass("textures/grass.png");
-    qInfo()<<"Dimensions";
-    qInfo()<<grass.width();
-    qInfo()<<grass.height();
-
-    int curPix = 0;
-
-    qInfo()<<grass.width() / samples;
-    qInfo()<<grass.height() / samples;
-
-    for(uint i = 0; i < m_heights.size(); ++i)
-    {
-        for(uint j = 0; j < m_heights[i].size(); ++j)
-        {
-            for(int sampleX = 0; sampleX < samples; ++sampleX)
-            {
-                for(int sampleY = 0; sampleY < samples; ++sampleY)
-                {
-                    QColor currentPixel = grass.pixelColor((sampleX / samples) * grass.width(), (sampleY / samples) * grass.height());
-
-                    framebuffer[curPix] = int(currentPixel.red()/* * 255.0f*/);
-                    ++curPix;
-
-                    framebuffer[curPix] = int(currentPixel.green()/* * 255.0f*/);
-                    ++curPix;
-
-                    framebuffer[curPix] = int(currentPixel.blue()/* * 255.0f*/);
-                    ++curPix;
-                }
-            }
-        }
-    }
-
-    QImage texture(framebuffer, width(), height(), QImage::Format_RGB888);
-    texture.save("TerrainTexture.png", "PNG", 100);
-
-    delete [] framebuffer;
 }
 
 QOpenGLTexture* GLWidget::addNewTexture(QString &filename)

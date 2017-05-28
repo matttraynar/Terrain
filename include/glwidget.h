@@ -44,6 +44,9 @@ public:
 
     bool m_ortho;
     bool doOnce;
+
+    bool shading;
+
     void changeOrtho();
 
 protected:
@@ -100,8 +103,6 @@ private:
     void prepareTerrain();
     void prepareWater();
     void prepareTrees();
-
-    void makeTexture();
 
     QOpenGLTexture *addNewTexture(QString &filename);
 

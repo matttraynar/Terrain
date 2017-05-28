@@ -19,11 +19,14 @@ uniform sampler2D grassTexture;
 uniform sampler2D rockTexture;
 uniform sampler2D snowTexture;
 
+uniform bool useShading;
+
 out vec4 fragColour;
 
 void main()
 {
 	bool useTextures = true;
+
 	vec4 lCol = vec4(1.0, 1.0, 1.0, 1.0);
 	vec3 lPosA = lightPos;
 
@@ -130,19 +133,33 @@ void main()
 
 			float brightness = clamp(dot(out_norm,normalize(lightPos)), 0.0, 1.0);
 
-			fragColour = vec4(brightness * lCol.rgb * colour.rgb, 1.0);
-//			fragColour = colour;
+
+			if(useShading)
+			{
+				fragColour = vec4(brightness * lCol.rgb * colour.rgb, 1.0);
+			}
+			else
+			{
+				fragColour = colour;
+			}
+
 		}
 		else
 		{
 			float brightness = 1.0f;
-
 			if(length(out_norm) > 0)
 			{
 				brightness = clamp(dot(out_norm,normalize(lPosA)), 0.0, 1.0);
 			}
 
-			fragColour = vec4(brightness * lCol.rgb * mCol.rgb, 1.0);
+			if(useShading)
+			{
+				fragColour = vec4(brightness * lCol.rgb * mCol.rgb, 1.0);
+			}
+			else
+			{
+				fragColour = vec4(mCol.rgb, 1.0f);
+			}
 		}
 	}
 	else
