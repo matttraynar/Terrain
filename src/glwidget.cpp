@@ -37,6 +37,8 @@ GLWidget::GLWidget( QWidget* parent ) :
 
     double width = 50.0;
 
+    qInfo()<<"Texturing";
+    makeTexture();
     qInfo()<<"Farm at "<<farmPosition;
 
     qInfo()<<"Creating Voronoi";
@@ -163,6 +165,10 @@ void GLWidget::initializeGL()
         }
 
         m_pgm.bind();
+
+        //Next pass the minimum and height range values to the shader
+        m_pgm.setUniformValue("min", m_terrainMin);
+        m_pgm.setUniformValue("range", m_terrainMax - m_terrainMin);
 
         m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree1.obj")));
         m_treeMeshes[0]->prepareMesh(m_pgm);
@@ -306,6 +312,8 @@ void GLWidget::initializeGL()
         m_pgm.setUniformValue("snowTexture", 3);
 
         m_pgm.release();
+
+
     }
 }
 
@@ -779,10 +787,6 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
         }
     }
 
-    //Next pass the minimum and height range values to the shader
-    m_pgm.setUniformValue("min", m_terrainMin);
-    m_pgm.setUniformValue("range", m_terrainMax - m_terrainMin);
-
     //The next bit creates the flat parts of terrain. The following variables
     //represent the range in which the cut takes place
     float minCut = ((m_terrainMax - m_terrainMin) * (5.0f/8.0f)) + m_terrainMin;
@@ -903,7 +907,6 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
     m_view.lookAt(m_cameraPos,
                             terrainMiddle,
                             QVector3D(0,1,0));
-
 }
 
 void GLWidget::drawTerrain()
@@ -1279,6 +1282,59 @@ void GLWidget::prepareTrees()
 
         }
     }
+}
+
+void GLWidget::makeTexture()
+{
+    qInfo()<<m_heights.size();
+
+    int nPixels = m_heights.size() * m_heights[0].size();
+    int samples = 512;
+
+    uchar* framebuffer = new uchar[nPixels * samples * samples * 3];
+
+    for(uint i = 0; i < nPixels * samples * samples * 3; ++i)
+    {
+        framebuffer[i] = 255;
+    }
+
+    QImage grass("textures/grass.png");
+    qInfo()<<"Dimensions";
+    qInfo()<<grass.width();
+    qInfo()<<grass.height();
+
+    int curPix = 0;
+
+    qInfo()<<grass.width() / samples;
+    qInfo()<<grass.height() / samples;
+
+    for(uint i = 0; i < m_heights.size(); ++i)
+    {
+        for(uint j = 0; j < m_heights[i].size(); ++j)
+        {
+            for(int sampleX = 0; sampleX < samples; ++sampleX)
+            {
+                for(int sampleY = 0; sampleY < samples; ++sampleY)
+                {
+                    QColor currentPixel = grass.pixelColor((sampleX / samples) * grass.width(), (sampleY / samples) * grass.height());
+
+                    framebuffer[curPix] = int(currentPixel.red()/* * 255.0f*/);
+                    ++curPix;
+
+                    framebuffer[curPix] = int(currentPixel.green()/* * 255.0f*/);
+                    ++curPix;
+
+                    framebuffer[curPix] = int(currentPixel.blue()/* * 255.0f*/);
+                    ++curPix;
+                }
+            }
+        }
+    }
+
+    QImage texture(framebuffer, width(), height(), QImage::Format_RGB888);
+    texture.save("TerrainTexture.png", "PNG", 100);
+
+    delete [] framebuffer;
 }
 
 QOpenGLTexture* GLWidget::addNewTexture(QString &filename)

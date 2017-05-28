@@ -101,6 +101,8 @@ private:
     void prepareWater();
     void prepareTrees();
 
+    void makeTexture();
+
     QOpenGLTexture *addNewTexture(QString &filename);
 
     std::vector<std::shared_ptr<Mesh>> m_farmMeshes;
