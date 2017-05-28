@@ -42,6 +42,10 @@ public:
     GLWidget(QWidget* parent = 0);
     ~GLWidget();
 
+    bool m_ortho;
+    bool doOnce;
+    void changeOrtho();
+
 protected:
      //-------------------------------------------------------
     //Drawing and painting functions
@@ -81,8 +85,6 @@ private:
 
     std::vector<std::shared_ptr<Mesh>> m_treeMeshes;
     std::vector<int> m_treeMeshesToUse;
-
-    bool m_ortho;
 
      //-------------------------------------------------------
     //Terrain generation functions

@@ -17,31 +17,12 @@ GLWidget::GLWidget( QWidget* parent ) :
     m_cameraPos = QVector3D(20.0f, 50.0f, 20.0f);
 
     m_ortho = false;
+    doOnce = true;
 
     m_x = -0;
     moveDown = false;
 
     m_wireframe = false;
-}
-
-GLWidget::~GLWidget()
-{
-
-}
-
-
-void GLWidget::initializeGL()
-{
-    glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
-
-    glEnable(GL_DEPTH_TEST);
-
-    if(!prepareShaderProgram("shaders/vert.glsl", "shaders/frag.glsl") )
-    {
-        exit(1);
-    }
-
-    m_pgm.bind();
 
     m_view.setToIdentity();
     m_view.lookAt(m_cameraPos,
@@ -54,81 +35,7 @@ void GLWidget::initializeGL()
     qInfo()<<"Generating terrain";
     generateHeightMap(6, 10.f);
 
-    qInfo()<<"Preparing VAOs";
-    prepareTerrain();
-    prepareWater();
-
     double width = 50.0;
-
-    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree1.obj")));
-    m_treeMeshes[0]->prepareMesh(m_pgm);
-
-    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree2.obj")));
-    m_treeMeshes[1]->prepareMesh(m_pgm);
-
-    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree3.obj")));
-    m_treeMeshes[2]->prepareMesh(m_pgm);
-
-    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree4.obj")));
-    m_treeMeshes[3]->prepareMesh(m_pgm);
-
-    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree5.obj")));
-    m_treeMeshes[4]->prepareMesh(m_pgm);
-
-    m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree6.obj")));
-    m_treeMeshes[5]->prepareMesh(m_pgm);
-
-    //Load the farm meshes
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/mainhouse.obj")));
-    m_farmMeshes[0]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse1.obj")));
-    m_farmMeshes[1]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse2.obj")));
-    m_farmMeshes[2]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse3.obj")));
-    m_farmMeshes[3]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse4.obj")));
-    m_farmMeshes[4]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse5.obj")));
-    m_farmMeshes[5]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse6.obj")));
-    m_farmMeshes[6]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse7.obj")));
-    m_farmMeshes[7]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree1.obj")));
-    m_farmMeshes[8]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree2.obj")));
-    m_farmMeshes[9]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree3.obj")));
-    m_farmMeshes[10]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree4.obj")));
-    m_farmMeshes[11]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree5.obj")));
-    m_farmMeshes[12]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree6.obj")));
-    m_farmMeshes[13]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree7.obj")));
-    m_farmMeshes[14]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree8.obj")));
-    m_farmMeshes[15]->prepareMesh(m_pgm);
-
-    m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree9.obj")));
-    m_farmMeshes[16]->prepareMesh(m_pgm);
 
     qInfo()<<"Farm at "<<farmPosition;
 
@@ -195,17 +102,7 @@ void GLWidget::initializeGL()
 
     }
 
-    m_fieldGenerator.createWalls(m_pgm);
-
-    m_vRegions = m_fieldGenerator.getRegions();
-
-    for(uint i = 0; i < m_vRegions.size(); ++i)
-    {
-            m_vRegions[i].passVBOToShader(m_pgm);
-    }
-
 //    m_treePositions = m_fieldGenerator.getTreePositions();
-    prepareTrees();
 
     for(uint i = 0; i < m_treePositions.size(); ++i)
     {
@@ -242,34 +139,174 @@ void GLWidget::initializeGL()
         }
     }
 
-    //Finished creating regions
 
-    m_pgm.bind();
+}
 
-    QOpenGLTexture* sand = addNewTexture(QString("textures/sand.png"));
-    sand->bind(0);
-    m_pgm.setUniformValue("sandTexture", 0);
+GLWidget::~GLWidget()
+{
 
-    QOpenGLTexture* grass = addNewTexture(QString("textures/grass.png"));
-    grass->bind(1);
-    m_pgm.setUniformValue("grassTexture", 1);
+}
 
-    QOpenGLTexture* rock = addNewTexture(QString("textures/rock.png"));
-    rock->bind(2);
-    m_pgm.setUniformValue("rockTexture", 2);
 
-    QOpenGLTexture* snow = addNewTexture(QString("textures/snow.png"));
-    snow->bind(3);
-    m_pgm.setUniformValue("snowTexture", 3);
+void GLWidget::initializeGL()
+{
+    if(doOnce)
+    {
+        glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
 
-    m_pgm.release();
+        glEnable(GL_DEPTH_TEST);
 
-    qInfo()<<"Exporting terrain";
-//    ExportScene::sendTo("obj", "../Output/Terrain.obj", m_verts, m_norms, m_uvs);
 
-    qInfo()<<"Exporting fields";
-//    m_fieldGenerator.exportFields();
+        if(!prepareShaderProgram("shaders/vert.glsl", "shaders/frag.glsl") )
+        {
+            exit(1);
+        }
 
+        m_pgm.bind();
+
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree1.obj")));
+        m_treeMeshes[0]->prepareMesh(m_pgm);
+
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree2.obj")));
+        m_treeMeshes[1]->prepareMesh(m_pgm);
+
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree3.obj")));
+        m_treeMeshes[2]->prepareMesh(m_pgm);
+
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree4.obj")));
+        m_treeMeshes[3]->prepareMesh(m_pgm);
+
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree5.obj")));
+        m_treeMeshes[4]->prepareMesh(m_pgm);
+
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree6.obj")));
+        m_treeMeshes[5]->prepareMesh(m_pgm);
+
+        //Load the farm meshes
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/mainhouse.obj")));
+        m_farmMeshes[0]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse1.obj")));
+        m_farmMeshes[1]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse2.obj")));
+        m_farmMeshes[2]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse3.obj")));
+        m_farmMeshes[3]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse4.obj")));
+        m_farmMeshes[4]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse5.obj")));
+        m_farmMeshes[5]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse6.obj")));
+        m_farmMeshes[6]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse7.obj")));
+        m_farmMeshes[7]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree1.obj")));
+        m_farmMeshes[8]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree2.obj")));
+        m_farmMeshes[9]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree3.obj")));
+        m_farmMeshes[10]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree4.obj")));
+        m_farmMeshes[11]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree5.obj")));
+        m_farmMeshes[12]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree6.obj")));
+        m_farmMeshes[13]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree7.obj")));
+        m_farmMeshes[14]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree8.obj")));
+        m_farmMeshes[15]->prepareMesh(m_pgm);
+
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree9.obj")));
+        m_farmMeshes[16]->prepareMesh(m_pgm);
+
+        m_fieldGenerator.createWalls(m_pgm);
+
+        m_vRegions = m_fieldGenerator.getRegions();
+
+        for(uint i = 0; i < m_vRegions.size(); ++i)
+        {
+            m_vRegions[i].passVBOToShader(m_pgm);
+        }
+
+        qInfo()<<"Preparing VAOs";
+        prepareTerrain();
+        prepareWater();
+        prepareTrees();
+
+        for(uint i = 0; i < m_treePositions.size(); ++i)
+        {
+            int treeIndex = 5 * (float)rand()/(float)RAND_MAX;
+
+            m_treeMeshesToUse.push_back(treeIndex);
+        }
+
+        //Finished creating regions
+
+        m_pgm.bind();
+
+        QOpenGLTexture* sand = addNewTexture(QString("textures/sand.png"));
+        sand->bind(0);
+        m_pgm.setUniformValue("sandTexture", 0);
+
+        QOpenGLTexture* grass = addNewTexture(QString("textures/grass.png"));
+        grass->bind(1);
+        m_pgm.setUniformValue("grassTexture", 1);
+
+        QOpenGLTexture* rock = addNewTexture(QString("textures/rock.png"));
+        rock->bind(2);
+        m_pgm.setUniformValue("rockTexture", 2);
+
+        QOpenGLTexture* snow = addNewTexture(QString("textures/snow.png"));
+        snow->bind(3);
+        m_pgm.setUniformValue("snowTexture", 3);
+
+        m_pgm.release();
+
+        qInfo()<<"Exporting terrain";
+        //    ExportScene::sendTo("obj", "../Output/Terrain.obj", m_verts, m_norms, m_uvs);
+
+        qInfo()<<"Exporting fields";
+        //    m_fieldGenerator.exportFields();
+
+        doOnce = false;
+    }
+    else
+    {
+        m_pgm.bind();
+
+        QOpenGLTexture* sand = addNewTexture(QString("textures/sand.png"));
+        sand->bind(0);
+        m_pgm.setUniformValue("sandTexture", 0);
+
+        QOpenGLTexture* grass = addNewTexture(QString("textures/grass.png"));
+        grass->bind(1);
+        m_pgm.setUniformValue("grassTexture", 1);
+
+        QOpenGLTexture* rock = addNewTexture(QString("textures/rock.png"));
+        rock->bind(2);
+        m_pgm.setUniformValue("rockTexture", 2);
+
+        QOpenGLTexture* snow = addNewTexture(QString("textures/snow.png"));
+        snow->bind(3);
+        m_pgm.setUniformValue("snowTexture", 3);
+
+        m_pgm.release();
+    }
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -281,23 +318,30 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::paintGL()
 {
+    qInfo()<<"Painting";
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     m_pgm.bind();
+
+    changeOrtho();
 
     m_pgm.setUniformValue("lightPos",QVector3D(m_x, 10.0f, 0.0f));
     m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
 
     loadMatricesToShader(QVector3D(0,0,0));
 
+    qInfo()<<"Terrain";
     drawTerrain();
 
     if(!m_ortho)
     {
+        qInfo()<<"Trees";
         vao_trees.bind();
 
         m_pgm.setUniformValue("mCol",QVector4D(0.05f, 0.24f,0.01f,0.5f));
 
+        qInfo()<<m_treePositions.size();
+        qInfo()<<m_treeMeshesToUse.size();
         for(uint i = 0; i < m_treePositions.size(); ++i)
         {
             loadMatricesToShader(m_treePositions[i]);
@@ -307,13 +351,13 @@ void GLWidget::paintGL()
         vao_trees.release();
     }
 
-
     m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
 
     loadMatricesToShader(farmPosition);
-    qInfo()<<"Position: "<<farmPosition;
+
     for(uint i = 0; i < m_farmMeshes.size(); ++i)
     {
+        qInfo()<<"Farm building "<<i;
         m_farmMeshes[i]->draw();
     }
 
@@ -321,6 +365,7 @@ void GLWidget::paintGL()
 
     loadMatricesToShader(QVector3D(0,0,0));
 
+    qInfo()<<"Walls";
     m_fieldGenerator.drawWalls(m_pgm);
 
     m_pgm.release();
@@ -396,30 +441,7 @@ void GLWidget::mousePressEvent(QMouseEvent *e)
     {
         m_ortho = !m_ortho;
 
-        if(m_ortho)
-        {
-            glClearColor(0.8, 0.8f, 0.8f, 1.0f);
-            for(uint i = 0; i < m_verts.size(); ++i)
-            {
-                m_verts[i].setY(m_verts[i].y() + 1.0f);
-            }
-
-            vbo_terrain.bind();
-            vbo_terrain.allocate(&m_verts[0], (int)m_verts.size() * sizeof(GLfloat) * 3);
-            vbo_terrain.release();
-
-        }
-        else
-        {
-            glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
-            for(uint i = 0; i < m_verts.size(); ++i)
-            {
-                m_verts[i].setY(m_verts[i].y() - 1.0f);
-            }
-            vbo_terrain.bind();
-            vbo_terrain.allocate(&m_verts[0], (int)m_verts.size() * sizeof(GLfloat) * 3);
-            vbo_terrain.release();
-        }
+        changeOrtho();
     }
 
     //Store the position the mouse was pressed in
@@ -585,7 +607,7 @@ void GLWidget::loadMatricesToShader(QVector3D position)
 
     if(m_ortho)
     {
-        m_view.ortho(-25, 25, 25, -25, 0.01f, 1000.0f);
+        m_view.ortho(-25, 25, 25, -25, 0.01f, 10000.0f);
     }
     else
     {
@@ -630,6 +652,32 @@ void GLWidget::loadMatricesToShader(QVector3D position)
     m_pgm.setUniformValue("camPos", newCamPos);
 }
 
+void GLWidget::changeOrtho()
+{
+    if(m_ortho)
+    {
+        glClearColor(0.8, 0.8f, 0.8f, 1.0f);
+        for(uint i = 0; i < m_verts.size(); ++i)
+        {
+            m_verts[i].setY(m_verts[i].y() + 1.0f);
+        }
+
+        vbo_terrain.bind();
+        vbo_terrain.allocate(&m_verts[0], (int)m_verts.size() * sizeof(GLfloat) * 3);
+        vbo_terrain.release();
+    }
+    else
+    {
+        glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
+        for(uint i = 0; i < m_verts.size(); ++i)
+        {
+            m_verts[i].setY(m_verts[i].y() - 1.0f);
+        }
+        vbo_terrain.bind();
+        vbo_terrain.allocate(&m_verts[0], (int)m_verts.size() * sizeof(GLfloat) * 3);
+        vbo_terrain.release();
+    }
+}
  //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void GLWidget::generateHeightMap(int iterations, float roughness)

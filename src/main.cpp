@@ -5,17 +5,30 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w;
+//    MainWindow w;
 
-//    w.resize(1080, 720);
-    w.resize(720, 720);
-    w.show();
+////    w.resize(1080, 720);
+//    w.resize(720, 720);
+//    w.show();
 
-//    GLWidget window;
-//    QPixmap picture = window.renderPixmap(1080, 720, false);
-//    picture.save("newImage.png", "PNG", 100);
+    GLWidget window;
+    window.m_ortho = true;
+    QPixmap picture = window.renderPixmap(720, 720, false);
+    picture.save("orthoImage.png", "PNG", 100);
 
-    a.exec();
+//    qInfo()<<"Rendered 1";
 
-//    return 0;
+    qInfo()<<"Window updated";
+    window.m_ortho = false;
+
+//    renderer.save("perspImage.png", "PNG", 100);
+
+    QPixmap orthoPicture = window.renderPixmap(720, 720, false);
+    orthoPicture.save("perspImage.png", "PNG", 100);
+
+    qInfo()<<"Rendered 2";
+
+//    a.exec();
+
+    return 0;
 }
