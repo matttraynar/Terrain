@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "glwidget.h"
 #include <QApplication>
 
 int main(int argc, char *argv[])
@@ -9,5 +10,11 @@ int main(int argc, char *argv[])
     w.resize(1080, 720);
     w.show();
 
-    return a.exec();
+//    GLWidget window;
+//    QPixmap picture = window.renderPixmap(1080, 720, false);
+//    picture.save("newImage.png", "PNG", 100);
+
+    a.exec();
+
+//    return 0;
 }

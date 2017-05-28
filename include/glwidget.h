@@ -82,9 +82,6 @@ private:
     std::vector<std::shared_ptr<Mesh>> m_treeMeshes;
     std::vector<int> m_treeMeshesToUse;
 
-    std::vector<std::shared_ptr<Mesh>> m_farmMeshes;
-    QVector3D farmPosition;
-
      //-------------------------------------------------------
     //Terrain generation functions
     void generateHeightMap(int iterations, float roughness);
@@ -102,6 +99,8 @@ private:
 
     QOpenGLTexture *addNewTexture(QString &filename);
 
+    std::vector<std::shared_ptr<Mesh>> m_farmMeshes;
+    QVector3D farmPosition;
     int m_divisions;
     float m_waterLevel;
 

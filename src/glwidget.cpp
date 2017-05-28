@@ -14,7 +14,7 @@ GLWidget::GLWidget( QWidget* parent ) :
     m_zRot = 0;
     m_zDis = 0;
     m_mouseDelta = 0;
-    m_cameraPos = QVector3D(10.0f, 10.0f, 10.0f);
+    m_cameraPos = QVector3D(0.0f, 50.0f, 0.0f);
 
     m_x = -0;
     moveDown = false;
@@ -44,7 +44,8 @@ void GLWidget::initializeGL()
     m_view.setToIdentity();
     m_view.lookAt(m_cameraPos,
                           QVector3D(0.0f, 0.0f, 0.0f),
-                          QVector3D(0.0f, 1.0f, 0.0f));
+                          QVector3D(0.0f,1.0f, 0.0f));
+
 
     startTimer(1);
 
@@ -338,6 +339,7 @@ void GLWidget::timerEvent(QTimerEvent *e)
 {
     e;
 
+
     //Pulse background
 //    static float colour = 0.0f;
 
@@ -568,7 +570,7 @@ void GLWidget::loadMatricesToShader(QVector3D position)
     //Reset the model matrix and set to the right matrix taking into account mouse movement
     m_model.setToIdentity();
 
-    m_model.rotate(m_xRot / 16.0f, QVector3D(1, 0, 0));
+//    m_model.rotate(m_xRot / 16.0f, QVector3D(1, 0, 0));
     m_model.rotate(m_yRot / 16.0f, QVector3D(0, 1, 0));
 
     m_model.translate(position);
@@ -1203,3 +1205,5 @@ QOpenGLTexture* GLWidget::addNewTexture(QString &filename)
 
     return texture;
 }
+
+ //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
