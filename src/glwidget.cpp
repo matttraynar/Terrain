@@ -14,7 +14,9 @@ GLWidget::GLWidget( QWidget* parent ) :
     m_zRot = 0;
     m_zDis = 0;
     m_mouseDelta = 0;
-    m_cameraPos = QVector3D(0.0f, 50.0f, 0.0f);
+    m_cameraPos = QVector3D(20.0f, 50.0f, 20.0f);
+
+    m_ortho = false;
 
     m_x = -0;
     moveDown = false;
@@ -48,7 +50,6 @@ void GLWidget::initializeGL()
 
 
     startTimer(1);
-
 
     qInfo()<<"Generating terrain";
     generateHeightMap(6, 10.f);
@@ -137,17 +138,19 @@ void GLWidget::initializeGL()
     qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
 
-    bool adjustHeights = false;
+    bool adjustHeights = true;
 
     if(adjustHeights)
     {
         qInfo()<<"Adjusting heights";
 
+        float minDistance = 1000000;
+        float yValue = 0.0f;
+
         for(uint i = 0; i < m_fieldGenerator.getVerts().size(); ++i)
         {
-//            qInfo()<<"Adjusting edge: "<<i;
-            float minDistance = 1000000;
-            float yValue = 0.0f;
+            minDistance = 1000000;
+            yValue = 0.0f;
 
             for(int k = 0; k < m_verts.size(); ++k)
             {
@@ -164,18 +167,32 @@ void GLWidget::initializeGL()
                 }
             }
 
-//            if(yValue < m_waterLevel)
-//            {
-//                yValue = m_waterLevel - 0.25;
-//            }
-//            else
-//            {
-//                yValue += 0.3f;
-//            }
-//             yValue += 0.3f;
-
             m_fieldGenerator.getVert(i)->setY(yValue);
         }
+
+        minDistance = 1000000;
+        yValue = 0.0f;
+
+        farmPosition = m_fieldGenerator.getFarmPosition();
+
+        for(int k = 0; k < m_verts.size(); ++k)
+        {
+            QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
+            QVector3D flatVector2(farmPosition.x(), 0.0f, farmPosition.z());
+
+            if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+            {
+                if((flatVector1 - flatVector2).length() < minDistance)
+                {
+                    minDistance = (flatVector1 - flatVector2).length();
+                    yValue = m_verts[k].y();
+                }
+            }
+        }
+
+        farmPosition.setY(yValue);
+        qInfo()<<"Position: "<<farmPosition;
+
     }
 
     m_fieldGenerator.createWalls(m_pgm);
@@ -197,7 +214,7 @@ void GLWidget::initializeGL()
         m_treeMeshesToUse.push_back(treeIndex);
     }
 
-    bool adjustTreeHeights = false;
+    bool adjustTreeHeights = true;
 
     if(adjustTreeHeights)
     {
@@ -253,7 +270,6 @@ void GLWidget::initializeGL()
     qInfo()<<"Exporting fields";
 //    m_fieldGenerator.exportFields();
 
-    farmPosition = m_fieldGenerator.getFarmPosition();//QVector3D(0,m_heights[m_heights.size() / 2.0f][m_heights.size() / 2.0f ],0);
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -269,39 +285,33 @@ void GLWidget::paintGL()
 
     m_pgm.bind();
 
-    m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
     m_pgm.setUniformValue("lightPos",QVector3D(m_x, 10.0f, 0.0f));
+    m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
 
     loadMatricesToShader(QVector3D(0,0,0));
 
-//    drawTerrain();
+    drawTerrain();
 
-    vao_water.bind();
-    m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,1.0f,0.5f));
-
-//    glDrawArrays(GL_QUADS, 0, (int)m_waterVerts.size());
-
-    vao_water.release();
-
-    vao_trees.bind();
-
-    m_pgm.setUniformValue("mCol",QVector4D(0.05f, 0.24f,0.01f,0.5f));
-
-    for(uint i = 0; i < m_treePositions.size(); ++i)
+    if(!m_ortho)
     {
-        loadMatricesToShader(m_treePositions[i]);
+        vao_trees.bind();
 
-        //(m_wireframe) ?  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) :  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        //glDrawElements(GL_QUADS, (int)m_treeIndices.size(), GL_UNSIGNED_INT, &m_treeIndices[0]);
+        m_pgm.setUniformValue("mCol",QVector4D(0.05f, 0.24f,0.01f,0.5f));
 
-//        m_treeMeshes[m_treeMeshesToUse[i]]->draw();
+        for(uint i = 0; i < m_treePositions.size(); ++i)
+        {
+            loadMatricesToShader(m_treePositions[i]);
+            m_treeMeshes[m_treeMeshesToUse[i]]->draw();
+        }
 
+        vao_trees.release();
     }
 
-    vao_trees.release();
 
+    m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
 
     loadMatricesToShader(farmPosition);
+    qInfo()<<"Position: "<<farmPosition;
     for(uint i = 0; i < m_farmMeshes.size(); ++i)
     {
         m_farmMeshes[i]->draw();
@@ -311,26 +321,7 @@ void GLWidget::paintGL()
 
     loadMatricesToShader(QVector3D(0,0,0));
 
-//    glLineWidth(2.5);
-//    glColor3f(1.0, 0.0, 0.0);
-//    glBegin(GL_LINES);
-//    glVertex3f(0.0, 0.0, 0.0);
-//    glVertex3f(-25, 0.0, -25);
-//    glEnd();
-
     m_fieldGenerator.drawWalls(m_pgm);
-
-    m_pgm.setUniformValue("mCol",QVector4D(1.0f,1.0f,1.0f,1.0f));
-
-    for(uint i = 0; i < m_vRegions.size(); ++i)
-    {
-//        if(i != 1)
-//        {
-//            continue;
-//        }
-//        m_vRegions[i].draw();
-    }
-
 
     m_pgm.release();
 }
@@ -401,6 +392,36 @@ void GLWidget::wheelEvent(QWheelEvent *e)
 
 void GLWidget::mousePressEvent(QMouseEvent *e)
 {
+    if (e->button() == Qt::RightButton)
+    {
+        m_ortho = !m_ortho;
+
+        if(m_ortho)
+        {
+            glClearColor(0.8, 0.8f, 0.8f, 1.0f);
+            for(uint i = 0; i < m_verts.size(); ++i)
+            {
+                m_verts[i].setY(m_verts[i].y() + 1.0f);
+            }
+
+            vbo_terrain.bind();
+            vbo_terrain.allocate(&m_verts[0], (int)m_verts.size() * sizeof(GLfloat) * 3);
+            vbo_terrain.release();
+
+        }
+        else
+        {
+            glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
+            for(uint i = 0; i < m_verts.size(); ++i)
+            {
+                m_verts[i].setY(m_verts[i].y() - 1.0f);
+            }
+            vbo_terrain.bind();
+            vbo_terrain.allocate(&m_verts[0], (int)m_verts.size() * sizeof(GLfloat) * 3);
+            vbo_terrain.release();
+        }
+    }
+
     //Store the position the mouse was pressed in
     m_lastPos = e->pos();
     m_wireframe = true;
@@ -561,22 +582,47 @@ void GLWidget::loadMatricesToShader(QVector3D position)
 
     //Reset the view matrix and set to look at origin from the new position
     m_view.setToIdentity();
-    m_view.lookAt(newCamPos + m_dir, QVector3D(0,0,0), QVector3D(0,1,0));
+
+    if(m_ortho)
+    {
+        m_view.ortho(-25, 25, 25, -25, 0.01f, 1000.0f);
+    }
+    else
+    {
+        m_view.lookAt(newCamPos + m_dir, QVector3D(0,(m_terrainMax + m_terrainMin) / 4.0f,0), QVector3D(0,1,0));
+    }
 
     //Reset the projection matrix and set to the right perspective
     m_proj.setToIdentity();
-    m_proj.perspective(70.0f, float(width())/height(), 0.1f, 1000.0f);
+
+    if(!m_ortho)
+    {
+        m_proj.perspective(45.0f, float(width())/height(), 0.1f, 1000.0f);
+    }
 
     //Reset the model matrix and set to the right matrix taking into account mouse movement
-    m_model.setToIdentity();
 
-//    m_model.rotate(m_xRot / 16.0f, QVector3D(1, 0, 0));
-    m_model.rotate(m_yRot / 16.0f, QVector3D(0, 1, 0));
+    if(m_ortho)
+    {
+        m_model.setToIdentity();
 
-    m_model.translate(position);
+        m_model.rotate(4324.0f / 16.0f, QVector3D(1, 0, 0));
+
+        m_model.translate(position);
+    }
+    else
+    {
+        m_model.setToIdentity();
+
+//        m_model.rotate(m_xRot / 16.0f, QVector3D(1, 0, 0));
+        m_model.rotate(m_yRot / 16.0f, QVector3D(0, 1, 0));
+
+        m_model.translate(position);
+    }
 
     //Calculate the MVP
     m_mvp = m_proj * m_view * m_model;
+
 
     //Pass the MVP into the shader
     m_pgm.setUniformValue("M",m_model);
@@ -1083,8 +1129,6 @@ void GLWidget::prepareTrees()
     //Finally we need to place the trees so iterate through the list of normals
     int switchCounter = 0;
 
-    farmPosition = QVector3D(-1,-1,-1);
-
     for(int i = 0; i < m_norms.size(); i += 4)
     {
         //Get the normal of the current face
@@ -1185,10 +1229,6 @@ void GLWidget::prepareTrees()
             //to create visual interest
             switchCounter++;
 
-        }
-        else if(farmPosition.x() < 5 || farmPosition.y() < 5 || farmPosition.z() < 5)
-        {
-            farmPosition = m_verts[i];
         }
     }
 }

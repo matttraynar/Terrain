@@ -746,6 +746,7 @@ void EnglishFields::editEdges()
 void EnglishFields::farmFieldEdges()
 {
     QVector3D regionCenter = m_regions[m_farmRegion].getMiddle();
+    qInfo()<<"Center: "<<regionCenter;
 
     float minDistance = 10000;
     float maxDistance = -10000;
@@ -769,9 +770,7 @@ void EnglishFields::farmFieldEdges()
         VoronoiEdge* currentEdge = m_allEdges[m_regions[m_farmRegion].getEdgeID(i)];
 
         QVector3D edgeVector = *(currentEdge->m_endPTR) - *(currentEdge->m_startPTR);
-        QVector3D midVector = regionCenter - *(currentEdge->m_startPTR);
 
-//        QVector3D tmpClosestPoint = *(currentEdge->m_startPTR) + ((QVector3D::dotProduct(edgeVector, midVector) / edgeVector.length()) * edgeVector.normalized());
         QVector3D tmpClosestPoint = currentEdge->getMidPoint();
 
         float distance = (tmpClosestPoint - regionCenter).length();
@@ -956,6 +955,7 @@ void EnglishFields::farmFieldEdges()
         m_regions.push_back(VoronoiFace(newEdges));
     }
 
+    qInfo()<<"Center: "<<regionCenter;
     qInfo()<<"Finished";
 }
 
