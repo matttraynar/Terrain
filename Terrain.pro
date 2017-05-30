@@ -45,6 +45,6 @@ LIBS += C:/CGAL-4.9_64/auxiliary/gmp/lib/libgmp-10.lib
 LIBS += C:/CGAL-4.9_64/auxiliary/gmp/lib/libmpfr-4.lib
 LIBS += C:/CGAL-4.9_64/lib/CGAL-vc140-mt-gd-4.9.lib
 
-win32::LIBS += -L"E:\mattt\Documents\MPCLibraries\assimp-3.3.1\lib\Debug" -lassimp-vc140-mt
+win32::LIBS += $$PWD/libs/assimp-3.3.1/lib/Debug/assimp-vc140-mt.lib
 
-INCLUDEPATH += $$PWD/libs/assimp/include/
+INCLUDEPATH += $$PWD/libs/assimp-3.3.1/include/
