@@ -1,5 +1,58 @@
 #include "mesh.h"
 
+Mesh::Mesh(std::string filepath)
+{
+    //Create a new assimp importer and scene with the file path
+        Assimp::Importer importer;
+        const aiScene* scene = importer.ReadFile(filepath,
+                                                 aiProcess_GenSmoothNormals |
+                                                 aiProcess_Triangulate |
+                                                 aiProcess_JoinIdenticalVertices |
+                                                 aiProcess_SortByPType);
+
+        //Check for loading errors
+        if(!scene)
+        {
+            qWarning() << "Error: File didn't load: ASSIMP: " << importer.GetErrorString();
+            exit(1);
+        }
+
+        //Check for meshes
+        if(scene->HasMeshes())
+        {
+            //There are meshes so we can iterate through them
+            for(uint i = 0; i < scene->mNumMeshes; ++i)
+            {
+                //Get the number of faces (just to make the next for loop more readable
+                uint numFaces = scene->mMeshes[i]->mNumFaces;
+
+                for(uint j = 0; j < numFaces; ++j)
+                {
+                    //Get each face in the mesh and add the index to the index container
+                    auto face = scene->mMeshes[i]->mFaces[j];
+
+                    m_meshIndex.push_back(face.mIndices[0]);
+                    m_meshIndex.push_back(face.mIndices[1]);
+                    m_meshIndex.push_back(face.mIndices[2]);
+                }
+
+                //Update the num verts. This is again to make the next for loop readable
+                uint numVerts = scene->mMeshes[i]->mNumVertices;
+
+                for(uint j = 0; j < numVerts; ++j)
+                {
+                    //Iterate throught the vertex and normal data in the current mesh
+                    auto vert = scene->mMeshes[i]->mVertices[j];
+                    auto norm = scene->mMeshes[i]->mNormals[j];
+
+                    //Add this data to the correct container
+                    m_verts.push_back(QVector3D(vert.x,vert.y,vert.z));
+                    m_norms.push_back(QVector3D(norm.x,norm.y,norm.z));
+                }
+            }
+        }
+}
+
 Mesh::Mesh(const char *filepath)
 {
     //Create a new assimp importer and scene with the file path

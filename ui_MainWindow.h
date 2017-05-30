@@ -45,7 +45,7 @@ public:
         horizontalLayout->setSpacing(6);
         horizontalLayout->setContentsMargins(11, 11, 11, 11);
         horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
-        widget = new GLWidget(centralWidget);
+		widget = new GLWidget("", centralWidget);
         widget->setObjectName(QStringLiteral("widget"));
         sizePolicy.setHeightForWidth(widget->sizePolicy().hasHeightForWidth());
         widget->setSizePolicy(sizePolicy);

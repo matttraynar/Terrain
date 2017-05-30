@@ -39,7 +39,7 @@ class GLWidget : public QGLWidget
     Q_OBJECT
 
 public:
-    GLWidget(QWidget* parent = 0);
+    GLWidget(std::string _filepath = "", QWidget* parent = 0);
     ~GLWidget();
 
     bool m_ortho;
@@ -77,9 +77,12 @@ protected:
      //-------------------------------------------------------
 
 private:
+    std::string m_workingPath;
+
      //-------------------------------------------------------
     //Shader functions
     bool prepareShaderProgram(const QString& vertexShaderPath, const QString& fragmentShaderPath);
+    bool prepareShaderProgram(const std::string &vertexShaderPath, const std::string &fragmentShaderPath);
     void loadMatricesToShader(QVector3D position);
 
     QOpenGLShaderProgram m_pgm;
@@ -105,6 +108,7 @@ private:
     void prepareTrees();
 
     QOpenGLTexture *addNewTexture(QString &filename);
+    QOpenGLTexture *addNewTexture(std::string &filename);
 
     std::vector<std::shared_ptr<Mesh>> m_farmMeshes;
     QVector3D farmPosition;

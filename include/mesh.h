@@ -14,6 +14,7 @@
 class Mesh
 {
 public:
+    Mesh(std::string filepath);
     Mesh(const char* filepath);
     ~Mesh();
 

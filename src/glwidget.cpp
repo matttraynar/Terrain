@@ -2,13 +2,15 @@
 
 #include <QDebug>
 
-GLWidget::GLWidget( QWidget* parent ) :
+GLWidget::GLWidget(std::string _filepath, QWidget* parent ) :
     QGLWidget(parent)
 {
     std::cout<<"Starting program"<<std::endl;
     QSurfaceFormat glFormat;
     glFormat.setVersion(3, 3);
     glFormat.setProfile(QSurfaceFormat::CoreProfile);
+
+    m_workingPath = _filepath;
 
     m_xRot = 0;
     m_yRot = 0;
@@ -158,7 +160,8 @@ void GLWidget::initializeGL()
 
         glEnable(GL_DEPTH_TEST);
 
-        if(!prepareShaderProgram("shaders/vert.glsl", "shaders/frag.glsl") )
+
+        if(!prepareShaderProgram(m_workingPath + "shaders/vert.glsl", m_workingPath + "shaders/frag.glsl") )
         {
             exit(1);
         }
@@ -167,74 +170,74 @@ void GLWidget::initializeGL()
 
         //Next pass the minimum and height range values to the shader
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree1.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree1.obj")));
         m_treeMeshes[0]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree2.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree2.obj")));
         m_treeMeshes[1]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree3.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree3.obj")));
         m_treeMeshes[2]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree4.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree4.obj")));
         m_treeMeshes[3]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree5.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree5.obj")));
         m_treeMeshes[4]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree6.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree6.obj")));
         m_treeMeshes[5]->prepareMesh(m_pgm);
 
         //Load the farm meshes
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/mainhouse.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/mainhouse.obj")));
         m_farmMeshes[0]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse1.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse1.obj")));
         m_farmMeshes[1]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse2.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse2.obj")));
         m_farmMeshes[2]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse3.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse3.obj")));
         m_farmMeshes[3]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse4.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse4.obj")));
         m_farmMeshes[4]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse5.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse5.obj")));
         m_farmMeshes[5]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse6.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse6.obj")));
         m_farmMeshes[6]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse7.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse7.obj")));
         m_farmMeshes[7]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree1.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree1.obj")));
         m_farmMeshes[8]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree2.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree2.obj")));
         m_farmMeshes[9]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree3.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree3.obj")));
         m_farmMeshes[10]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree4.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree4.obj")));
         m_farmMeshes[11]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree5.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree5.obj")));
         m_farmMeshes[12]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree6.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree6.obj")));
         m_farmMeshes[13]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree7.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree7.obj")));
         m_farmMeshes[14]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree8.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree8.obj")));
         m_farmMeshes[15]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree9.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree9.obj")));
         m_farmMeshes[16]->prepareMesh(m_pgm);
 
         m_fieldGenerator.createWalls(m_pgm);
@@ -262,19 +265,19 @@ void GLWidget::initializeGL()
 
         m_pgm.bind();
 
-        QOpenGLTexture* sand = addNewTexture(QString("textures/sand.png"));
+        QOpenGLTexture* sand = addNewTexture(m_workingPath + "textures/sand.png");
         sand->bind(0);
         m_pgm.setUniformValue("sandTexture", 0);
 
-        QOpenGLTexture* grass = addNewTexture(QString("textures/grass.png"));
+        QOpenGLTexture* grass = addNewTexture(m_workingPath + "textures/grass.png");
         grass->bind(1);
         m_pgm.setUniformValue("grassTexture", 1);
 
-        QOpenGLTexture* rock = addNewTexture(QString("textures/rock.png"));
+        QOpenGLTexture* rock = addNewTexture(m_workingPath + "textures/rock.png");
         rock->bind(2);
         m_pgm.setUniformValue("rockTexture", 2);
 
-        QOpenGLTexture* snow = addNewTexture(QString("textures/snow.png"));
+        QOpenGLTexture* snow = addNewTexture(m_workingPath + "textures/snow.png");
         snow->bind(3);
         m_pgm.setUniformValue("snowTexture", 3);
 
@@ -292,25 +295,23 @@ void GLWidget::initializeGL()
     {
         m_pgm.bind();
 
-        QOpenGLTexture* sand = addNewTexture(QString("textures/sand.png"));
+        QOpenGLTexture* sand = addNewTexture(m_workingPath + "textures/sand.png");
         sand->bind(0);
         m_pgm.setUniformValue("sandTexture", 0);
 
-        QOpenGLTexture* grass = addNewTexture(QString("textures/grass.png"));
+        QOpenGLTexture* grass = addNewTexture(m_workingPath + "textures/grass.png");
         grass->bind(1);
         m_pgm.setUniformValue("grassTexture", 1);
 
-        QOpenGLTexture* rock = addNewTexture(QString("textures/rock.png"));
+        QOpenGLTexture* rock = addNewTexture(m_workingPath + "textures/rock.png");
         rock->bind(2);
         m_pgm.setUniformValue("rockTexture", 2);
 
-        QOpenGLTexture* snow = addNewTexture(QString("textures/snow.png"));
+        QOpenGLTexture* snow = addNewTexture(m_workingPath + "textures/snow.png");
         snow->bind(3);
         m_pgm.setUniformValue("snowTexture", 3);
 
         m_pgm.release();
-
-
     }
 }
 
@@ -577,6 +578,39 @@ void GLWidget::setZRotation(int angle)
 }
 
  //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+bool GLWidget::prepareShaderProgram(const std::string &vertexShaderPath, const std::string &fragmentShaderPath)
+{
+    // Load the vertex shader
+    bool result = m_pgm.addShaderFromSourceFile(QOpenGLShader::Vertex, vertexShaderPath.c_str() );
+
+    //Check if the function succeeded, if not print why and return
+    if ( !result )
+    {
+        qWarning() << m_pgm.log();
+        return result;
+    }
+
+   //Do the same with the fragment shader
+    result = m_pgm.addShaderFromSourceFile(QOpenGLShader::Fragment, fragmentShaderPath.c_str() );
+
+    if ( !result )
+    {
+       qWarning() << m_pgm.log();
+       return result;
+    }
+
+   //Finally link the shaders to the program
+    result = m_pgm.link();
+
+    if ( !result )
+    {
+       qWarning() << m_pgm.log();
+       return result;
+    }
+
+    return result;
+}
 
 bool GLWidget::prepareShaderProgram( const QString& vertexShaderPath, const QString& fragmentShaderPath )
 {
@@ -1298,6 +1332,19 @@ void GLWidget::prepareTrees()
 QOpenGLTexture* GLWidget::addNewTexture(QString &filename)
 {
     QOpenGLTexture* texture = new QOpenGLTexture(QImage(filename));
+
+    texture->setWrapMode(QOpenGLTexture::Repeat);
+
+    texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+
+    texture->setMagnificationFilter(QOpenGLTexture::Linear);
+
+    return texture;
+}
+
+QOpenGLTexture* GLWidget::addNewTexture(std::string &filename)
+{
+    QOpenGLTexture* texture = new QOpenGLTexture(QImage(filename.c_str()));
 
     texture->setWrapMode(QOpenGLTexture::Repeat);
 

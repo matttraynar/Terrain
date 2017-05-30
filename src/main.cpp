@@ -13,7 +13,15 @@ int main(int argc, char *argv[])
 
 //    return a.exec();
 
-    GLWidget window;
+    char* filepath = strdup(argv[0]);
+    std::string filenameStr(filepath);
+
+    for(uint i = 0; i < 11; ++i)
+    {
+        filenameStr.pop_back();
+    }
+
+    GLWidget window(filenameStr);
 
     window.m_ortho = true;
     std::cout<<'\n';
@@ -21,7 +29,10 @@ int main(int argc, char *argv[])
 
     std::cout<<"Saving ortho"<<std::endl;
     std::cout<<'\n';
-    picture.save("orthoImage.png", "PNG", 100);
+
+    std::string output = filenameStr + "orthoImage.png";
+
+    picture.save(output.c_str(), "PNG", 100);
 
     window.shading = true;
     window.m_ortho = false;
@@ -30,7 +41,9 @@ int main(int argc, char *argv[])
 
     std::cout<<"Saving persp"<<std::endl;
     std::cout<<'\n';
-    orthoPicture.save("perspImage.png", "PNG", 100);
+
+    output = filenameStr + "perspImage.png";
+    orthoPicture.save(output.c_str(), "PNG", 100);
 
     window.shading = false;
     window.m_ortho =  true;
@@ -38,7 +51,9 @@ int main(int argc, char *argv[])
     QPixmap texture = window.renderPixmap(720, 720, false);
 
     std::cout<<"Saving texture"<<std::endl;
-    texture.save("terrainTexture.png", "PNG", 100);
+
+    output = filenameStr + "terrainTexture.png";
+    texture.save(output.c_str(), "PNG", 100);
 
     return 0;
 }
