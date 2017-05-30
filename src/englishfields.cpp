@@ -1,6 +1,7 @@
 #include "englishfields.h"
 
 #include <QDebug>
+#include <stdio.h>
 
 EnglishFields::EnglishFields()
 {
@@ -13,6 +14,7 @@ EnglishFields::EnglishFields(double _width)
     m_width = _width;
     m_maxDisplacementIterations = 3;
 
+    std::cout<<"Making fields"<<std::endl;
     makeVoronoiDiagram(time(NULL));
 //    makeVoronoiDiagram(1495790767);
 
@@ -23,7 +25,10 @@ EnglishFields::EnglishFields(double _width)
         m_farmRegion = 1000000;
     }
 
-    subdivide();
+    std::cout<<"..."<<std::endl;
+    subdivide();    
+
+    std::cout<<"..."<<std::endl;
     editEdges();
 
     if(m_farmRegion != 1000)
@@ -32,6 +37,8 @@ EnglishFields::EnglishFields(double _width)
     }
 
     qInfo()<<"Subdividing edges";
+
+    std::cout<<"..."<<std::endl;
     makeEdgesUsable();
 
 }

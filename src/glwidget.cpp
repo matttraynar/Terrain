@@ -5,6 +5,7 @@
 GLWidget::GLWidget( QWidget* parent ) :
     QGLWidget(parent)
 {
+    std::cout<<"Starting program"<<std::endl;
     QSurfaceFormat glFormat;
     glFormat.setVersion(3, 3);
     glFormat.setProfile(QSurfaceFormat::CoreProfile);
@@ -157,7 +158,6 @@ void GLWidget::initializeGL()
 
         glEnable(GL_DEPTH_TEST);
 
-
         if(!prepareShaderProgram("shaders/vert.glsl", "shaders/frag.glsl") )
         {
             exit(1);
@@ -167,74 +167,74 @@ void GLWidget::initializeGL()
 
         //Next pass the minimum and height range values to the shader
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree1.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree1.obj")));
         m_treeMeshes[0]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree2.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree2.obj")));
         m_treeMeshes[1]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree3.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree3.obj")));
         m_treeMeshes[2]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree4.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree4.obj")));
         m_treeMeshes[3]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree5.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree5.obj")));
         m_treeMeshes[4]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Trees/tree6.obj")));
+        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Trees/tree6.obj")));
         m_treeMeshes[5]->prepareMesh(m_pgm);
 
         //Load the farm meshes
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/mainhouse.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/mainhouse.obj")));
         m_farmMeshes[0]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse1.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse1.obj")));
         m_farmMeshes[1]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse2.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse2.obj")));
         m_farmMeshes[2]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse3.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse3.obj")));
         m_farmMeshes[3]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse4.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse4.obj")));
         m_farmMeshes[4]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse5.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse5.obj")));
         m_farmMeshes[5]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse6.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse6.obj")));
         m_farmMeshes[6]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/outhouse7.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/outhouse7.obj")));
         m_farmMeshes[7]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree1.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree1.obj")));
         m_farmMeshes[8]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree2.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree2.obj")));
         m_farmMeshes[9]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree3.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree3.obj")));
         m_farmMeshes[10]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree4.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree4.obj")));
         m_farmMeshes[11]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree5.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree5.obj")));
         m_farmMeshes[12]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree6.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree6.obj")));
         m_farmMeshes[13]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree7.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree7.obj")));
         m_farmMeshes[14]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree8.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree8.obj")));
         m_farmMeshes[15]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("../Farm/tree9.obj")));
+        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh("Farm/tree9.obj")));
         m_farmMeshes[16]->prepareMesh(m_pgm);
 
         m_fieldGenerator.createWalls(m_pgm);
@@ -323,6 +323,7 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::paintGL()
 {
+    std::cout<<"Rendering"<<std::endl;
     qInfo()<<"Painting";
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
