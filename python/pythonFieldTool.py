@@ -19,56 +19,69 @@ class ControlMainWindow(QtGui.QDialog):
         self.setWindowFlags(QtCore.Qt.Tool)
         self.ui =  customUI.Ui_Dialog()
         self.ui.setupUi(self)
-        self.ui.pushButton.clicked.connect(self.loadImage)
+        self.ui.pushButton.clicked.connect(self.loadOrtho)
         self.ui.pushButton_2.clicked.connect(self.quitWindow)
-        self.centerWindow()
+        self.ui.pushButton_3.clicked.connect(self.loadTexture)
+        self.ui.pushButton_4.clicked.connect(self.load3D)
+        self.centerWindow()        
         
         img = QtGui.QPixmap("E:/mattt/Documents/Uni/FMP/Terrain/ui/tmpImage.png")
     
         self.ui.label.resize(img.size())
-        self.resize(img.width() + 60, img.height() + 100)       
+        self.resize(img.width() + 300, img.height() + 75)       
+                
+        self.setMinimumWidth(self.width())
+        self.setMinimumHeight(self.height())
         
-        self.ui.vLayoutWidget.setFixedWidth(img.width() + 40)
+        self.setMaximumWidth(self.width())
+        self.setMaximumHeight(self.height())
         
-        self.ui.vLayoutWidget.setFixedHeight(img.height() + 40)
-        
-        
-        self.centerWindow()
-        
+        self.centerWindow()        
+                
         scaled_img = img.scaled(self.ui.label.size(), QtCore.Qt.KeepAspectRatio)
-        
-        self.ui.label.setPixmap(img)
+        self.ui.label.setPixmap(scaled_img)
         self.update()
-  
-    def loadImage(self):          
+                    
+    def loadImage(self, img):        
+        self.ui.label.setEnabled(True)
+                
+        scaled_img = img.scaled(self.ui.label.size(), QtCore.Qt.KeepAspectRatio)
+        self.ui.label.setPixmap(scaled_img)
+        self.update()
+        
+    def loadOrtho(self):          
         # filename = QtGui.QFileDialog.getOpenFileName(self, 'Open Image', '/', 'Image Files (*.png)')
         
         # print(filename[0])
         # img = QtGui.QPixmap(filename[0])
         
-        print("\nStarting terrain process\n");
+        # print("\nStarting terrain process\n");
 
-        print(subprocess.check_output("E:\mattt\Documents\Uni\FMP\Terrain\debug\Terrain.exe"))
+        # print(subprocess.check_output("E:\mattt\Documents\Uni\FMP\Terrain\debug\Terrain.exe"))
 
-        print("Finished")
+        # print("Finished")
         
         img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/orthoImage.png')
         
-        self.ui.label.setEnabled(True)
-        self.ui.label.resize(img.size())
-        self.resize(img.width() + 60, img.height() + 100)
+        self.loadImage(img)
+        
+        # self.ui.label.setEnabled(True)
+                
+        # scaled_img = img.scaled(self.ui.label.size(), QtCore.Qt.KeepAspectRatio)
+        # self.ui.label.setPixmap(scaled_img)
+        # self.update()
+        
+    def loadTexture(self):
+        img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/terrainTexture.png')
+        
+        self.loadImage(img)
         
         
-        self.ui.vLayoutWidget.setFixedWidth(img.width() + 40)
+    def load3D(self):
+        img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/perspImage.png')
         
-        self.ui.vLayoutWidget.setFixedHeight(img.height() + 40)
+        self.loadImage(img)
         
-        
-        self.centerWindow()
-        
-        scaled_img = img.scaled(self.ui.label.size(), QtCore.Qt.KeepAspectRatio)
-        self.ui.label.setPixmap(scaled_img)
-        self.update()
         
         
     def quitWindow(self):
