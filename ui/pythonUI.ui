@@ -46,7 +46,7 @@
        <height>800</height>
       </size>
      </property>
-     <widget class="QWidget" name="" native="true">
+     <widget class="QWidget" name="widget" native="true">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -114,19 +114,32 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="loadCacheButton">
+              <widget class="QPushButton" name="loadSettingsButton">
                <property name="enabled">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
                <property name="text">
-                <string>Load Cache</string>
+                <string>Load Settings</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="clearCacheButton">
+              <spacer name="horizontalSpacer_15">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>50</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="resetSettingsButton">
                <property name="enabled">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -138,7 +151,7 @@
                 <bool>false</bool>
                </property>
                <property name="text">
-                <string>Clear Cache</string>
+                <string>Reset Settings</string>
                </property>
                <property name="autoDefault">
                 <bool>true</bool>
@@ -161,7 +174,7 @@
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
-                 <width>100</width>
+                 <width>50</width>
                  <height>20</height>
                 </size>
                </property>
@@ -195,24 +208,25 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="saveCacheButton">
+              <widget class="QPushButton" name="saveSettingsButton">
                <property name="enabled">
                 <bool>false</bool>
                </property>
                <property name="text">
-                <string>Save Cache</string>
+                <string>Save Settings</string>
                </property>
               </widget>
              </item>
             </layout>
-            <zorder>loadCacheButton</zorder>
-            <zorder>saveCacheButton</zorder>
-            <zorder>clearCacheButton</zorder>
+            <zorder>loadSettingsButton</zorder>
+            <zorder>saveSettingsButton</zorder>
+            <zorder>resetSettingsButton</zorder>
             <zorder>lineEdit</zorder>
             <zorder>pushButton</zorder>
             <zorder>lineEdit_2</zorder>
             <zorder>pushButton_2</zorder>
             <zorder>horizontalSpacer</zorder>
+            <zorder>horizontalSpacer_15</zorder>
            </widget>
           </item>
           <item>
@@ -336,7 +350,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">
@@ -372,7 +386,7 @@
            <property name="layoutDirection">
             <enum>Qt::LeftToRight</enum>
            </property>
-           <widget class="QWidget" name="">
+           <widget class="QWidget" name="layoutWidget">
             <property name="geometry">
              <rect>
               <x>9</x>
@@ -546,8 +560,14 @@
                     <property name="buttonSymbols">
                      <enum>QAbstractSpinBox::NoButtons</enum>
                     </property>
+                    <property name="minimum">
+                     <number>1</number>
+                    </property>
                     <property name="maximum">
                      <number>100</number>
+                    </property>
+                    <property name="value">
+                     <number>1</number>
                     </property>
                    </widget>
                   </item>
@@ -647,6 +667,12 @@
                     </property>
                     <property name="buttonSymbols">
                      <enum>QAbstractSpinBox::NoButtons</enum>
+                    </property>
+                    <property name="minimum">
+                     <number>1</number>
+                    </property>
+                    <property name="value">
+                     <number>1</number>
                     </property>
                    </widget>
                   </item>
@@ -798,13 +824,13 @@
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>30</height>
+                      <height>35</height>
                      </size>
                     </property>
                     <property name="maximumSize">
                      <size>
                       <width>16777215</width>
-                      <height>30</height>
+                      <height>35</height>
                      </size>
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_11">
@@ -884,17 +910,17 @@
                     </layout>
                    </widget>
                   </item>
+                  <item>
+                   <widget class="QPlainTextEdit" name="farmMeshBrowser">
+                    <property name="readOnly">
+                     <bool>true</bool>
+                    </property>
+                    <property name="textInteractionFlags">
+                     <set>Qt::NoTextInteraction</set>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
-                </item>
-                <item>
-                 <widget class="QTextBrowser" name="farmMeshBrowser">
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>175</height>
-                   </size>
-                  </property>
-                 </widget>
                 </item>
                </layout>
               </widget>
@@ -969,10 +995,16 @@
                 </item>
                 <item>
                  <widget class="QWidget" name="TreeMeshLayout" native="true">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>35</height>
+                   </size>
+                  </property>
                   <property name="maximumSize">
                    <size>
                     <width>16777215</width>
-                    <height>30</height>
+                    <height>35</height>
                    </size>
                   </property>
                   <layout class="QHBoxLayout" name="horizontalLayout_12">
@@ -1053,12 +1085,12 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QTextBrowser" name="treeMeshBrowser">
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>175</height>
-                   </size>
+                 <widget class="QPlainTextEdit" name="treeMeshBrowser">
+                  <property name="readOnly">
+                   <bool>true</bool>
+                  </property>
+                  <property name="textInteractionFlags">
+                   <set>Qt::NoTextInteraction</set>
                   </property>
                  </widget>
                 </item>
@@ -1073,7 +1105,7 @@
           <attribute name="title">
            <string>Export</string>
           </attribute>
-          <widget class="QWidget" name="">
+          <widget class="QWidget" name="layoutWidget">
            <property name="geometry">
             <rect>
              <x>10</x>
@@ -1150,13 +1182,13 @@
                   <widget class="QWidget" name="">
                    <property name="geometry">
                     <rect>
-                     <x>10</x>
-                     <y>20</y>
+                     <x>11</x>
+                     <y>21</y>
                      <width>281</width>
-                     <height>60</height>
+                     <height>61</height>
                     </rect>
                    </property>
-                   <layout class="QVBoxLayout" name="TerrainLayout">
+                   <layout class="QVBoxLayout" name="verticalLayout_15">
                     <item>
                      <layout class="QHBoxLayout" name="horizontalLayout_7">
                       <item>
@@ -1192,11 +1224,38 @@
                      </layout>
                     </item>
                     <item>
-                     <widget class="QCheckBox" name="triangulateCheck">
-                      <property name="text">
-                       <string>Triangulate Mesh</string>
-                      </property>
-                     </widget>
+                     <layout class="QHBoxLayout" name="horizontalLayout_24">
+                      <item>
+                       <widget class="QCheckBox" name="triangulateCheck">
+                        <property name="text">
+                         <string>Triangulate Mesh</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_14">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="postGenTerrain">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="text">
+                         <string>Post-Gen Export</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
                     </item>
                    </layout>
                   </widget>
@@ -1225,7 +1284,7 @@
                   <property name="checked">
                    <bool>false</bool>
                   </property>
-                  <widget class="QWidget" name="">
+                  <widget class="QWidget" name="layoutWidget">
                    <property name="geometry">
                     <rect>
                      <x>10</x>
@@ -1346,6 +1405,16 @@
                        </widget>
                       </item>
                       <item>
+                       <widget class="QPushButton" name="postGenTexture">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="text">
+                         <string>Post-Gen Export</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
                        <spacer name="horizontalSpacer_9">
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
@@ -1387,7 +1456,7 @@
                   <property name="checked">
                    <bool>false</bool>
                   </property>
-                  <widget class="QWidget" name="">
+                  <widget class="QWidget" name="layoutWidget">
                    <property name="geometry">
                     <rect>
                      <x>10</x>
@@ -1508,6 +1577,16 @@
                        </widget>
                       </item>
                       <item>
+                       <widget class="QPushButton" name="postGenHeightmap">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="text">
+                         <string>Post-Gen Export</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
                        <spacer name="horizontalSpacer_13">
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
@@ -1549,7 +1628,7 @@
                   <property name="checked">
                    <bool>false</bool>
                   </property>
-                  <widget class="QWidget" name="">
+                  <widget class="QWidget" name="layoutWidget">
                    <property name="geometry">
                     <rect>
                      <x>10</x>
@@ -1666,6 +1745,16 @@
                         </property>
                         <property name="text">
                          <string>Load Walls to Window</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="postGenWalls">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="text">
+                         <string>Post-Gen Export</string>
                         </property>
                        </widget>
                       </item>
@@ -1887,7 +1976,10 @@
                    </spacer>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="exportButton">
+                   <widget class="QPushButton" name="importButton">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
                     <property name="minimumSize">
                      <size>
                       <width>75</width>
@@ -1896,13 +1988,13 @@
                     </property>
                     <property name="font">
                      <font>
-                      <pointsize>10</pointsize>
+                      <pointsize>8</pointsize>
                       <weight>50</weight>
                       <bold>false</bold>
                      </font>
                     </property>
                     <property name="text">
-                     <string>Export</string>
+                     <string>Import To Maya</string>
                     </property>
                    </widget>
                   </item>
@@ -1922,7 +2014,7 @@
                  </layout>
                 </item>
                 <item>
-                 <widget class="QProgressBar" name="exportProgress">
+                 <widget class="QProgressBar" name="importProgress">
                   <property name="enabled">
                    <bool>false</bool>
                   </property>
