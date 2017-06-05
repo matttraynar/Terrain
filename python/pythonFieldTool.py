@@ -1,7 +1,10 @@
 from PySide import QtCore, QtGui
 
+import os.path
+
 import subprocess
 import sys
+
 
 import pythonUI as customUI
 
@@ -22,6 +25,10 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui =  customUI.Ui_Dialog()
         self.ui.setupUi(self)
         
+        self.ui.loadSettingsButton.clicked.connect(self.loadSettings)
+        self.ui.resetSettingsButton.clicked.connect(self.resetSettings)
+        self.ui.saveSettingsButton.clicked.connect(self.saveSettings)
+        
         self.ui.farmMeshButton.clicked.connect(lambda: self.search(0))
         self.ui.treeMeshButton.clicked.connect(lambda: self.search(1))
         self.ui.terrainButton.clicked.connect(lambda: self.search(2))
@@ -30,6 +37,8 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.wallsButton.clicked.connect(lambda: self.search(5))
         self.ui.locationButton.clicked.connect(lambda: self.search(6))
         self.ui.defaultButton.clicked.connect(lambda: self.search(7))
+        self.ui.pushButton.clicked.connect(lambda: self.search(8))
+        self.ui.pushButton_2.clicked.connect(lambda: self.search(9))
         
         
         self.ui.loadWallsButton.clicked.connect(self.loadOrtho)
@@ -51,6 +60,344 @@ class ControlMainWindow(QtGui.QDialog):
         self.is2D = True
         self.isNotValid = False
         self.defaultLocation = ''
+        
+    def loadSettings(self):        
+        if len(self.ui.lineEdit.text()) < 1:
+            flags = QtGui.QMessageBox.StandardButton.Ok
+            
+            result = QtGui.QMessageBox.warning(self, "No Load Path", "File path to load settings not found", flags)
+                
+            if result == QtGui.QMessageBox.Ok:
+                return 
+          
+        filepath = self.ui.lineEdit.text()
+                
+        if not os.path.exists(filepath + "/fieldSettings.txt"):
+            flags = QtGui.QMessageBox.StandardButton.Ok
+            
+            result = QtGui.QMessageBox.warning(self, "No Settings Found", "No settings file found at " + filepath, flags)
+                
+            if result == QtGui.QMessageBox.Ok:
+                return    
+                               
+        filepath = str(filepath)
+        
+        self.resetSettings()
+        self.ui.lineEdit.setText(filepath)
+        
+        f = open(filepath + "/fieldSettings.txt", 'r')     
+           
+        self.ui.seedValueBox.setValue(int(f.readline()))
+        self.ui.terrainSizeBox.setValue(int(f.readline()))
+        self.ui.startPointSizeBox.setValue(int(f.readline()))
+        self.ui.roughnessBox.setValue(float(f.readline()))
+        self.ui.heightmapIterationsBox.setValue(int(f.readline()))
+                    
+        f.readline()
+        
+        if f.readline() == "True\n":
+            self.ui.farmPosition.setChecked(True)
+        else:
+            self.ui.farmPosition.setChecked(False)
+        
+        if self.ui.farmPosition.isChecked():
+            self.ui.translateXBox.setValue(float(f.readline()))
+            self.ui.translateYBox.setValue(float(f.readline()))
+            self.ui.translateZBox.setValue(float(f.readline()))
+            
+            f.readline()
+            
+            line = f.readline()
+            self.ui.farmMeshLine.setText(line.rsplit('/',1)[0])
+            
+            while line.find('#') is  -1:  
+                modelName = line.rsplit('/', 1)[-1].rstrip()
+                self.ui.farmMeshBrowser.appendPlainText(modelName)
+                line = f.readline()
+            
+        f.readline()
+        
+        if f.readline() == "True\n":
+            self.ui.trees.setChecked(True)
+        else:
+            self.ui.trees.setChecked(False)
+                    
+        if self.ui.trees.isChecked():
+            if f.readline() == "True\n":
+                self.ui.normalTreesCheck.setChecked(True)
+            else:
+                self.ui.normalTreesCheck.setChecked(False)
+                                        
+            if f.readline() == "True\n":
+                self.ui.clusterTreesCheck.setChecked(True)
+            else:
+                self.ui.clusterTreesCheck.setChecked(False)                
+            
+            f.readline()
+            
+            line = f.readline()
+            self.ui.treeMeshLine.setText(line.rsplit('/',1)[0])
+            
+            while line.find('#') is  -1:  
+                modelName = line.rsplit('/', 1)[-1].rstrip()
+                self.ui.treeMeshBrowser.appendPlainText(modelName)
+                line = f.readline()
+         
+        f.readline()
+          
+        line  = f.readline().rstrip()
+        
+        if line.find('#') is -1:            
+            self.ui.defaultLine.setText(line)
+                   
+        f.readline() 
+         
+        if f.readline() == "True\n":
+            self.ui.groupBox.setChecked(True)
+            self.ui.terrainLine.setText(f.readline().rstrip())            
+            
+            if f.readline() == "True\n":
+                self.ui.triangulateCheck.setChecked(True)
+            else:
+                self.ui.triangulateCheck.setChecked(False)
+            
+        else:
+            self.ui.groupBox.setChecked(False)      
+                    
+        f.readline()        
+        
+        if f.readline() == "True\n":
+            self.ui.groupBox_2.setChecked(True)
+            self.ui.textureLine.setText(f.readline().rstrip())
+        else:
+            self.ui.groupBox_2.setChecked(False)      
+                    
+        f.readline()
+        
+        if f.readline() == "True\n":
+            self.ui.groupBox_3.setChecked(True)
+            self.ui.heightmapLine.setText(f.readline().rstrip())
+        else:
+            self.ui.groupBox_3.setChecked(False)      
+                    
+        f.readline()
+        
+        if f.readline() == "True\n":
+            self.ui.groupBox_4.setChecked(True)
+            self.ui.wallsLine.setText(f.readline().rstrip())
+        else:
+            self.ui.groupBox_4.setChecked(False)      
+                    
+        f.readline()
+        
+        if f.readline() == "True\n":
+            self.ui.groupBox_5.setChecked(True)
+            self.ui.locationLine.setText(f.readline().rstrip())
+        else:
+            self.ui.groupBox_5.setChecked(False)      
+                    
+        f.readline()
+         
+        
+    def resetSettings(self):
+        #Reset cache path
+        self.ui.lineEdit.setText('')
+        
+        #Reset terrain values
+        self.ui.seedValueBox.setValue(0)
+        self.ui.terrainSizeBox.setValue(1)
+        self.ui.startPointSizeBox.setValue(1)
+        self.ui.roughnessBox.setValue(0.0000)
+        self.ui.heightmapIterationsBox.setValue(1)
+        
+        #Farm position
+        self.ui.farmPosition.setChecked(False)
+        self.ui.translateXBox.setValue(0.0000)
+        self.ui.translateYBox.setValue(0.0000)
+        self.ui.translateZBox.setValue(0.0000)
+        self.ui.farmMeshLine.setText('')
+        self.ui.farmMeshBrowser.clear()
+        
+        #Tree stuff
+        self.ui.trees.setChecked(False)
+        self.ui.normalTreesCheck.setChecked(True)
+        self.ui.clusterTreesCheck.setChecked(True)
+        self.ui.treeMeshLine.setText('')
+        self.ui.treeMeshBrowser.clear()
+        
+        #Export
+        self.defaultLocation = ''
+        self.ui.defaultLine.setText('')
+        
+        self.ui.groupBox.setChecked(False)
+        self.ui.terrainLine.setText('')
+        self.ui.triangulateCheck.setChecked(False)
+        
+        self.ui.groupBox_2.setChecked(False)
+        self.ui.textureLine.setText('')
+        self.ui.loadTextureButton.setEnabled(False)
+        
+        self.ui.groupBox_3.setChecked(False)
+        self.ui.heightmapLine.setText('')
+        self.ui.loadHeightmapButton.setEnabled(False)
+        
+        self.ui.groupBox_4.setChecked(False)
+        self.ui.wallsLine.setText('')
+        self.ui.loadWallsButton.setEnabled(False)
+                
+        self.ui.groupBox_5.setChecked(False)
+        self.ui.locationLine.setText('')
+        
+        self.ui.generateProgress.setEnabled(False)
+        self.ui.importButton.setEnabled(False)
+        self.ui.importProgress.setEnabled(False)
+        
+    def saveSettings(self):  
+        if len(self.ui.lineEdit_2.text()) < 1:
+            flags = QtGui.QMessageBox.StandardButton.Ok
+            
+            result = QtGui.QMessageBox.warning(self, "No Save Path", "File path to save settings not found", flags)
+                
+            if result == QtGui.QMessageBox.Ok:
+                return  
+          
+        filepath = self.ui.lineEdit_2.text()
+                
+        if os.path.exists(filepath + "/fieldSettings.txt"):
+            flags = QtGui.QMessageBox.StandardButton.Ok
+            flags |= QtGui.QMessageBox.StandardButton.Cancel
+            
+            result = QtGui.QMessageBox.warning(self, "File Exists", "A settings file already exists at " + filepath + "\nThis will replace it", flags)
+                
+            if result == QtGui.QMessageBox.Ok:
+                open(filepath + "/fieldSettings.txt", 'w').close()
+            if result == QtGui.QMessageBox.Cancel:
+                return  
+            
+                
+        f = open(filepath + "/fieldSettings.txt", 'w')
+        f.write(str(self.ui.seedValueBox.value()) + '\n')
+        f.write(str(self.ui.terrainSizeBox.value()) + '\n')
+        f.write(str(self.ui.startPointSizeBox.value()) + '\n')
+        f.write(str(self.ui.roughnessBox.value()) + '\n')
+        f.write(str(self.ui.heightmapIterationsBox.value()) + '\n')
+                
+        f.write("------------------\n")
+        if self.ui.farmPosition.isChecked():
+            f.write(str(True) + '\n')
+            f.write(str(self.ui.translateXBox.value()) + '\n')
+            f.write(str(self.ui.translateYBox.value()) + '\n')
+            f.write(str(self.ui.translateZBox.value()) + '\n')
+            
+            f.write("#\n")
+            
+            if len(self.ui.farmMeshBrowser.toPlainText()) > 1:
+                f.write(self.ui.farmMeshLine.text() + "/")
+                for c in self.ui.farmMeshBrowser.toPlainText():                
+                    if c == '\n':
+                        f.write('\n' + self.ui.farmMeshLine.text() + "/")
+                    else:
+                        f.write(c) 
+                         
+                f.write('\n')                
+                
+            f.write("#\n")
+        else:
+            f.write(str(False) + '\n') 
+                   
+        f.write("------------------\n")
+                  
+        if self.ui.trees.isChecked():
+            f.write(str(True) + '\n')
+            f.write(str(self.ui.normalTreesCheck.isChecked()) + '\n')
+            f.write(str(self.ui.clusterTreesCheck.isChecked()) + '\n')
+            
+            f.write("#\n")
+            if len(self.ui.treeMeshBrowser.toPlainText()) > 1:
+                f.write(self.ui.treeMeshLine.text() + "/")
+                for c in self.ui.treeMeshBrowser.toPlainText():                
+                    if c == '\n':
+                        f.write('\n' + self.ui.treeMeshLine.text() + "/")
+                    else:
+                        f.write(c) 
+                         
+                f.write('\n') 
+                
+            f.write("#\n")
+        else:
+            f.write(str(False) + '\n')
+         
+        f.write("------------------\n")
+          
+        if len(self.ui.defaultLine.text()) > 0:
+            f.write(self.ui.defaultLine.text() + '\n')
+        else:
+            f.write("#\n")
+                   
+        f.write("------------------\n")
+                    
+        if self.ui.groupBox.isChecked():
+            f.write(str(True) + '\n')
+            
+            if len(self.ui.terrainLine.text()) > 0:
+                f.write(self.ui.terrainLine.text() + '\n')
+            else:
+                f.write("#\n")
+                
+            f.write(str(self.ui.triangulateCheck.isChecked()) + '\n')
+        else:
+            f.write(str(False) + '\n')
+            
+        f.write("------------------\n")
+        
+        if self.ui.groupBox_2.isChecked():
+            f.write(str(True) + '\n')
+            
+            if len(self.ui.textureLine.text()) > 0:
+                f.write(self.ui.textureLine.text() + '\n')
+            else:
+                f.write("#\n")
+        else:
+            f.write(str(False) + '\n')
+                            
+        f.write("------------------\n")
+        
+        if self.ui.groupBox_3.isChecked():
+            f.write(str(True) + '\n')
+            if len(self.ui.heightmapLine.text()) > 0:
+                f.write(self.ui.heightmapLine.text() + '\n')
+            else:
+                f.write("#\n")        
+        else:
+            f.write(str(False) + '\n') 
+                   
+        f.write("------------------\n")
+        
+        if self.ui.groupBox_4.isChecked():
+            f.write(str(True) + '\n')
+            if len(self.ui.wallsLine.text()) > 0:
+                f.write(self.ui.wallsLine.text() + '\n')
+            else:
+                f.write("#\n")
+        else:
+            f.write(str(False) + '\n') 
+                   
+        f.write("------------------\n")
+        
+        if self.ui.groupBox_5.isChecked():
+            f.write(str(True) + '\n')
+            if len(self.ui.locationLine.text()) > 0:
+                f.write(self.ui.locationLine.text() + '\n')
+            else:
+                f.write("#\n")        
+        else:
+            f.write(str(False) + '\n')
+                   
+        f.write("------------------\n")        
+            
+        f.close()
+        
+        print "Settings saved at " + filepath
                 
     def search(self, lineEdit):
         filepath = ''
@@ -70,14 +417,14 @@ class ControlMainWindow(QtGui.QDialog):
                 files = subprocess.check_output(["ls", filetype]).split('\n')
             except subprocess.CalledProcessError as e:
                 flags = QtGui.QMessageBox.StandardButton.Retry
-                flags |= QtGui.QMessageBox.StandardButton.Ignore
+                flags |= QtGui.QMessageBox.StandardButton.Cancel
                 
                 result = QtGui.QMessageBox.critical(self, "No files found", "Could not find any obj files at " + filepath, flags)
                 
                 if result == QtGui.QMessageBox.Retry:
                     self.search(lineEdit)
                     return
-                elif result == QtGui.QMessageBox.Ignore:
+                elif result == QtGui.QMessageBox.Cancel:
                     self.isNotValid = True
                     return    
                     
@@ -86,13 +433,19 @@ class ControlMainWindow(QtGui.QDialog):
             self.ui.farmMeshLine.setText(filepath)            
                         
             for line in subprocess.check_output(["ls", filetype]).split('\n'):
-                self.ui.farmMeshBrowser.append(line.rsplit('/', 1)[-1])
+                filename = line.rsplit('/', 1)[-1]
                 
+                if len(filename) > 1:
+                    self.ui.farmMeshBrowser.appendPlainText(filename)
+                                
         elif lineEdit == 1:
             self.ui.treeMeshLine.setText(filepath)            
                         
             for line in subprocess.check_output(["ls", filetype]).split('\n'):
-                self.ui.treeMeshBrowser.append(line.rsplit('/', 1)[-1])
+                filename = line.rsplit('/', 1)[-1]
+                
+                if len(filename) > 1:
+                    self.ui.treeMeshBrowser.appendPlainText(filename)
                 
         elif lineEdit == 2:
             self.ui.terrainLine.setText(filepath)
@@ -112,6 +465,12 @@ class ControlMainWindow(QtGui.QDialog):
         elif lineEdit == 7:
             self.ui.defaultLine.setText(filepath)
             self.defaultLocation = filepath
+            
+        elif lineEdit == 8:
+            self.ui.lineEdit.setText(filepath)
+            
+        elif lineEdit == 9:
+            self.ui.lineEdit_2.setText(filepath)
             
             
                     
@@ -184,6 +543,15 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.translateYBox.setValue(yValue)
         
     def generate(self):
+        if self.isGenerated:
+            flags = QtGui.QMessageBox.StandardButton.Ok
+            flags |= QtGui.QMessageBox.StandardButton.Cancel
+            
+            result = QtGui.QMessageBox.warning(self, "Regeneration Warning", "Doing this will regenerate the fields, do you want to proceed?", flags)
+                
+            if result == QtGui.QMessageBox.Cancel:
+                return  
+        
         print("\nStarting terrain process\n");
         
         p = subprocess.Popen("E:\mattt\Documents\Uni\FMP\Terrain\debug\Terrain.exe", stdout = subprocess.PIPE, bufsize = 1)
@@ -195,14 +563,24 @@ class ControlMainWindow(QtGui.QDialog):
 
         print("Finished")
         
+        self.ui.saveSettingsButton.setEnabled(True)
+        
+        self.ui.postGenTerrain.setEnabled(True)
+        
         self.ui.loadTextureButton.setEnabled(True)
+        self.ui.postGenTexture.setEnabled(True)
+        
         self.ui.loadHeightmapButton.setEnabled(True)
+        self.ui.postGenHeightmap.setEnabled(True)
+        
         self.ui.loadWallsButton.setEnabled(True)
+        self.ui.postGenWalls.setEnabled(True)
+        
         self.ui.switch3DButton.setEnabled(True)
+        self.ui.importButton.setEnabled(True)
+        
+        self.isGenerated = True       
                 
-    def quitWindow(self):
-        print 'Quit Window'
-        self.close()
         
     def centerWindow(self):                
         screenRes = QtGui.QDesktopWidget().screenGeometry()
@@ -211,6 +589,7 @@ class ControlMainWindow(QtGui.QDialog):
     is2D = True
     isNotValid = False
     defaultLocation = ''
+    isGenerated = False
       
  
 myWin = ControlMainWindow(parent=maya_main_window())
