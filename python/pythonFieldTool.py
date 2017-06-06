@@ -39,11 +39,11 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.locationButton.clicked.connect(lambda: self.search(6))
         self.ui.defaultButton.clicked.connect(lambda: self.search(7))
         self.ui.pushButton.clicked.connect(lambda: self.search(8))
-        self.ui.pushButton_2.clicked.connect(lambda: self.search(9))
-        
+        self.ui.pushButton_2.clicked.connect(lambda: self.search(9))        
         
         self.ui.loadWallsButton.clicked.connect(self.loadOrtho)
         self.ui.loadTextureButton.clicked.connect(self.loadTexture)
+        self.ui.loadHeightmapButton.clicked.connect(self.loadHeightmap)
         self.ui.generateButton.clicked.connect(self.generate)
         self.ui.switch3DButton.clicked.connect(self.load3D)
         self.ui.imageButton.clicked.connect(self.setPos)
@@ -89,7 +89,14 @@ class ControlMainWindow(QtGui.QDialog):
         
         f = open(filepath + "/fieldSettings.txt", 'r')     
            
-        self.ui.seedValueBox.setValue(int(f.readline()))
+        value = int(f.readline())
+        
+        if value > -1:            
+            self.ui.seedValueCheck.setChecked(True)
+            self.ui.seedValueBox.setValue(value)
+        else:
+            self.ui.seedValueCheck.setChecked(False)
+            
         self.ui.terrainSizeBox.setValue(int(f.readline()))
         self.ui.startPointSizeBox.setValue(int(f.readline()))
         self.ui.roughnessBox.setValue(float(f.readline()))
@@ -207,6 +214,7 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.lineEdit.setText('')
         
         #Reset terrain values
+        self.ui.seedValueCheck.setChecked(False)
         self.ui.seedValueBox.setValue(0)
         self.ui.terrainSizeBox.setValue(1)
         self.ui.startPointSizeBox.setValue(1)
@@ -288,7 +296,11 @@ class ControlMainWindow(QtGui.QDialog):
             self.settingsDir = filepath
         else:                                
             f = open(filepath + "/fieldSettings.txt", 'w')
-            f.write(str(self.ui.seedValueBox.value()) + '\n')
+            
+            if self.ui.seedValueCheck.isChecked():
+                f.write(str(self.ui.seedValueBox.value()) + '\n')
+            else:
+                f.write(str(-1) + '\n')
             f.write(str(self.ui.terrainSizeBox.value()) + '\n')
             f.write(str(self.ui.startPointSizeBox.value()) + '\n')
             f.write(str(self.ui.roughnessBox.value()) + '\n')
@@ -413,7 +425,7 @@ class ControlMainWindow(QtGui.QDialog):
             self.settingsDir = filepath
         
         print "Settings saved at " + filepath
-                
+                    
     def search(self, lineEdit):
         filepath = ''
         if len(self.defaultLocation) < 1:
@@ -516,6 +528,14 @@ class ControlMainWindow(QtGui.QDialog):
         img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/terrainTexture.png')        
         self.loadImage(img)
                
+               
+    def loadHeightmap(self):
+        if not self.is2D:
+            self.ui.switch3DButton.setText("Switch to 3D")
+            self.is2D = True
+            
+        img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/heightmap.png')        
+        self.loadImage(img)
     
     def load3D(self):
         if self.is2D:
