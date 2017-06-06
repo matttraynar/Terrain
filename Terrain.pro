@@ -28,8 +28,8 @@ HEADERS  += include/MainWindow.h \
 
 FORMS    += MainWindow.ui
 
-DISTFILES += shaders/vert.glsl \
-					shaders/frag.glsl
+DISTFILES += debug/shaders/vert.glsl \
+					debug/shaders/frag.glsl
 
 win32::LIBS += -lopengl32
 

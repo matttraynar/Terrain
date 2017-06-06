@@ -155,7 +155,6 @@ void main()
 			if(useShading)
 			{
 				fragColour = vec4(brightness * lCol.rgb * mCol.rgb, 1.0);
-				fragColour = vec4(0.0, 1.0, 0.0, 1.0);
 			}
 			else if(useHeightmap)
 			{
@@ -163,8 +162,7 @@ void main()
 			}
 			else
 			{
-				fragColour = vec4(0.0, 1.0, 0.0, 1.0);
-//				fragColour = vec4(mCol.rgb, 1.0f);
+				fragColour = vec4(mCol.rgb, 1.0f);
 			}
 		}
 	}
