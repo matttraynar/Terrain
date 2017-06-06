@@ -164,6 +164,12 @@ void GLWidget::loadThese(std::string _settingsPath)
     {
         getline(f, line);
         s_seed = std::stoi(line);
+        (s_seed < 0) ? s_hasSeed = false : s_hasSeed = true;
+
+        if(!s_hasSeed)
+        {
+            s_seed = time(NULL);
+        }
 
         getline(f, line);
         s_terrainSize = std::stoi(line);
@@ -486,6 +492,7 @@ void GLWidget::initializeGL()
         qInfo()<<"Exporting terrain";
         if(s_exportTerrain)
         {
+            std::cout<<m_uvs.size()<<std::endl;
             ExportScene::sendTo("obj", s_terrainPath + "/Terrain.obj", m_verts, m_norms, m_uvs);
         }
 
@@ -534,6 +541,8 @@ void GLWidget::paintGL()
     qInfo()<<"Painting";
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    std::cout<<m_terrainMin<<std::endl;
+    std::cout<<m_terrainMax<<std::endl;
 
     m_pgm.bind();
     m_pgm.setUniformValue("min", m_terrainMin);
@@ -547,11 +556,9 @@ void GLWidget::paintGL()
 
     m_pgm.bind();
 
-    std::cout<<heightmap<<std::endl;
-
     if(heightmap)
     {
-        m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
+        m_pgm.setUniformValue("mCol",QVector4D(1.0f,1.0f,1.0f,1.0f));
     }
     else
     {
@@ -608,6 +615,60 @@ void GLWidget::paintGL()
     }
 
     m_pgm.release();
+}
+
+void GLWidget::renderTexture()
+{
+    shading = false;
+    m_ortho =  true;
+
+    QPixmap texture = renderPixmap(720, 720, false);
+
+    std::cout<<"Saving texture"<<std::endl;
+
+    std::string output = m_workingPath + "terrainTexture.png";
+    texture.save(output.c_str(), "PNG", 100);
+}
+
+void GLWidget::renderHeightmap()
+{
+    heightmap = true;
+
+    QPixmap heightmapImage = renderPixmap(720, 720, false);
+
+    std::cout<<"Saving texture"<<std::endl;
+
+    std::string output = m_workingPath + "heightmap.png";
+    heightmapImage.save(output.c_str(), "PNG", 100);
+}
+
+void GLWidget::renderOrtho()
+{
+    m_ortho = true;
+    heightmap = false;
+    std::cout<<'\n';
+    QPixmap picture = renderPixmap(720, 720, false);
+
+    std::cout<<"Saving ortho"<<std::endl;
+    std::cout<<'\n';
+
+    std::string output = m_workingPath + "orthoImage.png";
+
+    picture.save(output.c_str(), "PNG", 100);
+}
+
+void GLWidget::render3D()
+{
+    shading = true;
+    m_ortho = false;
+
+    QPixmap orthoPicture = renderPixmap(720, 720, false);
+
+    std::cout<<"Saving persp"<<std::endl;
+    std::cout<<'\n';
+
+    std::string output = m_workingPath + "perspImage.png";
+    orthoPicture.save(output.c_str(), "PNG", 100);
 }
 
 void GLWidget::timerEvent(QTimerEvent *e)
@@ -879,7 +940,7 @@ void GLWidget::loadMatricesToShader(QVector3D position)
 
     if(m_ortho)
     {
-        m_view.ortho(-25, 25, 25, -25, 0.0001f, 10000000.0f);
+        m_view.ortho(-25, 25, 25, -25, 0.01f, 1000.0f);
     }
     else
     {
@@ -902,7 +963,7 @@ void GLWidget::loadMatricesToShader(QVector3D position)
 
         m_model.rotate(4324.0f / 16.0f, QVector3D(1, 0, 0));
 
-        m_model.translate(position);
+        m_model.translate(QVector3D(0,2,0));
     }
     else
     {
@@ -963,6 +1024,18 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
     //Create a new random generator
     std::random_device rnd;
     std::mt19937 eng(rnd());
+
+//    if(s_hasSeed)
+//    {
+        eng.seed(s_seed);
+//    }
+//    else
+//    {
+//        eng.seed(time(NULL));
+//    }
+
+    std::cout<<s_seed<<std::endl;
+
     std::uniform_real_distribution<> random(-1.0f, 1.0f);
 
     //Set the four corners of the height map to random values between -1 and 1
@@ -1233,6 +1306,12 @@ void GLWidget::diamond(int x, int y, int sideLength, float scale)
     {
         std::random_device rnd;
         std::mt19937 eng(rnd());
+
+//        if(s_hasSeed)
+//        {
+            eng.seed(s_seed);
+//        }
+
         std::uniform_real_distribution<> diamondValue(-1.0f, 1.0f);
 
         int midPoint = sideLength / 2;
@@ -1247,6 +1326,12 @@ void GLWidget::square(int x, int y, int sideLength, float scale)
 {
     std::random_device rnd;
     std::mt19937 eng(rnd());
+
+//    if(s_hasSeed)
+//    {
+        eng.seed(s_seed);
+//    }
+
     std::uniform_real_distribution<> squareValue(-1.0f, 1.0f);
 
     int midPoint = sideLength / 2;

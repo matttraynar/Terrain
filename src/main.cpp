@@ -32,48 +32,13 @@ int main(int argc, char *argv[])
 
     GLWidget window(filenameStr, settingsStr);
 
-    window.m_ortho = true;
-    window.heightmap = false;
-    std::cout<<'\n';
-    QPixmap picture = window.renderPixmap(720, 720, false);
+    window.renderOrtho();
 
-    std::cout<<"Saving ortho"<<std::endl;
-    std::cout<<'\n';
+    window.render3D();
 
-    std::string output = filenameStr + "orthoImage.png";
+    window.renderTexture();
 
-    picture.save(output.c_str(), "PNG", 100);
-
-    window.shading = true;
-    window.m_ortho = false;
-
-    QPixmap orthoPicture = window.renderPixmap(720, 720, false);
-
-    std::cout<<"Saving persp"<<std::endl;
-    std::cout<<'\n';
-
-    output = filenameStr + "perspImage.png";
-    orthoPicture.save(output.c_str(), "PNG", 100);
-
-    window.shading = false;
-    window.m_ortho =  true;
-
-    QPixmap texture = window.renderPixmap(720, 720, false);
-
-    std::cout<<"Saving texture"<<std::endl;
-
-    output = filenameStr + "terrainTexture.png";
-    texture.save(output.c_str(), "PNG", 100);
-
-    window.m_ortho = false;
-    window.heightmap = true;
-
-    QPixmap heightmap = window.renderPixmap(720, 720, false);
-
-    std::cout<<"Saving texture"<<std::endl;
-
-    output = filenameStr + "heightmap.png";
-    heightmap.save(output.c_str(), "PNG", 100);
+    window.renderHeightmap();
 
     return 0;
 }

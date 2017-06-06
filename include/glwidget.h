@@ -51,6 +51,11 @@ public:
 
     void changeOrtho();
 
+    void renderTexture();
+    void renderHeightmap();
+    void renderOrtho();
+    void render3D();
+
 protected:
      //-------------------------------------------------------
     //Drawing and painting functions
@@ -83,6 +88,7 @@ private:
     std::string m_workingPath;
     void loadThese(std::string _settingsPath);
 
+    bool s_hasSeed;
     int s_seed;
     int s_terrainSize;
     int s_numPoints;
