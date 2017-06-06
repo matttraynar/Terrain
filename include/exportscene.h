@@ -6,6 +6,8 @@
 #include <vector>
 
 #include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
 
 class ExportScene

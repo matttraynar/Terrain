@@ -50,10 +50,13 @@ void ExportScene::sendTo(std::string _filetype, std::string _filepath, const std
 
         int j = 0;
 
+        int singleDimension = sqrt(_uvs.size());
+
         bool hasNorms = (_norms.size() > 0 ) ? true : false;
         bool hasUVs = (_uvs.size() > 0 ) ? true : false;
 
         qInfo()<<"Passing data";
+
         for ( auto itr = vVertices.begin(); itr != vVertices.end(); ++itr )
         {
             pMesh->mVertices[ itr - vVertices.begin() ] = aiVector3D( vVertices[j].x(), vVertices[j].y(), vVertices[j].z() );
@@ -65,7 +68,7 @@ void ExportScene::sendTo(std::string _filetype, std::string _filepath, const std
 
             if(hasUVs)
             {
-                pMesh->mTextureCoords[0][ itr - vVertices.begin() ] = aiVector3D( _uvs[j].x(), _uvs[j].y(), 0 );
+                 pMesh->mTextureCoords[0][ itr - vVertices.begin() ] = aiVector3D((vVertices[j].x() + 25.0f) / 50.0f , 1.0f - (vVertices[j].z() + 25.0f) / 50.0f, 0 );
             }
 
             j++;
@@ -88,6 +91,9 @@ void ExportScene::sendTo(std::string _filetype, std::string _filepath, const std
             face.mIndices[3] = k+3;
             k = k + 4;
         }
+
+//        Assimp::Importer fixer;
+//        scene = *(fixer.ApplyPostProcessing(aiProcess_JoinIdenticalVertices));
 
         qInfo()<<"Faces are done";
         Assimp::Exporter exporter;
