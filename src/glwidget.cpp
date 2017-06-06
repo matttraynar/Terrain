@@ -352,75 +352,93 @@ void GLWidget::initializeGL()
 
         //Next pass the minimum and height range values to the shader
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree1.obj")));
-        m_treeMeshes[0]->prepareMesh(m_pgm);
+        if(s_hasTrees)
+        {
+            for(size_t i = 0; i < s_treeMeshes.size(); ++i)
+            {
+                m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(s_treeMeshes[i])));
+                m_treeMeshes[i]->prepareMesh(m_pgm);
+            }
+        }
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree2.obj")));
-        m_treeMeshes[1]->prepareMesh(m_pgm);
+//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree1.obj")));
+//        m_treeMeshes[0]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree3.obj")));
-        m_treeMeshes[2]->prepareMesh(m_pgm);
+//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree2.obj")));
+//        m_treeMeshes[1]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree4.obj")));
-        m_treeMeshes[3]->prepareMesh(m_pgm);
+//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree3.obj")));
+//        m_treeMeshes[2]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree5.obj")));
-        m_treeMeshes[4]->prepareMesh(m_pgm);
+//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree4.obj")));
+//        m_treeMeshes[3]->prepareMesh(m_pgm);
 
-        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree6.obj")));
-        m_treeMeshes[5]->prepareMesh(m_pgm);
+//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree5.obj")));
+//        m_treeMeshes[4]->prepareMesh(m_pgm);
+
+//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree6.obj")));
+//        m_treeMeshes[5]->prepareMesh(m_pgm);
 
         //Load the farm meshes
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/mainhouse.obj")));
-        m_farmMeshes[0]->prepareMesh(m_pgm);
+        if(s_hasFarm)
+        {
+            for(size_t i = 0; i < s_farmMeshes.size(); ++i)
+            {
+                m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(s_farmMeshes[i])));
+                m_farmMeshes[i]->prepareMesh(m_pgm);
+            }
+        }
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse1.obj")));
-        m_farmMeshes[1]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/mainhouse.obj")));
+//        m_farmMeshes[0]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse2.obj")));
-        m_farmMeshes[2]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse1.obj")));
+//        m_farmMeshes[1]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse3.obj")));
-        m_farmMeshes[3]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse2.obj")));
+//        m_farmMeshes[2]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse4.obj")));
-        m_farmMeshes[4]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse3.obj")));
+//        m_farmMeshes[3]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse5.obj")));
-        m_farmMeshes[5]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse4.obj")));
+//        m_farmMeshes[4]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse6.obj")));
-        m_farmMeshes[6]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse5.obj")));
+//        m_farmMeshes[5]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse7.obj")));
-        m_farmMeshes[7]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse6.obj")));
+//        m_farmMeshes[6]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree1.obj")));
-        m_farmMeshes[8]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse7.obj")));
+//        m_farmMeshes[7]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree2.obj")));
-        m_farmMeshes[9]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree1.obj")));
+//        m_farmMeshes[8]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree3.obj")));
-        m_farmMeshes[10]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree2.obj")));
+//        m_farmMeshes[9]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree4.obj")));
-        m_farmMeshes[11]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree3.obj")));
+//        m_farmMeshes[10]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree5.obj")));
-        m_farmMeshes[12]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree4.obj")));
+//        m_farmMeshes[11]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree6.obj")));
-        m_farmMeshes[13]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree5.obj")));
+//        m_farmMeshes[12]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree7.obj")));
-        m_farmMeshes[14]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree6.obj")));
+//        m_farmMeshes[13]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree8.obj")));
-        m_farmMeshes[15]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree7.obj")));
+//        m_farmMeshes[14]->prepareMesh(m_pgm);
 
-        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree9.obj")));
-        m_farmMeshes[16]->prepareMesh(m_pgm);
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree8.obj")));
+//        m_farmMeshes[15]->prepareMesh(m_pgm);
+
+//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree9.obj")));
+//        m_farmMeshes[16]->prepareMesh(m_pgm);
 
         m_fieldGenerator.createWalls(m_pgm);
 
@@ -438,7 +456,7 @@ void GLWidget::initializeGL()
 
         for(uint i = 0; i < m_treePositions.size(); ++i)
         {
-            int treeIndex = 5 * (float)rand()/(float)RAND_MAX;
+            int treeIndex = m_treeMeshes.size() * (float)rand()/(float)RAND_MAX;
 
             m_treeMeshesToUse.push_back(treeIndex);
         }
@@ -466,10 +484,16 @@ void GLWidget::initializeGL()
         m_pgm.release();
 
         qInfo()<<"Exporting terrain";
-        //    ExportScene::sendTo("obj", "../Output/Terrain.obj", m_verts, m_norms, m_uvs);
+        if(s_exportTerrain)
+        {
+            ExportScene::sendTo("obj", s_terrainPath + "/Terrain.obj", m_verts, m_norms, m_uvs);
+        }
 
         qInfo()<<"Exporting fields";
-        //    m_fieldGenerator.exportFields();
+        if(s_exportWalls)
+        {
+            m_fieldGenerator.exportFields();
+        }
 
         doOnce = false;
     }
@@ -517,15 +541,25 @@ void GLWidget::paintGL()
     m_pgm.setUniformValue("waterLevel", m_waterLevel);
 
     m_pgm.setUniformValue("useShading", shading);
+    m_pgm.setUniformValue("useHeightmap", heightmap);
 
     m_pgm.release();
 
     m_pgm.bind();
 
-    changeOrtho();
+    std::cout<<heightmap<<std::endl;
+
+    if(heightmap)
+    {
+        m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
+    }
+    else
+    {
+        m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
+        changeOrtho();
+    }
 
     m_pgm.setUniformValue("lightPos",QVector3D(m_x, 10.0f, 0.0f));
-    m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
 
     loadMatricesToShader(QVector3D(0,0,0));
 
@@ -534,7 +568,7 @@ void GLWidget::paintGL()
 
     if(shading)
     {
-        if(!m_ortho)
+        if(!m_ortho && s_hasTrees)
         {
             qInfo()<<"Trees";
             vao_trees.bind();
@@ -552,14 +586,17 @@ void GLWidget::paintGL()
             vao_trees.release();
         }
 
-        m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
-
-        loadMatricesToShader(farmPosition);
-
-        for(uint i = 0; i < m_farmMeshes.size(); ++i)
+        if(s_hasFarm)
         {
-            qInfo()<<"Farm building "<<i;
-            m_farmMeshes[i]->draw();
+            m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
+
+            loadMatricesToShader(farmPosition);
+
+            for(uint i = 0; i < m_farmMeshes.size(); ++i)
+            {
+                qInfo()<<"Farm building "<<i;
+                m_farmMeshes[i]->draw();
+            }
         }
 
         m_pgm.setUniformValue("mCol",QVector4D(0.25f, 0.1f ,0.1f, 1.0f));
@@ -842,7 +879,7 @@ void GLWidget::loadMatricesToShader(QVector3D position)
 
     if(m_ortho)
     {
-        m_view.ortho(-25, 25, 25, -25, 0.01f, 10000.0f);
+        m_view.ortho(-25, 25, 25, -25, 0.0001f, 10000000.0f);
     }
     else
     {

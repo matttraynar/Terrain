@@ -20,6 +20,7 @@ uniform sampler2D rockTexture;
 uniform sampler2D snowTexture;
 
 uniform bool useShading;
+uniform bool useHeightmap;
 
 out vec4 fragColour;
 
@@ -75,6 +76,7 @@ void main()
 //				colour = texture2D(sandTexture, out_uv) * (1 - colourScale);
 //				colour += texture2D(grassTexture, out_uv) * colourScale;
 //			}
+
 			if(colourHeight < waterHeight * 2.0f)
 			{
 				colour = texture2D(grassTexture, out_uv);
@@ -133,7 +135,6 @@ void main()
 
 			float brightness = clamp(dot(out_norm,normalize(lightPos)), 0.0, 1.0);
 
-
 			if(useShading)
 			{
 				fragColour = vec4(brightness * lCol.rgb * colour.rgb, 1.0);
@@ -142,7 +143,6 @@ void main()
 			{
 				fragColour = colour;
 			}
-
 		}
 		else
 		{
@@ -155,10 +155,16 @@ void main()
 			if(useShading)
 			{
 				fragColour = vec4(brightness * lCol.rgb * mCol.rgb, 1.0);
+				fragColour = vec4(0.0, 1.0, 0.0, 1.0);
+			}
+			else if(useHeightmap)
+			{
+				fragColour = vec4(colourHeight, colourHeight, colourHeight, 1.0);
 			}
 			else
 			{
-				fragColour = vec4(mCol.rgb, 1.0f);
+				fragColour = vec4(0.0, 1.0, 0.0, 1.0);
+//				fragColour = vec4(mCol.rgb, 1.0f);
 			}
 		}
 	}

@@ -47,6 +47,7 @@ public:
     bool doOnce;
 
     bool shading;
+    bool heightmap;
 
     void changeOrtho();
 

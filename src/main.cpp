@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
     GLWidget window(filenameStr, settingsStr);
 
     window.m_ortho = true;
+    window.heightmap = false;
     std::cout<<'\n';
     QPixmap picture = window.renderPixmap(720, 720, false);
 
@@ -63,6 +64,16 @@ int main(int argc, char *argv[])
 
     output = filenameStr + "terrainTexture.png";
     texture.save(output.c_str(), "PNG", 100);
+
+    window.m_ortho = false;
+    window.heightmap = true;
+
+    QPixmap heightmap = window.renderPixmap(720, 720, false);
+
+    std::cout<<"Saving texture"<<std::endl;
+
+    output = filenameStr + "heightmap.png";
+    heightmap.save(output.c_str(), "PNG", 100);
 
     return 0;
 }
