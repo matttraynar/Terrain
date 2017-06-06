@@ -18,6 +18,7 @@
 #include <vector>
 #include <math.h>
 #include <random>
+#include <fstream>
 
 #include "perlinnoise.h"
 #include "englishfields.h"
@@ -39,7 +40,7 @@ class GLWidget : public QGLWidget
     Q_OBJECT
 
 public:
-    GLWidget(std::string _filepath = "", QWidget* parent = 0);
+    GLWidget(std::string _filepath = "", std::string _settings = "", QWidget* parent = 0);
     ~GLWidget();
 
     bool m_ortho;
@@ -77,7 +78,40 @@ protected:
      //-------------------------------------------------------
 
 private:
+    //Settings
     std::string m_workingPath;
+    void loadThese(std::string _settingsPath);
+
+    int s_seed;
+    int s_terrainSize;
+    int s_numPoints;
+    float s_roughness;
+    int s_heightmapIters;
+
+    bool s_hasFarm;
+    QVector3D s_farmPos;
+    std::vector<std::string> s_farmMeshes;
+
+    bool s_hasTrees;
+    bool s_normTrees;
+    bool s_clusterTrees;
+    std::vector<std::string> s_treeMeshes;
+
+    bool s_exportTerrain;
+    bool s_triangulateTerrain;
+    std::string s_terrainPath;
+
+    bool s_exportTexture;
+    std::string s_texturePath;
+
+    bool s_exportHeightmap;
+    std::string s_heightmapPath;
+
+    bool s_exportWalls;
+    std::string s_wallsPath;
+
+    bool s_exportLocations;
+    std::string s_locationsPath;
 
      //-------------------------------------------------------
     //Shader functions

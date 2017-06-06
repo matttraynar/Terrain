@@ -2,10 +2,14 @@
 
 #include <QDebug>
 
-GLWidget::GLWidget(std::string _filepath, QWidget* parent ) :
+GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent ) :
     QGLWidget(parent)
 {
     std::cout<<"Starting program"<<std::endl;
+
+    std::cout<<"Settings at: "<<_settings<<std::endl;
+    loadThese(_settings);
+
     QSurfaceFormat glFormat;
     glFormat.setVersion(3, 3);
     glFormat.setProfile(QSurfaceFormat::CoreProfile);
@@ -151,6 +155,184 @@ GLWidget::~GLWidget()
 
 }
 
+void GLWidget::loadThese(std::string _settingsPath)
+{
+    std::string line;
+    std::ifstream f(_settingsPath);
+
+    if(f)
+    {
+        getline(f, line);
+        s_seed = std::stoi(line);
+
+        getline(f, line);
+        s_terrainSize = std::stoi(line);
+
+        getline(f, line);
+        s_numPoints = std::stoi(line);
+
+        getline(f, line);
+        s_roughness = std::strtof(line.c_str(), 0);
+
+        getline(f, line);
+        s_heightmapIters = std::stoi(line);
+
+        getline(f,line);
+
+        getline(f, line);
+        (line.find("True") != std::string::npos) ? s_hasFarm = true : s_hasFarm = false;
+
+        if(s_hasFarm)
+        {
+            getline(f, line);
+            s_farmPos.setX(strtof(line.c_str(), NULL));
+
+            getline(f, line);
+            s_farmPos.setY(strtof(line.c_str(), NULL));
+
+            getline(f, line);
+            s_farmPos.setZ(strtof(line.c_str(), NULL));
+
+            getline(f, line);
+
+            getline(f, line);
+
+            while(line.find(".obj") != std::string::npos)
+            {
+                s_farmMeshes.push_back(line);
+                getline(f, line);
+            }
+        }
+
+        getline(f, line);
+
+        getline(f, line);
+        (line.find("True") != std::string::npos) ? s_hasTrees = true : s_hasTrees = false;
+
+        if(s_hasTrees)
+        {
+            getline(f, line);
+            (line.find("True") != std::string::npos) ? s_normTrees = true : s_normTrees = false;
+
+            getline(f, line);
+            (line.find("True") != std::string::npos) ? s_clusterTrees = true : s_clusterTrees = false;
+
+            getline(f, line);
+
+            getline(f, line);
+
+            while(line.find(".obj") != std::string::npos)
+            {
+                s_treeMeshes.push_back(line);
+                getline(f, line);
+            }
+        }
+
+        getline(f, line);
+        getline(f, line);
+        getline(f, line);
+
+        getline(f, line);
+        (line.find("True") != std::string::npos) ? s_exportTerrain = true : s_exportTerrain = false;
+
+        if(s_exportTerrain)
+        {
+            getline(f, line);
+            s_terrainPath = line;
+
+            getline(f, line);
+            (line.find("True") != std::string::npos) ? s_triangulateTerrain = true : s_triangulateTerrain = false;
+        }
+
+        getline(f, line);
+
+        getline(f, line);
+        (line.find("True") != std::string::npos) ? s_exportTexture = true : s_exportTexture = false;
+
+        if(s_exportTexture)
+        {
+            getline(f, line);
+            s_texturePath = line;
+        }
+
+        getline(f, line);
+
+        getline(f, line);
+        (line.find("True") != std::string::npos) ? s_exportHeightmap = true : s_exportHeightmap = false;
+
+        if(s_exportHeightmap)
+        {
+            getline(f, line);
+            s_heightmapPath = line;
+        }
+
+        getline(f, line);
+
+        getline(f, line);
+        (line.find("True") != std::string::npos) ? s_exportWalls = true : s_exportWalls = false;
+
+        if(s_exportWalls)
+        {
+            getline(f, line);
+            s_wallsPath = line;
+        }
+
+        getline(f, line);
+
+        getline(f, line);
+        (line.find("True") != std::string::npos) ? s_exportLocations = true : s_exportLocations = false;
+
+        if(s_exportLocations)
+        {
+            getline(f, line);
+            s_locationsPath = line;
+        }
+
+        f.close();
+    }
+    else
+    {
+        std::cout<<"INVALID SETTINGS FILE";
+    }
+
+
+//    std::cout<<s_seed<<std::endl;
+//    std::cout<<s_terrainSize<<std::endl;
+//    std::cout<<s_numPoints<<std::endl;
+//    std::cout<<s_roughness<<std::endl;
+//    std::cout<<s_heightmapIters<<std::endl;
+
+//    std::cout<<"Farms\n";
+//    std::cout<<s_hasFarm<<std::endl;
+//    std::cout<<s_farmPos.x()<<" "<<s_farmPos.y()<<" "<<s_farmPos.z()<<std::endl;
+
+//    for(size_t i = 0; i < s_farmMeshes.size(); ++i)
+//    {
+//        std::cout<<s_farmMeshes[i]<<std::endl;
+//    }
+
+//    std::cout<<"Trees\n";
+//    std::cout<<s_hasTrees<<std::endl;
+//    std::cout<<s_normTrees<<std::endl;
+//    std::cout<<s_clusterTrees<<std::endl;
+
+//    for(size_t i = 0; i < s_treeMeshes.size(); ++i)
+//    {
+//        std::cout<<s_treeMeshes[i]<<std::endl;
+//    }
+
+//    std::cout<<s_exportTerrain<<std::endl;
+//    std::cout<<s_triangulateTerrain<<std::endl;
+//    std::cout<<s_terrainPath<<std::endl;
+//    std::cout<<s_exportTexture<<std::endl;
+//    std::cout<<s_texturePath<<std::endl;
+//    std::cout<<s_exportHeightmap<<std::endl;
+//    std::cout<<s_heightmapPath<<std::endl;
+//    std::cout<<s_exportWalls<<std::endl;
+//    std::cout<<s_wallsPath<<std::endl;
+//    std::cout<<s_exportLocations<<std::endl;
+//    std::cout<<s_locationsPath<<std::endl;
+}
 
 void GLWidget::initializeGL()
 {

@@ -13,7 +13,13 @@ int main(int argc, char *argv[])
 
 //    return a.exec();
 
-    char* filepath = strdup(argv[0]);
+    if(argc < 2)
+    {
+        std::cout<<"Wrong number of parameters entered, needs settings file"<<std::endl;
+        exit(1);
+    }
+
+    const char* filepath = strdup(argv[0]);
     std::string filenameStr(filepath);
 
     for(uint i = 0; i < 11; ++i)
@@ -21,7 +27,10 @@ int main(int argc, char *argv[])
         filenameStr.pop_back();
     }
 
-    GLWidget window(filenameStr);
+    const char* settings = strdup(argv[1]);
+    std::string settingsStr(settings);
+
+    GLWidget window(filenameStr, settingsStr);
 
     window.m_ortho = true;
     std::cout<<'\n';
