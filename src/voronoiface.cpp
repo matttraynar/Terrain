@@ -592,7 +592,7 @@ void VoronoiFace::exportRegion(std::string filepath)
     }
 
     qInfo()<<"Data loaded, exporting";
-    ExportScene::sendTo(type, filepath, tmpVerts, tmpNorms, tmpUVs);
+    ExportScene::sendTo(type, filepath, tmpVerts, tmpNorms, tmpUVs, 0.0f, false, false);
     qInfo()<<"Finished exporting";
 }
 

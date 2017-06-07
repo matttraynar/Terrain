@@ -41,14 +41,14 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
     startTimer(1);
 
     qInfo()<<"Generating terrain";
-    generateHeightMap(6, 10.f);
+    generateHeightMap(s_heightmapIters, s_roughness);
 
     double width = 50.0;
 
     qInfo()<<"Farm at "<<farmPosition;
 
     qInfo()<<"Creating Voronoi";
-    m_fieldGenerator = EnglishFields(width);
+    m_fieldGenerator = EnglishFields(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, s_farmPos);
 
     qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
@@ -88,25 +88,30 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
         minDistance = 1000000;
         yValue = 0.0f;
 
-        farmPosition = m_fieldGenerator.getFarmPosition();
-
-        for(int k = 0; k < m_verts.size(); ++k)
+        if(s_hasFarm)
         {
-            QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
-            QVector3D flatVector2(farmPosition.x(), 0.0f, farmPosition.z());
-
-            if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+            farmPosition = m_fieldGenerator.getFarmPosition();
+            qInfo()<<m_verts.size();
+            for(int k = 0; k < m_verts.size(); ++k)
             {
-                if((flatVector1 - flatVector2).length() < minDistance)
+                qInfo()<<k;
+                QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
+                QVector3D flatVector2(farmPosition.x(), 0.0f, farmPosition.z());
+
+                if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
                 {
-                    minDistance = (flatVector1 - flatVector2).length();
-                    yValue = m_verts[k].y();
+                    if((flatVector1 - flatVector2).length() < minDistance)
+                    {
+                        minDistance = (flatVector1 - flatVector2).length();
+                        yValue = m_verts[k].y();
+                    }
                 }
             }
+
+            farmPosition.setY(yValue);
+            qInfo()<<"Position: "<<farmPosition;
         }
 
-        farmPosition.setY(yValue);
-        qInfo()<<"Position: "<<farmPosition;
 
     }
 
@@ -147,6 +152,7 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
         }
     }
 
+    qInfo()<<"FINISHED";
 
 }
 
@@ -327,7 +333,7 @@ void GLWidget::loadThese(std::string _settingsPath)
 //        std::cout<<s_treeMeshes[i]<<std::endl;
 //    }
 
-//    std::cout<<s_exportTerrain<<std::endl;
+    std::cout<<s_exportTerrain<<std::endl;
 //    std::cout<<s_triangulateTerrain<<std::endl;
 //    std::cout<<s_terrainPath<<std::endl;
 //    std::cout<<s_exportTexture<<std::endl;
@@ -492,15 +498,17 @@ void GLWidget::initializeGL()
         qInfo()<<"Exporting terrain";
         if(s_exportTerrain)
         {
-            std::cout<<m_uvs.size()<<std::endl;
-            ExportScene::sendTo("obj", s_terrainPath + "/Terrain.obj", m_verts, m_norms, m_uvs);
+            std::cout<<"Exporting"<<std::endl;
+            ExportScene::sendTo("obj", s_terrainPath + "/Terrain.obj", m_verts, m_norms, m_uvs, s_terrainSize, s_triangulateTerrain, true);
+            std::cout<<"Exported scene"<<std::endl;
         }
 
         qInfo()<<"Exporting fields";
         if(s_exportWalls)
         {
-            m_fieldGenerator.exportFields();
+            m_fieldGenerator.exportFields(s_wallsPath);
         }
+        qInfo()<<"Done";
 
         doOnce = false;
     }
@@ -1027,7 +1035,7 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
 
 //    if(s_hasSeed)
 //    {
-        eng.seed(s_seed);
+//        eng.seed(s_seed);
 //    }
 //    else
 //    {
@@ -1153,7 +1161,7 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
     //Finally we need to convert the height map into vertex positions
 
     //Set the range (width and height(of the terrain)
-    float range = 50.0f;
+    float range = s_terrainSize;
 
     //Centering around the origin. E.G. a range of 20 starts at -10
     float start = - (range/2.0f);
@@ -1309,7 +1317,7 @@ void GLWidget::diamond(int x, int y, int sideLength, float scale)
 
 //        if(s_hasSeed)
 //        {
-            eng.seed(s_seed);
+//            eng.seed(s_seed + 1);
 //        }
 
         std::uniform_real_distribution<> diamondValue(-1.0f, 1.0f);
@@ -1329,7 +1337,7 @@ void GLWidget::square(int x, int y, int sideLength, float scale)
 
 //    if(s_hasSeed)
 //    {
-        eng.seed(s_seed);
+//        eng.seed(s_seed - 1);
 //    }
 
     std::uniform_real_distribution<> squareValue(-1.0f, 1.0f);

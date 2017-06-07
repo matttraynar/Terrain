@@ -79,12 +79,12 @@ class EnglishFields
 {
 public:
     EnglishFields();
-    EnglishFields(double _width);
+    EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasPos, int _numPoints, QVector3D _farmPos);
     EnglishFields(double _width, std::vector<QVector3D> _sites);
 
     ~EnglishFields();
 
-    void exportFields();
+    void exportFields(std::string _exportPath);
 
     void operator = (EnglishFields &toCopy);
 
@@ -127,6 +127,10 @@ private:
 
     bool checkContains(uint ID, std::vector<uint> IDs);
     bool isBoundaryEdge(VoronoiEdge* _edge);
+
+    bool m_hasFarm;
+    QVector3D m_farmPos;
+    int m_numPoints;
 
     uint findFarmRegion(QVector3D _pos);
     void farmFieldEdges();

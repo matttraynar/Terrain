@@ -23,7 +23,8 @@ HEADERS  += include/MainWindow.h \
     include/voronoiface.h \
     include/voronoiedge.h \
     include/mesh.h \
-    include/exportscene.h
+	include/exportscene.h \
+	ui_MainWindow.h
 
 
 FORMS    += MainWindow.ui

@@ -4,6 +4,7 @@
 #include <QVector3D>
 #include <QVector2D>
 #include <vector>
+#include <memory>
 
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -13,7 +14,7 @@
 class ExportScene
 {
 public:
-    static void sendTo(std::string _filetype, std::string _filepath, const std::vector<QVector3D> _verts, const std::vector<QVector3D> _norms, const std::vector<QVector2D> _uvs);
+    static void sendTo(std::string _filetype, std::string _filepath, const std::vector<QVector3D> _verts, const std::vector<QVector3D> _norms, const std::vector<QVector2D> _uvs, float _terrainSize, bool _triangulate, bool _isTerrain);
 
 private:
     ExportScene();

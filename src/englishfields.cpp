@@ -8,17 +8,33 @@ EnglishFields::EnglishFields()
     //Blank constructor, does nothing
 }
 
-EnglishFields::EnglishFields(double _width)
+EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasPos, int _numPoints, QVector3D _farmPos)
 {
     //Set up and create the voronoi diagram.
     m_width = _width;
     m_maxDisplacementIterations = 3;
+    m_numPoints = _numPoints;
+    m_hasFarm = _hasPos;
+    m_farmPos = _farmPos;
+
+    qInfo()<<_hasSeed;
+    qInfo()<<_hasPos;
+//    qInfo()<<_
 
     std::cout<<"Making fields"<<std::endl;
-    makeVoronoiDiagram(time(NULL));
-//    makeVoronoiDiagram(1495790767);
 
-    bool skipFarmField = true;
+    if(_hasSeed)
+    {
+        makeVoronoiDiagram(_seed);
+    }
+    else
+    {
+        makeVoronoiDiagram(time(NULL));
+    }
+
+    qInfo()<<m_regions.size();
+
+    bool skipFarmField = _hasPos;
 
     if(!skipFarmField)
     {
@@ -26,12 +42,15 @@ EnglishFields::EnglishFields(double _width)
     }
 
     std::cout<<"..."<<std::endl;
-    subdivide();    
+    subdivide();
+    qInfo()<<"Subdividing done";
 
     std::cout<<"..."<<std::endl;
     editEdges();
 
-    if(m_farmRegion != 1000)
+    qInfo()<<m_farmRegion;
+
+    if(m_farmRegion > -1 && m_farmRegion < m_regions.size())
     {
         farmFieldEdges();
     }
@@ -40,6 +59,7 @@ EnglishFields::EnglishFields(double _width)
 
     std::cout<<"..."<<std::endl;
     makeEdgesUsable();
+    qInfo()<<"######################";
 
 }
 
@@ -63,7 +83,7 @@ EnglishFields::~EnglishFields()
 //    }
 }
 
-void EnglishFields::exportFields()
+void EnglishFields::exportFields(std::string _exportPath)
 {
 
     std::stringstream stream;
@@ -72,7 +92,7 @@ void EnglishFields::exportFields()
     {
         qInfo()<<"Exporting region "<<i;
         stream<<i;
-        m_regions[i].exportRegion("../Output/region" + stream.str() + ".obj");
+        m_regions[i].exportRegion(_exportPath + "/region" + stream.str() + ".obj");
         stream.str("");
         qInfo()<<"Finished region";
     }
@@ -101,34 +121,23 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
     //A container to keep the initial sites in
     std::vector< K::Point_2 > points;
 
-    if(m_sites.size() != 0)
+    //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
+    srand(_seed);
+    qInfo()<<"Seed: "<<_seed;
+
+//    uint numPoints = 7;
+
+    points.reserve(m_numPoints);
+
+    for(uint i = 0; i < m_numPoints; ++i)
     {
-        //We know the number of points so set the container size
-        points.reserve(m_sites.size());
-
-        //If we have then add them to the vector
-        for(uint i = 0; i < m_sites.size(); ++i)
-        {
-            points.push_back(K::Point_2(m_sites[i].x(), m_sites[i].y()));
-        }
-    }
-    else
-    {
-        //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
-        srand(_seed);
-        qInfo()<<"Seed: "<<_seed;
-
-        uint numPoints = 7;
-
-        points.reserve(numPoints);
-
-        for(uint i = 0; i < numPoints; ++i)
-        {
-            points.push_back(K::Point_2((m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0), (m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0)));
-        }
+        points.push_back(K::Point_2((m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0), (m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0)));
     }
 
-    points.push_back(K::Point_2(0, 0));
+    if(m_hasFarm)
+    {
+        points.push_back(K::Point_2(m_farmPos.x(), m_farmPos.y()));
+    }
 
     //A new half-edge data structure to store the Voronoi
     //edges in
@@ -239,7 +248,7 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
         m_regions[i].storeOriginalEdges(m_allEdges);
     }
 
-    m_farmRegion = findFarmRegion(QVector3D(0,0,0));
+    m_farmRegion = findFarmRegion(m_farmPos);
     qInfo()<<"Farm is in region "<<m_farmRegion;
 }
 
@@ -630,6 +639,7 @@ void EnglishFields::subdivide()
 void EnglishFields::editEdges()
 {
     int startFaceCount = m_regions.size();
+    qInfo()<<m_regions.size();
 
     if(m_farmRegion < 1000)
     {
@@ -674,7 +684,7 @@ void EnglishFields::editEdges()
     std::vector<uint> threeFieldRemoval;
 
     for(int i = 0; i < startFaceCount; ++i)
-    {        
+    {
         if(i == m_farmRegion)
         {
             continue;
@@ -710,6 +720,7 @@ void EnglishFields::editEdges()
             tmpFarmRegion--;
         }
     }
+
 
     for(uint i = 0; i < threeFieldRemoval.size(); ++i)
     {
@@ -2285,9 +2296,12 @@ void EnglishFields::makeEdgesUsable()
     std::vector<uint> updatedEdgeIDs;
 
     m_maxDisplacementIterations = 20;
+    qInfo()<<"###########";
+    qInfo()<<originalEdgeCount;
 
     for(int i = 0; i < originalEdgeCount; ++i)
     {
+        qInfo()<<"---------"<<i;
         if(m_allEdges[i]->getLength() < 2.0f)
         {
             midPointEdge(m_allEdges[i], m_maxDisplacementIterations + 1, updatedEdgeIDs, false);
