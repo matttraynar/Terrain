@@ -1,5 +1,7 @@
 from PySide import QtCore, QtGui
 
+import maya.mel as mel
+
 import os
 import os.path
 
@@ -8,8 +10,10 @@ import sys
 
 
 import pythonUI as customUI
+import importUI as importUI
 
 reload(customUI)
+reload(importUI)
 
 from shiboken import wrapInstance
 
@@ -18,7 +22,117 @@ import maya.OpenMayaUI as omui
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
- 
+
+class importWindow(QtGui.QDialog):
+    def __init__(self, parent=None, default = '', terrainPath = '', heightmapPath = '', texturePath = '', terrainSize = 50): 
+        super(importWindow, self).__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Tool)
+        self.ui =  importUI.Ui_Dialog()
+        self.ui.setupUi(self)  
+        
+        self.ui.terrainButton.clicked.connect(lambda: self.search(0))
+        self.ui.heightmapButton.clicked.connect(lambda: self.search(1))
+        self.ui.textureButton.clicked.connect(lambda: self.search(2))
+        
+        self.ui.terrainBox.toggled.connect(self.switchGroupBox) 
+        self.ui.heightmapBox.toggled.connect(self.switchGroupBox)       
+        
+        self.ui.importButton.clicked.connect(self.importToMaya)
+        self.ui.cancelButton.clicked.connect(self.close)
+        
+        self.ui.terrainLine.setText(terrainPath + "/Terrain.obj")
+        self.ui.heightmapLine.setText(heightmapPath + "/heightmap.obj")
+        self.ui.textureLine.setText(texturePath + "/terrainTexture.obj")
+        
+        self.defaultLocation = default
+        self.terrainChecked = True
+        self.terrainSize = terrainSize
+        
+    def switchGroupBox(self):
+        self.terrainChecked = not self.terrainChecked
+        self.ui.terrainBox.setChecked(self.terrainChecked)
+        self.ui.heightmapBox.setChecked(not self.terrainChecked)
+        
+    def importToMaya(self):        
+        if self.terrainChecked:
+            if len(str(self.ui.terrainLine.text())) < 1:
+                flags = QtGui.QMessageBox.StandardButton.Ok
+                
+                result = QtGui.QMessageBox.warning(self, "No Terrain Path", "File path for the terrain not given", flags)
+                    
+                if result == QtGui.QMessageBox.Ok:
+                    return
+            else:                
+                filename = cmds.file(self.ui.terrainLine.text(), i=True, ns="Terrain", mnc=True)
+                
+                cmds.select("Terrain:*")
+                cmds.polySetToFaceNormal()
+                cmds.polyNormal(nm = 0, ch = 0)
+                cmds.polySoftEdge(a = 180, ch = 0)
+        else:
+            if len(str(self.ui.heightmapLine.text())) < 1:
+                flags = QtGui.QMessageBox.StandardButton.Ok
+                
+                result = QtGui.QMessageBox.warning(self, "No Heightmap Path", "File path for the heightmap not given", flags)
+                    
+                if result == QtGui.QMessageBox.Ok:
+                    return
+            else:
+                if cmds.objExists("HeightmapTerrain"):
+                    cmds.select("HeightmapTerrain")
+                    cmds.delete()
+                
+                cmds.polyPlane(n="HeightmapTerrain", w=self.terrainSize, h=self.terrainSize, sx = 100, sy = 100)
+                cmds.select("HeightmapTerrain")
+                
+                    
+                cmds.setToolTo('artPuttyContext')
+                cmds.artPuttyCtx('artPuttyContext', ifl = self.ui.heightmapLine.text(), md = 10, e = True)
+
+                cmds.setToolTo('selectSuperContext')
+                cmds.setAttr("HeightmapTerrain.scaleY", -1)
+                cmds.polyNormal(nm = 0)
+                
+                cmds.select("HeightmapTerrain.f[9900:9999]")
+                cmds.delete()
+                cmds.select("HeightmapTerrain")
+                cmds.polySetToFaceNormal()
+                cmds.polySoftEdge(a = 180)
+                
+                cmds.select(cl = True)
+                                              
+        self.close()
+        
+    def search(self, lineEdit):
+        filepath = ''
+        if lineEdit is 0:
+            if len(self.defaultLocation) < 1:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", ".", "Geometry files (*.obj)")
+            else:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Geometry files (*.obj)")
+        else:
+            if len(self.defaultLocation) < 1:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", ".", "Image files (*.png *.jpg)")
+            else:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Image files (*.png *.jpg")
+            
+        if len(filepath) < 1:
+            return                                    
+                    
+        if lineEdit == 0:
+            self.ui.terrainLine.setText(filepath[0])       
+                                
+        elif lineEdit == 1:
+            self.ui.heightmapLine.setText(filepath[0])      
+                
+        elif lineEdit == 2:
+            self.ui.textureLine.setText(filepath[0])
+            
+    defaultLocation = ''
+    terrainChecked = True
+    terrainSize = 50
+            
+
 class ControlMainWindow(QtGui.QDialog): 
     def __init__(self, parent=None): 
         super(ControlMainWindow, self).__init__(parent)
@@ -39,7 +153,9 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.locationButton.clicked.connect(lambda: self.search(6))
         self.ui.defaultButton.clicked.connect(lambda: self.search(7))
         self.ui.pushButton.clicked.connect(lambda: self.search(8))
-        self.ui.pushButton_2.clicked.connect(lambda: self.search(9))        
+        self.ui.pushButton_2.clicked.connect(lambda: self.search(9))  
+
+        self.ui.importButton.clicked.connect(self.createImportWindow)      
         
         self.ui.loadWallsButton.clicked.connect(self.loadOrtho)
         self.ui.loadTextureButton.clicked.connect(self.loadTexture)
@@ -62,7 +178,10 @@ class ControlMainWindow(QtGui.QDialog):
         self.defaultLocation = ''
         
         self.workingDir = customUI.__file__.rsplit('\\',1)[0]
-        
+    def createImportWindow(self):
+        importer = importWindow(self, self.defaultLocation, self.ui.terrainLine.text(), self.ui.heightmapLine.text(), self.ui.textureLine.text(), self.ui.terrainSizeBox.value())
+        importer.show()
+
     def loadSettings(self):        
         if len(self.ui.lineEdit.text()) < 1:
             flags = QtGui.QMessageBox.StandardButton.Ok
@@ -631,7 +750,7 @@ class ControlMainWindow(QtGui.QDialog):
     hasSettings = False
     settingsDir = ''
     workingDir = ''
-      
+   
  
 myWin = ControlMainWindow(parent=maya_main_window())
 
