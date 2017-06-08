@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     std::string settingsStr(settings);
 
     GLWidget window(filenameStr, settingsStr);
+    std::cout<<"Setup complete, rendering";
 
     window.renderOrtho();
 

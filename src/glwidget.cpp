@@ -42,6 +42,7 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
 
     qInfo()<<"Generating terrain";
     generateHeightMap(s_heightmapIters, s_roughness);
+    std::cout<<"Heightmap done"<<std::endl;
 
     double width = 50.0;
 
@@ -49,6 +50,7 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
 
     qInfo()<<"Creating Voronoi";
     m_fieldGenerator = EnglishFields(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, s_farmPos);
+    std::cout<<"Fields done"<<std::endl;
 
     qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
@@ -115,7 +117,15 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
 
     }
 
-//    m_treePositions = m_fieldGenerator.getTreePositions();
+    std::cout<<"Heights done"<<std::endl;
+
+    if(s_clusterTrees)
+    {
+        std::cout<<"Getting cluster trees"<<std::endl;
+        m_treePositions = m_fieldGenerator.getTreePositions();
+    }
+
+    std::cout<<"Got cluster trees"<<std::endl;
 
     for(uint i = 0; i < m_treePositions.size(); ++i)
     {
@@ -124,7 +134,9 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
         m_treeMeshesToUse.push_back(treeIndex);
     }
 
-    bool adjustTreeHeights = true;
+    std::cout<<"Meshes set"<<std::endl;
+
+    bool adjustTreeHeights = false;
 
     if(adjustTreeHeights)
     {
@@ -152,8 +164,8 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
         }
     }
 
+    std::cout<<"Finished"<<std::endl;
     qInfo()<<"FINISHED";
-
 }
 
 GLWidget::~GLWidget()
@@ -333,7 +345,7 @@ void GLWidget::loadThese(std::string _settingsPath)
 //        std::cout<<s_treeMeshes[i]<<std::endl;
 //    }
 
-    std::cout<<s_exportTerrain<<std::endl;
+//    std::cout<<s_exportTerrain<<std::endl;
 //    std::cout<<s_triangulateTerrain<<std::endl;
 //    std::cout<<s_terrainPath<<std::endl;
 //    std::cout<<s_exportTexture<<std::endl;
@@ -510,6 +522,11 @@ void GLWidget::initializeGL()
         }
         qInfo()<<"Done";
 
+        if(s_hasTrees)
+        {
+            exportLocations();
+        }
+
         doOnce = false;
     }
     else
@@ -634,7 +651,14 @@ void GLWidget::renderTexture()
 
     std::cout<<"Saving texture"<<std::endl;
 
-    std::string output = m_workingPath + "terrainTexture.png";
+    std::string output = s_texturePath + "/terrainTexture.png";
+
+    if(!s_exportTexture)
+    {
+        output = "terrainTexture.png";
+    }
+
+
     texture.save(output.c_str(), "PNG", 100);
 }
 
@@ -646,7 +670,13 @@ void GLWidget::renderHeightmap()
 
     std::cout<<"Saving texture"<<std::endl;
 
-    std::string output = m_workingPath + "heightmap.png";
+    std::string output = s_heightmapPath + "/heightmap.png";
+
+    if(!s_exportHeightmap)
+    {
+        output = "heightmap.png";
+    }
+
     heightmapImage.save(output.c_str(), "PNG", 100);
 }
 
@@ -660,7 +690,12 @@ void GLWidget::renderOrtho()
     std::cout<<"Saving ortho"<<std::endl;
     std::cout<<'\n';
 
-    std::string output = m_workingPath + "orthoImage.png";
+    std::string output = s_wallsPath + "/orthoImage.png";
+
+    if(!s_exportWalls)
+    {
+        output = "orthoImage.png";
+    }
 
     picture.save(output.c_str(), "PNG", 100);
 }
@@ -677,6 +712,22 @@ void GLWidget::render3D()
 
     std::string output = m_workingPath + "perspImage.png";
     orthoPicture.save(output.c_str(), "PNG", 100);
+}
+
+void GLWidget::exportLocations()
+{
+    std::cout<<"Exporting locations";
+
+    std::ofstream outputFile;
+    outputFile.open(s_locationsPath + "/locationData.txt");
+
+    for(size_t i = 0; i < m_treePositions.size(); ++i)
+    {
+        outputFile << m_treePositions[i].x() << "/" << m_treePositions[i].y() << "/" << m_treePositions[i].z() << "/" << m_treeMeshesToUse[i] << '\n';
+    }
+    outputFile << "######";
+
+    outputFile.close();
 }
 
 void GLWidget::timerEvent(QTimerEvent *e)
@@ -1534,109 +1585,112 @@ void GLWidget::prepareTrees()
 
     vao_trees.release();
 
-    //Finally we need to place the trees so iterate through the list of normals
-    int switchCounter = 0;
-
-    for(int i = 0; i < m_norms.size(); i += 4)
+    if(s_normTrees)
     {
-        //Get the normal of the current face
-        QVector3D faceNorm = m_norms[i] + m_norms[i + 1] + m_norms[i + 2] + m_norms[i + 3];
-        faceNorm /= 4.0f;
-        faceNorm.normalize();
+        //Finally we need to place the trees so iterate through the list of normals
+        int switchCounter = 0;
 
-//        if(faceNorm.y() > 0.8f)
-//        {
-//            QVector3D middle = (m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3]) / 4.0f;
-
-//            bool addSite = true;
-
-//            if(middle.y() < m_waterLevel * 1.25)
-//            {
-//                addSite = false;
-//            }
-//            else
-//            {
-//                for(uint j = 0; j < m_sitePoints.size(); ++j)
-//                {
-//                    if((m_sitePoints[j] - middle).length() < 10.0)
-//                    {
-//                        addSite = false;
-//                        break;
-//                    }
-//                }
-//            }
-
-//            if(addSite)
-//            {
-//                if(m_sitePoints.size() > 19)
-//                {
-//                    m_sitePoints.push_back(middle);
-
-//                    std::sort(m_sitePoints.begin(), m_sitePoints.end(), SortVector());
-
-//                    m_sitePoints.pop_back();
-//                }
-//                else
-//                {
-//                    m_sitePoints.push_back(middle);
-//                }
-//            }
-//        }
-
-        //We can now just see what the y value of the face normal is. If it is large we know
-        //the face points mostly upward, making it relatively flat. A check is also done to see
-        //if the current vert is above the water level or not
-        if((faceNorm.y() < 0.95f) && (m_verts[i].y() > (m_waterLevel + ((m_terrainMax - m_terrainMin) * 0.1f))))
+        for(int i = 0; i < m_norms.size(); i += 4)
         {
-            //Create a variable for storing the middle of the face
-            QVector3D midFace;
+            //Get the normal of the current face
+            QVector3D faceNorm = m_norms[i] + m_norms[i + 1] + m_norms[i + 2] + m_norms[i + 3];
+            faceNorm /= 4.0f;
+            faceNorm.normalize();
 
-            //To introduce some pseudo-random placement (to ensure the trees aren't all added in a uniform
-            //grid) use various methods to calulate the new position.
-            switch(switchCounter)
+            //        if(faceNorm.y() > 0.8f)
+            //        {
+            //            QVector3D middle = (m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3]) / 4.0f;
+
+            //            bool addSite = true;
+
+            //            if(middle.y() < m_waterLevel * 1.25)
+            //            {
+            //                addSite = false;
+            //            }
+            //            else
+            //            {
+            //                for(uint j = 0; j < m_sitePoints.size(); ++j)
+            //                {
+            //                    if((m_sitePoints[j] - middle).length() < 10.0)
+            //                    {
+            //                        addSite = false;
+            //                        break;
+            //                    }
+            //                }
+            //            }
+
+            //            if(addSite)
+            //            {
+            //                if(m_sitePoints.size() > 19)
+            //                {
+            //                    m_sitePoints.push_back(middle);
+
+            //                    std::sort(m_sitePoints.begin(), m_sitePoints.end(), SortVector());
+
+            //                    m_sitePoints.pop_back();
+            //                }
+            //                else
+            //                {
+            //                    m_sitePoints.push_back(middle);
+            //                }
+            //            }
+            //        }
+
+            //We can now just see what the y value of the face normal is. If it is large we know
+            //the face points mostly upward, making it relatively flat. A check is also done to see
+            //if the current vert is above the water level or not
+            if((faceNorm.y() < 0.95f) && (m_verts[i].y() > (m_waterLevel + ((m_terrainMax - m_terrainMin) * 0.1f))))
             {
-            case 0:
-                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3];
-                m_treePositions.push_back(midFace/4.0f);
-                break;
+                //Create a variable for storing the middle of the face
+                QVector3D midFace;
 
-            case 1:
-                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 2];
-                m_treePositions.push_back(midFace/3.0f);
-                break;
+                //To introduce some pseudo-random placement (to ensure the trees aren't all added in a uniform
+                //grid) use various methods to calulate the new position.
+                switch(switchCounter)
+                {
+                case 0:
+                    midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 2] + m_verts[i + 3];
+                    m_treePositions.push_back(midFace/4.0f);
+                    break;
 
-            case 2:
-                midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 3];
-                m_treePositions.push_back(midFace/3.0f);
-                break;
+                case 1:
+                    midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 2];
+                    m_treePositions.push_back(midFace/3.0f);
+                    break;
 
-            case 3:
-                midFace = m_verts[i] + m_verts[i + 3] + m_verts[i + 2];
-                m_treePositions.push_back(midFace/3.0f);
-                break;
+                case 2:
+                    midFace = m_verts[i] + m_verts[i + 1] + m_verts[i + 3];
+                    m_treePositions.push_back(midFace/3.0f);
+                    break;
 
-            case 4:
-                midFace = m_verts[i + 3] + m_verts[i + 1] + m_verts[i + 2];
-                m_treePositions.push_back(midFace/3.0f);
-                break;
+                case 3:
+                    midFace = m_verts[i] + m_verts[i + 3] + m_verts[i + 2];
+                    m_treePositions.push_back(midFace/3.0f);
+                    break;
 
-            case 5:
-                midFace = m_verts[i] + m_verts[i + 1];
-                m_treePositions.push_back(midFace/2.0f);
-                break;
+                case 4:
+                    midFace = m_verts[i + 3] + m_verts[i + 1] + m_verts[i + 2];
+                    m_treePositions.push_back(midFace/3.0f);
+                    break;
 
-            case 6:
-                midFace = m_verts[i + 1] + m_verts[i + 2];
-                m_treePositions.push_back(midFace/2.0f);
-                switchCounter = 0;
-                break;
+                case 5:
+                    midFace = m_verts[i] + m_verts[i + 1];
+                    m_treePositions.push_back(midFace/2.0f);
+                    break;
+
+                case 6:
+                    midFace = m_verts[i + 1] + m_verts[i + 2];
+                    m_treePositions.push_back(midFace/2.0f);
+                    switchCounter = 0;
+                    break;
+                }
+
+                //This ensures that the trees are positioned in different places.
+                //Not the perfect way of doing it but introduces enough randominity
+                //to create visual interest
+                switchCounter++;
+
             }
-
-            //This ensures that the trees are positioned in different places.
-            //Not the perfect way of doing it but introduces enough randominity
-            //to create visual interest
-            switchCounter++;
-
         }
     }
 }

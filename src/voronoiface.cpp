@@ -583,11 +583,66 @@ void VoronoiFace::exportRegion(std::string filepath)
                 continue;
             }
 
-            for(uint k = 0; k < m_edges[m_segmentIndices[i][j]]->getVerts().size(); ++k)
-            {
-                tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[k]);
-                tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[k]);
-            }
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[2]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[2]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[3]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[3]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[0]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[0]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[1]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[1]);
+
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[0]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[0]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[1]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[1]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[5]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[5]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[4]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[4]);
+
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[3]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[3]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[0]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[0]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[4]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[4]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[7]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[7]);
+
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[1]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[1]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[2]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[2]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[6]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[6]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[5]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[5]);
+
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[2]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[2]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[3]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[3]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[7]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[7]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[6]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[6]);
+
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[4]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[4]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[5]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[5]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[6]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[6]);
+            tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[7]);
+            tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[7]);
+//            for(uint k = 0; k < m_edges[m_segmentIndices[i][j]]->getVerts().size(); ++k)
+//            {
+//                std::cout<<k<<std::endl;
+//                tmpVerts.push_back(m_edges[m_segmentIndices[i][j]]->getVerts()[k]);
+//                tmpNorms.push_back(m_edges[m_segmentIndices[i][j]]->getNorms()[k]);
+//            }
+//            std::cout<<"##########\n";
         }
     }
 

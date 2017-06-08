@@ -19,6 +19,7 @@
 #include <math.h>
 #include <random>
 #include <fstream>
+//#include <iostream>
 
 #include "perlinnoise.h"
 #include "englishfields.h"
@@ -119,6 +120,8 @@ private:
 
     bool s_exportLocations;
     std::string s_locationsPath;
+
+    void exportLocations();
 
      //-------------------------------------------------------
     //Shader functions

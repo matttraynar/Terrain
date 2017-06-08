@@ -717,6 +717,32 @@ class ControlMainWindow(QtGui.QDialog):
         
         p.stdout.close()
         p.wait()
+        
+        output = ''
+        if len(self.ui.terrainLine.text()) < 1:
+            output = self.workingDir
+            cmds.file(self.workingDir + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
+        else:
+            output = self.ui.terrainLine.text()
+            cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
+        
+        cmds.select("Terrain:*")
+        cmds.polySetToFaceNormal()
+        cmds.polyNormal(nm = 0, ch = 0)
+        cmds.polySoftEdge(a = 180, ch = 0)
+        cmds.select("Terrain:*")
+        
+        if len(self.ui.terrainLine.text()) < 1:
+            cmds.file(self.workingDir + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
+        else:
+            cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
+        
+        cmds.select("Terrain:*")
+        cmds.delete()
+        
+        filetype = output + "/*.mtl"        
+        
+        subprocess.check_output(["rm", "-f", filetype])
 
         print("Finished")
         
