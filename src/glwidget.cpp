@@ -267,6 +267,10 @@ void GLWidget::loadThese(std::string _settingsPath)
             getline(f, line);
             (line.find("True") != std::string::npos) ? s_triangulateTerrain = true : s_triangulateTerrain = false;
         }
+        else
+        {
+            s_triangulateTerrain = false;
+        }
 
         getline(f, line);
 
@@ -508,18 +512,32 @@ void GLWidget::initializeGL()
         m_pgm.release();
 
         qInfo()<<"Exporting terrain";
+        std::cout<<s_triangulateTerrain<<std::endl;
         if(s_exportTerrain)
         {
             std::cout<<"Exporting"<<std::endl;
             ExportScene::sendTo("obj", s_terrainPath + "/Terrain.obj", m_verts, m_norms, m_uvs, s_terrainSize, s_triangulateTerrain, true);
             std::cout<<"Exported scene"<<std::endl;
         }
+        else
+        {
+            ExportScene::sendTo("obj", m_workingPath + "/Output/Terrain.obj", m_verts, m_norms, m_uvs, s_terrainSize, s_triangulateTerrain, true);
+        }
+
+        std::cout<<"Terrain exported"<<std::endl;
 
         qInfo()<<"Exporting fields";
         if(s_exportWalls)
         {
+            std::cout<<"Exporting walls"<<std::endl;
             m_fieldGenerator.exportFields(s_wallsPath);
         }
+        else
+        {
+            std::cout<<"Exporting walls"<<std::endl;
+            m_fieldGenerator.exportFields(m_workingPath);
+        }
+        std::cout<<"Fields exported"<<std::endl;
         qInfo()<<"Done";
 
         if(s_hasTrees)
@@ -649,7 +667,7 @@ void GLWidget::renderTexture()
 
     if(!s_exportTexture)
     {
-        output = "terrainTexture.png";
+        output = m_workingPath + "/Output/terrainTexture.png";
     }
 
 
@@ -670,7 +688,7 @@ void GLWidget::renderHeightmap()
 
     if(!s_exportHeightmap)
     {
-        output = "heightmap.png";
+        output = m_workingPath + "/Output/heightmap.png";
     }
 
     heightmapImage.save(output.c_str(), "PNG", 100);
@@ -694,7 +712,7 @@ void GLWidget::renderOrtho()
 
     if(!s_exportWalls)
     {
-        output = "orthoImage.png";
+        output = m_workingPath + "/Output/orthoImage.png";
     }
 
     picture.save(output.c_str(), "PNG", 100);
@@ -706,6 +724,7 @@ void GLWidget::render3D()
     m_ortho = false;
 
     changeOrtho();
+    std::cout<<"Saving persp"<<std::endl;
 
     m_yRot -= 10 * 10.0f * 16.0f;
     for(int i = 0; i < 21; ++i)
@@ -714,9 +733,8 @@ void GLWidget::render3D()
         m_pgm.setUniformValue("mCol",QVector4D(1.0f,0.0f,0.0f,0.0f));
         QPixmap orthoPicture = renderPixmap(720, 720, false);
 
-        std::cout<<"Saving persp"<<std::endl;
 
-        std::string output = m_workingPath + "perspImage" + std::to_string(i) + ".png";
+        std::string output = m_workingPath + "Output/perspImage" + std::to_string(i) + ".png";
         orthoPicture.save(output.c_str(), "PNG", 100);
     }
 }
