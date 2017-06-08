@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'pythonUI.ui'
 #
-# Created: Thu Jun 08 11:33:45 2017
+# Created: Thu Jun 08 12:56:04 2017
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -136,6 +136,13 @@ class Ui_Dialog(object):
         spacerItem3 = QtGui.QSpacerItem(78, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem3)
         self.verticalLayout.addWidget(self.bottomLayoutWidget)
+        self.slider3D = QtGui.QSlider(self.imageLayout)
+        self.slider3D.setMaximum(20)
+        self.slider3D.setProperty("value", 10)
+        self.slider3D.setOrientation(QtCore.Qt.Horizontal)
+        self.slider3D.setInvertedAppearance(False)
+        self.slider3D.setObjectName("slider3D")
+        self.verticalLayout.addWidget(self.slider3D)
         self.horizontalLayout_6.addWidget(self.imageLayout)
         self.tabWidget = QtGui.QTabWidget(self.widget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.MinimumExpanding)

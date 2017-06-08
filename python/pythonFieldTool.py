@@ -140,6 +140,9 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui =  customUI.Ui_Dialog()
         self.ui.setupUi(self)
         
+        self.ui.slider3D.setVisible(False)
+        self.ui.slider3D.valueChanged.connect(self.change3D)
+        
         self.ui.loadSettingsButton.clicked.connect(self.loadSettings)
         self.ui.resetSettingsButton.clicked.connect(self.resetSettings)
         self.ui.saveSettingsButton.clicked.connect(lambda: self.saveSettings(False))
@@ -658,23 +661,57 @@ class ControlMainWindow(QtGui.QDialog):
     
     def load3D(self):
         if self.is2D:
-            img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/perspImage.png')
-        
-            self.loadImage(img)
-            self.ui.switch3DButton.setText("Switch to 2D")
+            self.ui.imageButton.setDown(True)
+            self.change3D(10)
+            
             self.is2D = False
+            
+            self.ui.slider3D.setVisible(True)
                         
             self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
             
         else:
-            img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/orthoImage.png')
-        
-            self.loadImage(img)
+            if (len(self.ui.textureLine.text()) is 0) and (len(self.ui.heightmapLine.text()) is 0) and (len(self.ui.wallsLine.text()) is 0):
+                flags = QtGui.QMessageBox.StandardButton.Ok
+
+                result = QtGui.QMessageBox.warning(self, "No 2D Path", "No 2D images were exported (Texture, Heightmap, Walls)", flags)
+
+                if result == QtGui.QMessageBox.Ok:
+                    return 
+            
+            self.ui.imageButton.setDown(False)
+            
+            if len(self.ui.wallsLine.text()) > 0:                     
+                img = QtGui.QPixmap(self.ui.wallsLine.text() + '/orthoImage.png')
+            
+                self.loadImage(img)
+                self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.CrossCursor)
+                
+            elif len(self.ui.textureLine.text()) > 0:                     
+                img = QtGui.QPixmap(self.ui.textureLine.text() + '/terrainTexture.png')
+            
+                self.loadImage(img)
+                self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.CrossCursor)
+                
+            elif len(self.ui.heightmapLine.text()) > 0:                     
+                img = QtGui.QPixmap(self.ui.heightmapLine.text() + '/heightmap.png')
+            
+                self.loadImage(img)
+                
+                
             self.ui.switch3DButton.setText("Switch to 3D")
             self.is2D = True  
             
-            self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.CrossCursor)
+            self.ui.slider3D.setVisible(False)
             
+            
+    def change3D(self, value):
+        img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/perspImage' + str(value) + '.png')
+        # print 'E:/mattt/Documents/Uni/FMP/Terrain/debug/perspImage' + str(self.ui.slider3D.value()) + '.png'
+        self.loadImage(img)
+        self.ui.switch3DButton.setText("Switch to 2D")
+        self.is2D = False
+        
     def setPos(self):  
         if not self.ui.imageButton.isEnabled():
             return   
@@ -719,32 +756,33 @@ class ControlMainWindow(QtGui.QDialog):
         p.wait()
         
         output = ''
-        if len(self.ui.terrainLine.text()) < 1:
-            output = self.workingDir
-            cmds.file(self.workingDir + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
-        else:
+        
+        if len(self.ui.terrainLine.text()) > 1:
             output = self.ui.terrainLine.text()
             cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
+            # else:
+            #     output = self.ui.terrainLine.text()
+            #     cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
+            
+            cmds.select("Terrain:*")
+            cmds.polySetToFaceNormal()
+            cmds.polyNormal(nm = 0, ch = 0)
+            cmds.polySoftEdge(a = 180, ch = 0)
+            cmds.select("Terrain:*")
         
-        cmds.select("Terrain:*")
-        cmds.polySetToFaceNormal()
-        cmds.polyNormal(nm = 0, ch = 0)
-        cmds.polySoftEdge(a = 180, ch = 0)
-        cmds.select("Terrain:*")
-        
-        if len(self.ui.terrainLine.text()) < 1:
-            cmds.file(self.workingDir + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
-        else:
+            # if len(self.ui.terrainLine.text()) < 1:
+            #     cmds.file(self.workingDir + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
+            # else:
             cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
         
-        cmds.select("Terrain:*")
-        cmds.delete()
+            cmds.select("Terrain:*")
+            cmds.delete()
         
-        filetype = output + "/*.mtl"        
-        
-        subprocess.check_output(["rm", "-f", filetype])
+            filetype = output + "/*.mtl"        
+            
+            subprocess.check_output(["rm", "-f", filetype])
 
-        print("Finished")
+        print("Done")
         
         self.ui.saveSettingsButton.setEnabled(True)
         
@@ -759,10 +797,12 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.loadWallsButton.setEnabled(True)
         self.ui.postGenWalls.setEnabled(True)
         
+        self.load3D()  
         self.ui.switch3DButton.setEnabled(True)
         self.ui.importButton.setEnabled(True)
         
-        self.isGenerated = True       
+        self.isGenerated = True   
+          
                 
         
     def centerWindow(self):                

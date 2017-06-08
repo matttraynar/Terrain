@@ -562,12 +562,7 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::paintGL()
 {
-    std::cout<<"Rendering"<<std::endl;
-    qInfo()<<"Painting";
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    std::cout<<m_terrainMin<<std::endl;
-    std::cout<<m_terrainMax<<std::endl;
 
     m_pgm.bind();
     m_pgm.setUniformValue("min", m_terrainMin);
@@ -581,21 +576,18 @@ void GLWidget::paintGL()
 
     m_pgm.bind();
 
-    if(heightmap)
-    {
-        m_pgm.setUniformValue("mCol",QVector4D(1.0f,1.0f,1.0f,1.0f));
-    }
-    else
-    {
-        m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
-        changeOrtho();
-    }
+
 
     m_pgm.setUniformValue("lightPos",QVector3D(m_x, 10.0f, 0.0f));
 
     loadMatricesToShader(QVector3D(0,0,0));
 
-    qInfo()<<"Terrain";
+    m_pgm.setUniformValue("mCol",QVector4D(0.0f,0.0f,0.0f,0.0f));
+
+    if(heightmap)
+    {
+        m_pgm.setUniformValue("mCol",QVector4D(1.0f,1.0f,1.0f,1.0f));
+    }
     drawTerrain();
 
     if(shading)
@@ -646,6 +638,8 @@ void GLWidget::renderTexture()
 {
     shading = false;
     m_ortho =  true;
+    m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
+    changeOrtho();
 
     QPixmap texture = renderPixmap(720, 720, false);
 
@@ -664,6 +658,8 @@ void GLWidget::renderTexture()
 
 void GLWidget::renderHeightmap()
 {
+    m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
+    changeOrtho();
     heightmap = true;
 
     QPixmap heightmapImage = renderPixmap(720, 720, false);
@@ -684,6 +680,10 @@ void GLWidget::renderOrtho()
 {
     m_ortho = true;
     heightmap = false;
+
+    m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
+    changeOrtho();
+
     std::cout<<'\n';
     QPixmap picture = renderPixmap(720, 720, false);
 
@@ -705,13 +705,20 @@ void GLWidget::render3D()
     shading = true;
     m_ortho = false;
 
-    QPixmap orthoPicture = renderPixmap(720, 720, false);
+    changeOrtho();
 
-    std::cout<<"Saving persp"<<std::endl;
-    std::cout<<'\n';
+    m_yRot -= 10 * 10.0f * 16.0f;
+    for(int i = 0; i < 21; ++i)
+    {
+        m_yRot += 10.0f * 16.0f;
+        m_pgm.setUniformValue("mCol",QVector4D(1.0f,0.0f,0.0f,0.0f));
+        QPixmap orthoPicture = renderPixmap(720, 720, false);
 
-    std::string output = m_workingPath + "perspImage.png";
-    orthoPicture.save(output.c_str(), "PNG", 100);
+        std::cout<<"Saving persp"<<std::endl;
+
+        std::string output = m_workingPath + "perspImage" + std::to_string(i) + ".png";
+        orthoPicture.save(output.c_str(), "PNG", 100);
+    }
 }
 
 void GLWidget::exportLocations()
@@ -1029,6 +1036,7 @@ void GLWidget::loadMatricesToShader(QVector3D position)
         m_model.setToIdentity();
 
 //        m_model.rotate(m_xRot / 16.0f, QVector3D(1, 0, 0));
+        qInfo()<<m_yRot / 16.0f;
         m_model.rotate(m_yRot / 16.0f, QVector3D(0, 1, 0));
 
         m_model.translate(position);
@@ -1060,7 +1068,7 @@ void GLWidget::changeOrtho()
     }
     else
     {
-        glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
         for(uint i = 0; i < m_verts.size(); ++i)
         {
             m_verts[i].setY(m_verts[i].y() - 1.0f);
