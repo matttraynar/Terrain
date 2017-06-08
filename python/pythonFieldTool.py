@@ -40,13 +40,21 @@ class importWindow(QtGui.QDialog):
         self.ui.importButton.clicked.connect(self.importToMaya)
         self.ui.cancelButton.clicked.connect(self.close)
         
-        self.ui.terrainLine.setText(terrainPath + "/Terrain.obj")
-        self.ui.heightmapLine.setText(heightmapPath + "/heightmap.obj")
-        self.ui.textureLine.setText(texturePath + "/terrainTexture.obj")
+        if len(terrainPath) > 0:
+            self.ui.terrainLine.setText(terrainPath + "/Terrain.obj")
+            
+        if len(heightmapPath) > 0:
+            self.ui.heightmapLine.setText(heightmapPath + "/heightmap.png")
+            
+        if len(texturePath) > 0:
+            self.ui.textureLine.setText(texturePath + "/terrainTexture.png")
         
         self.defaultLocation = default
         self.terrainChecked = True
         self.terrainSize = terrainSize
+        
+        cmds.artPuttyCtx('artPuttyContext', ifl = self.ui.heightmapLine.text(), md = 20, e = True)
+
         
     def switchGroupBox(self):
         self.terrainChecked = not self.terrainChecked
@@ -65,10 +73,10 @@ class importWindow(QtGui.QDialog):
             else:                
                 filename = cmds.file(self.ui.terrainLine.text(), i=True, ns="Terrain", mnc=True)
                 
-                cmds.select("Terrain:*")
-                cmds.polySetToFaceNormal()
-                cmds.polyNormal(nm = 0, ch = 0)
-                cmds.polySoftEdge(a = 180, ch = 0)
+                # cmds.select("Terrain:*")
+                # cmds.polySetToFaceNormal()
+                # cmds.polyNormal(nm = 0, ch = 0)
+                # cmds.polySoftEdge(a = 180, ch = 0)
         else:
             if len(str(self.ui.heightmapLine.text())) < 1:
                 flags = QtGui.QMessageBox.StandardButton.Ok
@@ -83,11 +91,11 @@ class importWindow(QtGui.QDialog):
                     cmds.delete()
                 
                 cmds.polyPlane(n="HeightmapTerrain", w=self.terrainSize, h=self.terrainSize, sx = 100, sy = 100)
-                cmds.select("HeightmapTerrain")
-                
+                cmds.select("HeightmapTerrain")                
                     
+                
                 cmds.setToolTo('artPuttyContext')
-                cmds.artPuttyCtx('artPuttyContext', ifl = self.ui.heightmapLine.text(), md = 10, e = True)
+                cmds.artPuttyCtx('artPuttyContext', ifl = self.ui.heightmapLine.text(), md = 20, e = True)
 
                 cmds.setToolTo('selectSuperContext')
                 cmds.setAttr("HeightmapTerrain.scaleY", -1)
@@ -106,26 +114,40 @@ class importWindow(QtGui.QDialog):
     def search(self, lineEdit):
         filepath = ''
         if lineEdit is 0:
-            if len(self.defaultLocation) < 1:
+            if len(self.defaultLocation) < 1 and len(self.ui.terrainPath.text()) < 1:
                 filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", ".", "Geometry files (*.obj)")
+            elif len(self.ui.terrainPath.text()) > 0:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", self.ui.terrainPath.text(), "Geometry files (*.obj)")
             else:
                 filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Geometry files (*.obj)")
-        else:
-            if len(self.defaultLocation) < 1:
+                
+        elif lineEdit is 1:
+            if len(self.defaultLocation) < 1 and len(self.ui.heightmapLine.text()) < 1:
                 filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", ".", "Image files (*.png *.jpg)")
+            elif len(self.ui.heightmapLine.text()) > 0:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", self.ui.heightmapLine.text(), "Image files (*.png *.jpg)")
             else:
-                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Image files (*.png *.jpg")
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Image files (*.png *.jpg)")
+                
+        elif lineEdit is 2:
+            if len(self.defaultLocation) < 1 and len(self.ui.textureLine.text()) < 1:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", ".", "Image files (*.png *.jpg)")
+            elif len(self.ui.textureLine.text()) > 0:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", self.ui.textureLine.text(), "Image files (*.png *.jpg)")
+            else:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Image files (*.png *.jpg)")
+            
             
         if len(filepath) < 1:
             return                                    
                     
-        if lineEdit == 0:
+        if lineEdit is 0:
             self.ui.terrainLine.setText(filepath[0])       
                                 
-        elif lineEdit == 1:
+        elif lineEdit is 1:
             self.ui.heightmapLine.setText(filepath[0])      
                 
-        elif lineEdit == 2:
+        elif lineEdit is 2:
             self.ui.textureLine.setText(filepath[0])
             
     defaultLocation = ''
@@ -157,6 +179,11 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.defaultButton.clicked.connect(lambda: self.search(7))
         self.ui.pushButton.clicked.connect(lambda: self.search(8))
         self.ui.pushButton_2.clicked.connect(lambda: self.search(9))  
+        
+        self.ui.postGenTerrain.clicked.connect(lambda: self.moveFile(0))
+        self.ui.postGenTexture.clicked.connect(lambda: self.moveFile(1))
+        self.ui.postGenHeightmap.clicked.connect(lambda: self.moveFile(2))
+        self.ui.postGenWalls.clicked.connect(lambda: self.moveFile(3))
 
         self.ui.importButton.clicked.connect(self.createImportWindow)      
         
@@ -178,9 +205,113 @@ class ControlMainWindow(QtGui.QDialog):
         
         self.is2D = True
         self.isNotValid = False
-        self.defaultLocation = ''
-        
+        self.defaultLocation = ''        
         self.workingDir = customUI.__file__.rsplit('\\',1)[0]
+        self.execDir = 'E:/mattt/Documents/Uni/FMP/Terrain/debug'
+        
+    def moveFile(self, file):
+        if file is 0:
+            if len(self.ui.terrainLine.text()) < 1:
+                flags = QtGui.QMessageBox.StandardButton.Ok
+            
+                result = QtGui.QMessageBox.warning(self, "No Export Path", "File path to export terrain not found", flags)
+                    
+                if result == QtGui.QMessageBox.Ok:
+                    return 
+            
+            if os.path.exists(self.ui.terrainLine.text() + "/Terrain.obj"):
+                flags = QtGui.QMessageBox.StandardButton.Ok
+                flags |= QtGui.QMessageBox.StandardButton.Cancel
+                
+                result = QtGui.QMessageBox.warning(self, "File Exists", "A terrain obj already exists at " + self.ui.terrainLine.text() + "\nThis will replace it", flags)
+                    
+                if result == QtGui.QMessageBox.Cancel:
+                    return 
+                elif result == QtGui.QMessageBox.Ok:
+                    subprocess.call(["rm", "-f", self.ui.terrainLine.text() + "/Terrain.obj"])
+            
+            os.rename(self.execDir + "/Output/Terrain.obj", self.ui.terrainLine.text() + "/Terrain.obj")
+        
+        elif file is 1:
+            if len(self.ui.textureLine.text()) < 1:
+                flags = QtGui.QMessageBox.StandardButton.Ok
+            
+                result = QtGui.QMessageBox.warning(self, "No Export Path", "File path to export texture not found", flags)
+                    
+                if result == QtGui.QMessageBox.Ok:
+                    return 
+            
+            if os.path.exists(self.ui.textureLine.text() + "/terrainTexture.png"):
+                flags = QtGui.QMessageBox.StandardButton.Ok
+                flags |= QtGui.QMessageBox.StandardButton.Cancel
+                
+                result = QtGui.QMessageBox.warning(self, "File Exists", "A texture already exists at " + self.ui.textureLine.text() + "\nThis will replace it", flags)
+                    
+                if result == QtGui.QMessageBox.Cancel:
+                    return 
+                elif result == QtGui.QMessageBox.Ok:
+                    subprocess.call(["rm", "-f", self.ui.textureLine.text() + "/terrainTexture.png"])
+                    
+            os.rename(self.execDir + "/Output/terrainTexture.png", self.ui.textureLine.text() + "/terrainTexture.png")
+            
+            self.ui.loadTextureButton.setEnabled(True)
+       
+        elif file is 2:
+            if len(self.ui.heightmapLine.text()) < 1:
+                flags = QtGui.QMessageBox.StandardButton.Ok
+            
+                result = QtGui.QMessageBox.warning(self, "No Export Path", "File path to export heightmap not found", flags)
+                    
+                if result == QtGui.QMessageBox.Ok:
+                    return 
+            
+            if os.path.exists(self.ui.heightmapLine.text() + "/heightmap.png"):
+                flags = QtGui.QMessageBox.StandardButton.Ok
+                flags |= QtGui.QMessageBox.StandardButton.Cancel
+                
+                result = QtGui.QMessageBox.warning(self, "File Exists", "A heightmap already exists at " + self.ui.heightmapLine.text() + "\nThis will replace it", flags)
+                    
+                if result == QtGui.QMessageBox.Cancel:
+                    return 
+                elif result == QtGui.QMessageBox.Ok:
+                    subprocess.call(["rm", "-f", self.ui.heightmapLine.text() + "/heightmap.png"])
+              
+            os.rename(self.execDir + "/Output/heightmap.png", self.ui.heightmapLine.text() + "/heightmap.png")
+         
+            self.ui.loadHeightmapButton.setEnabled(True)
+         
+        elif file is 3:
+            if len(self.ui.wallsLine.text()) < 1:
+                flags = QtGui.QMessageBox.StandardButton.Ok
+            
+                result = QtGui.QMessageBox.warning(self, "No Export Path", "File path to export heightmap not found", flags)
+                    
+                if result == QtGui.QMessageBox.Ok:
+                    return 
+            
+            if os.path.exists(self.ui.wallsLine.text() + "/orthoImage.png"):
+                flags = QtGui.QMessageBox.StandardButton.Ok
+                flags |= QtGui.QMessageBox.StandardButton.Cancel
+                
+                result = QtGui.QMessageBox.warning(self, "File Exists", "Some walls files already exist at " + self.ui.wallsLine.text() + "\nThis will replace them", flags)
+                    
+                if result == QtGui.QMessageBox.Cancel:
+                    return 
+                elif result == QtGui.QMessageBox.Ok:
+                    subprocess.call(["rm", "-f", self.ui.wallsLine.text() + "/orthoImage.png"])
+                    subprocess.call(["rm", "-f", self.ui.wallsLine.text() + "/region*"])
+                    
+            os.rename(self.execDir + "/Output/orthoImage.png", self.ui.wallsLine.text() + "/orthoImage.png")
+            
+            for line in subprocess.check_output(["ls", self.execDir + "/Output/region*"]).split('\n'):
+                filename = line.rsplit('/', 1)[-1]
+                
+                if len(filename) > 1:          
+                    os.rename(line, self.ui.wallsLine.text() + "/" + filename)
+            
+            self.ui.loadWallsButton.setEnabled(True)
+            
+        
     def createImportWindow(self):
         importer = importWindow(self, self.defaultLocation, self.ui.terrainLine.text(), self.ui.heightmapLine.text(), self.ui.textureLine.text(), self.ui.terrainSizeBox.value())
         importer.show()
@@ -639,25 +770,28 @@ class ControlMainWindow(QtGui.QDialog):
             self.ui.switch3DButton.setText("Switch to 3D")
             self.is2D = True
                    
-        img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/orthoImage.png')        
-        self.loadImage(img)
+        if len(self.ui.wallsLine.text()) > 0:
+            img = QtGui.QPixmap(self.ui.wallsLine.text() + '/orthoImage.png')        
+            self.loadImage(img)
         
     def loadTexture(self):
         if not self.is2D:
             self.ui.switch3DButton.setText("Switch to 3D")
             self.is2D = True
             
-        img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/terrainTexture.png')        
-        self.loadImage(img)
+        if len(self.ui.textureLine.text()) > 0:
+            img = QtGui.QPixmap(self.ui.textureLine.text() + '/terrainTexture.png')        
+            self.loadImage(img)
                
                
     def loadHeightmap(self):
         if not self.is2D:
             self.ui.switch3DButton.setText("Switch to 3D")
             self.is2D = True
-            
-        img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/heightmap.png')        
-        self.loadImage(img)
+          
+        if len(self.ui.heightmapLine.text()) > 0:
+            img = QtGui.QPixmap(self.ui.heightmapLine.text() + '/heightmap.png')        
+            self.loadImage(img)
     
     def load3D(self):
         if self.is2D:
@@ -706,8 +840,8 @@ class ControlMainWindow(QtGui.QDialog):
             
             
     def change3D(self, value):
-        img = QtGui.QPixmap('E:/mattt/Documents/Uni/FMP/Terrain/debug/perspImage' + str(value) + '.png')
-        # print 'E:/mattt/Documents/Uni/FMP/Terrain/debug/perspImage' + str(self.ui.slider3D.value()) + '.png'
+        img = QtGui.QPixmap(self.execDir + '/Output/perspImage' + str(value) + '.png')
+      
         self.loadImage(img)
         self.ui.switch3DButton.setText("Switch to 2D")
         self.is2D = False
@@ -748,7 +882,8 @@ class ControlMainWindow(QtGui.QDialog):
         if not self.hasSettings:
             self.saveSettings(True)
     
-        p = subprocess.Popen(["E:\mattt\Documents\Uni\FMP\Terrain\debug\Terrain.exe", self.settingsDir + "/fieldSettings.txt"], stdout = subprocess.PIPE, bufsize = 1)
+        p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt"], stdout = subprocess.PIPE, bufsize = 1)
+        
         for line in iter(p.stdout.readline, b''):
             print line,
         
@@ -777,27 +912,48 @@ class ControlMainWindow(QtGui.QDialog):
         
             cmds.select("Terrain:*")
             cmds.delete()
-        
-            filetype = output + "/*.mtl"        
+        else:
+            cmds.file(self.execDir+ "/Output/Terrain.obj", i=True, ns="Terrain", mnc=True)
             
-            subprocess.check_output(["rm", "-f", filetype])
+            cmds.select("Terrain:*")
+            cmds.polySetToFaceNormal()
+            cmds.polyNormal(nm = 0, ch = 0)
+            cmds.polySoftEdge(a = 180, ch = 0)
+            cmds.select("Terrain:*")
+            
+            cmds.file(self.execDir + "/Output/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
+            
+            cmds.select("Terrain:*")
+            cmds.delete()
+            
+            output = self.execDir + '/Output'
+        
+        filetype = output + "/*.mtl"  
+        
+        subprocess.check_output(["rm", "-f", filetype])
 
         print("Done")
+        self.load3D()  
         
         self.ui.saveSettingsButton.setEnabled(True)
         
         self.ui.postGenTerrain.setEnabled(True)
         
-        self.ui.loadTextureButton.setEnabled(True)
+        if len(self.ui.textureLine.text()) > 0:
+            self.ui.loadTextureButton.setEnabled(True)
+            
         self.ui.postGenTexture.setEnabled(True)
         
-        self.ui.loadHeightmapButton.setEnabled(True)
+        if len(self.ui.heightmapLine.text()) > 0:
+            self.ui.loadHeightmapButton.setEnabled(True)
+        
         self.ui.postGenHeightmap.setEnabled(True)
         
-        self.ui.loadWallsButton.setEnabled(True)
+        if len(self.ui.wallsLine.text()) > 0:
+            self.ui.loadWallsButton.setEnabled(True)
+        
         self.ui.postGenWalls.setEnabled(True)
         
-        self.load3D()  
         self.ui.switch3DButton.setEnabled(True)
         self.ui.importButton.setEnabled(True)
         
@@ -816,6 +972,7 @@ class ControlMainWindow(QtGui.QDialog):
     hasSettings = False
     settingsDir = ''
     workingDir = ''
+    execDir = ''
    
  
 myWin = ControlMainWindow(parent=maya_main_window())
