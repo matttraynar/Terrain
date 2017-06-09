@@ -56,8 +56,6 @@ void ExportScene::sendTo(std::string _filetype, std::string _filepath, const std
         bool hasNorms = (_norms.size() > 0 ) ? true : false;
         bool hasUVs = (_uvs.size() > 0 ) ? true : false;
 
-        qInfo()<<"Passing data";
-
         for ( auto itr = vVertices.begin(); itr != vVertices.end(); ++itr )
         {
             pMesh->mVertices[ itr - vVertices.begin() ] = aiVector3D( vVertices[j].x(), vVertices[j].y(), vVertices[j].z() );
@@ -82,7 +80,6 @@ void ExportScene::sendTo(std::string _filetype, std::string _filepath, const std
             j++;
         }
 
-        qInfo()<<"Data is done";
         pMesh->mFaces = new aiFace[ vVertices.size() / 4 ];
         pMesh->mNumFaces = (unsigned int)(vVertices.size() / 4);
 
@@ -100,21 +97,16 @@ void ExportScene::sendTo(std::string _filetype, std::string _filepath, const std
             k = k + 4;
         }
 
-        qInfo()<<"Faces are done";
         Assimp::Exporter exporter;
         exporter.Export(&scene, _filetype, _filepath);
-        std::cout<<"Exported"<<std::endl;
 
         if(_triangulate)
         {
-            std::cout<<"Applying post process"<<std::endl;
             Assimp::Importer fixer;
             aiScene editScene = *fixer.ReadFile(_filepath, aiProcess_Triangulate);
 
             exporter.Export(&editScene, _filetype, _filepath);
         }
-
-        qInfo()<<"Exported";
     }
 }
 

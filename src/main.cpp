@@ -31,16 +31,18 @@ int main(int argc, char *argv[])
     std::string settingsStr(settings);
 
     GLWidget window(filenameStr, settingsStr);
-    std::cout<<"Setup complete, rendering";
-
 
     window.render3D();
+    std::cout<<"85"<<std::endl;
 
     window.renderOrtho();
+    std::cout<<"90"<<std::endl;
 
     window.renderTexture();
+    std::cout<<"95"<<std::endl;
 
     window.renderHeightmap();
+    std::cout<<"100"<<std::endl;
 
     return 0;
 }

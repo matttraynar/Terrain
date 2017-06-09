@@ -17,12 +17,6 @@ EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasP
     m_hasFarm = _hasPos;
     m_farmPos = _farmPos;
 
-    qInfo()<<_hasSeed;
-    qInfo()<<_hasPos;
-//    qInfo()<<_
-
-    std::cout<<"Making fields"<<std::endl;
-
     if(_hasSeed)
     {
         makeVoronoiDiagram(_seed);
@@ -32,7 +26,7 @@ EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasP
         makeVoronoiDiagram(time(NULL));
     }
 
-    qInfo()<<m_regions.size();
+    std::cout<<"30"<<std::endl;
 
     bool skipFarmField = _hasPos;
 
@@ -41,26 +35,20 @@ EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasP
         m_farmRegion = 1000000;
     }
 
-    std::cout<<"..."<<std::endl;
     subdivide();
-    qInfo()<<"Subdividing done";
+    std::cout<<"40"<<std::endl;
 
-    std::cout<<"..."<<std::endl;
     editEdges();
+    std::cout<<"45"<<std::endl;
 
-    qInfo()<<m_farmRegion;
 
     if(m_farmRegion > -1 && m_farmRegion < m_regions.size())
     {
         farmFieldEdges();
     }
 
-    qInfo()<<"Subdividing edges";
-
-    std::cout<<"..."<<std::endl;
     makeEdgesUsable();
-    qInfo()<<"######################";
-
+    std::cout<<"50"<<std::endl;
 }
 
 EnglishFields::EnglishFields(double _width,

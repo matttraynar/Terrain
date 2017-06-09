@@ -5,9 +5,6 @@
 GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent ) :
     QGLWidget(parent)
 {
-    std::cout<<"Starting program"<<std::endl;
-
-    std::cout<<"Settings at: "<<_settings<<std::endl;
     loadThese(_settings);
 
     QSurfaceFormat glFormat;
@@ -40,19 +37,13 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
 
     startTimer(1);
 
-    qInfo()<<"Generating terrain";
     generateHeightMap(s_heightmapIters, s_roughness);
-    std::cout<<"Heightmap done"<<std::endl;
+    std::cout<<"20"<<std::endl;
 
     double width = 50.0;
 
-    qInfo()<<"Farm at "<<farmPosition;
-
-    qInfo()<<"Creating Voronoi";
     m_fieldGenerator = EnglishFields(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, s_farmPos);
-    std::cout<<"Fields done"<<std::endl;
 
-    qInfo()<<"Getting regions";
     m_vRegions = m_fieldGenerator.getRegions();
 
     bool adjustHeights = true;
@@ -117,18 +108,7 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
 
     }
 
-    std::cout<<"Heights done"<<std::endl;
-
-//    for(uint i = 0; i < m_treePositions.size(); ++i)
-//    {
-//        int treeIndex = 5 * (float)rand()/(float)RAND_MAX;
-
-//        m_treeMeshesToUse.push_back(treeIndex);
-//    }
-
-    std::cout<<"Meshes set"<<std::endl;
-
-    bool adjustTreeHeights = false;
+    bool adjustTreeHeights = true;
 
     if(adjustTreeHeights)
     {
@@ -155,9 +135,6 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
             m_treePositions[i].setY(yValue);
         }
     }
-
-    std::cout<<"Finished"<<std::endl;
-    qInfo()<<"FINISHED";
 }
 
 GLWidget::~GLWidget()
@@ -463,9 +440,12 @@ void GLWidget::initializeGL()
 //        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree9.obj")));
 //        m_farmMeshes[16]->prepareMesh(m_pgm);
 
+        std::cout<<"60"<<std::endl;
+
         m_fieldGenerator.createWalls(m_pgm);
 
         m_vRegions = m_fieldGenerator.getRegions();
+        std::cout<<"70"<<std::endl;
 
         for(uint i = 0; i < m_vRegions.size(); ++i)
         {
@@ -475,23 +455,13 @@ void GLWidget::initializeGL()
 
         if(s_clusterTrees)
         {
-            std::cout<<"Getting cluster trees"<<std::endl;
             m_treePositions = m_fieldGenerator.getTreePositions();
         }
-        std::cout<<m_treePositions.size()<<std::endl;
 
-        std::cout<<"Got cluster trees"<<std::endl;
-
-        qInfo()<<"Preparing VAOs";
         prepareTerrain();
         prepareWater();
 
-        std::cout<<"############\n";
-        std::cout<<s_clusterTrees<<std::endl;
-        std::cout<<m_treePositions.size()<<std::endl;
         prepareTrees();
-        std::cout<<m_treePositions.size()<<std::endl;
-        std::cout<<"############\n";
 
         for(uint i = 0; i < m_treePositions.size(); ++i)
         {
@@ -499,6 +469,7 @@ void GLWidget::initializeGL()
 
             m_treeMeshesToUse.push_back(treeIndex);
         }
+        std::cout<<"80"<<std::endl;
 
         //Finished creating regions
 
@@ -522,7 +493,6 @@ void GLWidget::initializeGL()
 
         m_pgm.release();
 
-        qInfo()<<"Exporting terrain";
         if(s_exportTerrain)
         {
             ExportScene::sendTo("obj", s_terrainPath + "/Terrain.obj", m_verts, m_norms, m_uvs, s_terrainSize, s_triangulateTerrain, true);
@@ -532,9 +502,6 @@ void GLWidget::initializeGL()
             ExportScene::sendTo("obj", m_workingPath + "/Output/Terrain.obj", m_verts, m_norms, m_uvs, s_terrainSize, s_triangulateTerrain, true);
         }
 
-        std::cout<<"Terrain exported"<<std::endl;
-
-        qInfo()<<"Exporting fields";
         if(s_exportWalls)
         {
             m_fieldGenerator.exportFields(s_wallsPath, false);
@@ -543,8 +510,6 @@ void GLWidget::initializeGL()
         {
             m_fieldGenerator.exportFields(m_workingPath, true);
         }
-        std::cout<<"Fields exported"<<std::endl;
-        qInfo()<<"Done";
 
         if(s_hasTrees)
         {
@@ -666,8 +631,6 @@ void GLWidget::renderTexture()
 
     QPixmap texture = renderPixmap(720, 720, false);
 
-    std::cout<<"Saving texture"<<std::endl;
-
     std::string output = s_texturePath + "/terrainTexture.png";
 
     if(!s_exportTexture)
@@ -685,8 +648,6 @@ void GLWidget::renderHeightmap()
     heightmap = true;
 
     QPixmap heightmapImage = renderPixmap(720, 720, false);
-
-    std::cout<<"Saving texture"<<std::endl;
 
     std::string output = s_heightmapPath + "/heightmap.png";
 
@@ -706,11 +667,7 @@ void GLWidget::renderOrtho()
     m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
     changeOrtho();
 
-    std::cout<<'\n';
     QPixmap picture = renderPixmap(720, 720, false);
-
-    std::cout<<"Saving ortho"<<std::endl;
-    std::cout<<'\n';
 
     std::string output = s_wallsPath + "/orthoImage.png";
 
@@ -728,7 +685,6 @@ void GLWidget::render3D()
     m_ortho = false;
 
     glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
-    std::cout<<"Saving persp"<<std::endl;
 
     m_yRot -= 10 * 10.0f * 16.0f;
     for(int i = 0; i < 21; ++i)
@@ -745,8 +701,6 @@ void GLWidget::render3D()
 
 void GLWidget::exportLocations()
 {
-    std::cout<<"Exporting locations";
-
     std::ofstream outputFile;
     outputFile.open(s_locationsPath + "/locationData.txt");
 
@@ -1122,8 +1076,6 @@ void GLWidget::generateHeightMap(int iterations, float roughness)
 //    {
 //        eng.seed(time(NULL));
 //    }
-
-    std::cout<<s_seed<<std::endl;
 
     std::uniform_real_distribution<> random(-1.0f, 1.0f);
 
