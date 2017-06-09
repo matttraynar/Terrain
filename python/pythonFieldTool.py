@@ -24,7 +24,7 @@ def maya_main_window():
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
 
 class importWindow(QtGui.QDialog):
-    def __init__(self, parent=None, default = '', terrainPath = '', heightmapPath = '', texturePath = '', wallsPath = '', terrainSize = 50): 
+    def __init__(self, parent=None, default = '', terrainPath = '', heightmapPath = '', texturePath = '', wallsPath = '', treesPath = '', terrainSize = 50): 
         super(importWindow, self).__init__(parent)
         self.setWindowFlags(QtCore.Qt.Tool)
         self.ui =  importUI.Ui_Dialog()
@@ -51,8 +51,42 @@ class importWindow(QtGui.QDialog):
             self.ui.textureLine.setText(texturePath + "/terrainTexture.png")
             
         if len(wallsPath) > 0:
-            self.ui.wallsLine.setText(wallsPath)
-        
+            self.ui.wallsLine.setText(wallsPath)       
+            
+            filetype = wallsPath + "/region*"  
+                        
+            for line in subprocess.check_output(["ls", filetype]).split('\n'):
+                filename = line.rsplit('/', 1)[-1]
+                
+                if len(filename) > 1:
+                    self.ui.wallsEdit.appendPlainText(filename)
+            
+        if len(treesPath) > 0:
+            self.ui.treesLine.setText(treesPath)
+            
+            
+            filetype = treesPath + "/*obj"  
+                        
+            for line in subprocess.check_output(["ls", filetype]).split('\n'):
+                filename = line.rsplit('/', 1)[-1]
+                
+                if len(filename) > 1:
+                    self.ui.treesEdit.appendPlainText(filename)
+                    
+        else:
+            self.ui.treesBox.setVisible(False)
+            
+            windowRect = self.geometry()
+            windowRect.setHeight(self.minimumHeight())
+            self.setGeometry(windowRect) 
+            
+            settingsRect = self.ui.importSettings.geometry()               
+            settingsRect.setHeight(self.ui.importSettings.minimumHeight())
+            self.ui.importSettings.setGeometry(settingsRect)
+            
+            screenRes = QtGui.QDesktopWidget().screenGeometry()
+            self.move((screenRes.width() / 2.0) - (self.width() / 2.0), (screenRes.height() / 2.0) - (self.height() / 2.0))
+            
         self.defaultLocation = default
         self.terrainChecked = True
         self.terrainSize = terrainSize
@@ -267,7 +301,7 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.loadHeightmapButton.clicked.connect(self.loadHeightmap)
         self.ui.generateButton.clicked.connect(self.generate)
         self.ui.switch3DButton.clicked.connect(self.load3D)
-        self.ui.imageButton.clicked.connect(self.setPos)
+        self.ui.imageButton.clicked.connect(self.setPos)        
         
         self.centerWindow()    
                 
@@ -283,6 +317,15 @@ class ControlMainWindow(QtGui.QDialog):
         self.defaultLocation = ''        
         self.workingDir = customUI.__file__.rsplit('\\',1)[0]
         self.execDir = 'E:/mattt/Documents/Uni/FMP/Terrain/debug'
+        self.notFirstClose = False
+    
+    def closeEvent(self, event):
+        if self.notFirstClose:
+            subprocess.call(["rm", "-f", self.execDir + "/Output/*"])
+        else:
+            self.notFirstClose = True
+
+        event.accept()
         
     def moveFile(self, file):
         if file is 0:
@@ -388,7 +431,7 @@ class ControlMainWindow(QtGui.QDialog):
             
         
     def createImportWindow(self):
-        importer = importWindow(self, self.defaultLocation, self.ui.terrainLine.text(), self.ui.heightmapLine.text(), self.ui.textureLine.text(), self.ui.wallsLine.text(), self.ui.terrainSizeBox.value())
+        importer = importWindow(self, self.defaultLocation, self.ui.terrainLine.text(), self.ui.heightmapLine.text(), self.ui.textureLine.text(), self.ui.wallsLine.text(), self.ui.treeMeshLine.text(), self.ui.terrainSizeBox.value())
         importer.show()
 
     def loadSettings(self):        
@@ -616,7 +659,7 @@ class ControlMainWindow(QtGui.QDialog):
                 if result == QtGui.QMessageBox.Cancel:
                     return  
         else:
-            filepath = self.workingDir
+            filepath = self.execDir + "/Output"
             
         
         if self.hasSettings:
@@ -959,9 +1002,12 @@ class ControlMainWindow(QtGui.QDialog):
         
         if not self.hasSettings:
             self.saveSettings(True)
-            
+                        
         if len(self.ui.wallsLine.text()) < 1:
             subprocess.call(["rm", self.execDir + "/Output/region*"])
+        else:
+            subprocess.call(["rm", self.ui.wallsLine.text() + "/region*"])
+            
     
         p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt"], stdout = subprocess.PIPE, bufsize = 1)
         
@@ -1003,12 +1049,19 @@ class ControlMainWindow(QtGui.QDialog):
             
             output = self.execDir + '/Output'
         
-        filetype = output + "/*.mtl"  
-        
+        filetype = output + "/*.mtl"          
         subprocess.call(["rm", "-f", filetype])
+        
+        if len(self.ui.wallsLine.text()) > 1:
+            filetype = self.ui.wallsLine.text() + "/*.mtl"
+            subprocess.call(["rm", "-f", filetype])
 
         print("Done")
-        self.load3D()  
+        
+        if self.is2D:
+            self.load3D() 
+        else:
+            self.change3D(10)
         
         self.ui.saveSettingsButton.setEnabled(True)
         
@@ -1032,9 +1085,7 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.switch3DButton.setEnabled(True)
         self.ui.importButton.setEnabled(True)
         
-        self.isGenerated = True   
-          
-                
+        self.isGenerated = True 
         
     def centerWindow(self):                
         screenRes = QtGui.QDesktopWidget().screenGeometry()
@@ -1048,8 +1099,15 @@ class ControlMainWindow(QtGui.QDialog):
     settingsDir = ''
     workingDir = ''
     execDir = ''
+    notFirstClose = False
    
- 
-myWin = ControlMainWindow(parent=maya_main_window())
+global UI
 
-myWin.show()
+try:
+    UI.close()
+except: 
+    pass
+
+UI = ControlMainWindow(parent=maya_main_window())
+
+UI.show()
