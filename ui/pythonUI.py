@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'pythonUI.ui'
 #
-# Created: Fri Jun 09 09:43:48 2017
+# Created: Fri Jun 09 18:19:42 2017
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -721,6 +721,7 @@ class Ui_Dialog(object):
         self.verticalLayout_10.addLayout(self.horizontalLayout_21)
         self.verticalLayout_5.addWidget(self.groupBox_4)
         self.groupBox_5 = QtGui.QGroupBox(self.layoutWidget1)
+        self.groupBox_5.setEnabled(False)
         self.groupBox_5.setMinimumSize(QtCore.QSize(300, 60))
         self.groupBox_5.setMaximumSize(QtCore.QSize(300, 60))
         self.groupBox_5.setCheckable(True)
@@ -776,7 +777,8 @@ class Ui_Dialog(object):
         self.generateProgress = QtGui.QProgressBar(self.layoutWidget1)
         self.generateProgress.setEnabled(False)
         self.generateProgress.setProperty("value", 0)
-        self.generateProgress.setTextVisible(False)
+        self.generateProgress.setAlignment(QtCore.Qt.AlignCenter)
+        self.generateProgress.setTextVisible(True)
         self.generateProgress.setObjectName("generateProgress")
         self.verticalLayout_11.addWidget(self.generateProgress)
         self.horizontalLayout_19 = QtGui.QHBoxLayout()
@@ -784,7 +786,7 @@ class Ui_Dialog(object):
         spacerItem13 = QtGui.QSpacerItem(58, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_19.addItem(spacerItem13)
         self.importButton = QtGui.QPushButton(self.layoutWidget1)
-        self.importButton.setEnabled(True)
+        self.importButton.setEnabled(False)
         self.importButton.setMinimumSize(QtCore.QSize(75, 30))
         font = QtGui.QFont()
         font.setPointSize(8)
@@ -809,7 +811,7 @@ class Ui_Dialog(object):
         self.verticalLayout_8.addWidget(self.vLayoutWidget)
 
         self.retranslateUi(Dialog)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QObject.connect(self.seedValueCheck, QtCore.SIGNAL("toggled(bool)"), self.seedValueBox.setEnabled)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 

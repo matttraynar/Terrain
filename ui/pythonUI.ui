@@ -366,7 +366,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">
@@ -1807,6 +1807,9 @@
                 </item>
                 <item>
                  <widget class="QGroupBox" name="groupBox_5">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="minimumSize">
                    <size>
                     <width>300</width>
@@ -1983,8 +1986,11 @@
                   <property name="value">
                    <number>0</number>
                   </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
                   <property name="textVisible">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
@@ -2006,7 +2012,7 @@
                   <item>
                    <widget class="QPushButton" name="importButton">
                     <property name="enabled">
-                     <bool>true</bool>
+                     <bool>false</bool>
                     </property>
                     <property name="minimumSize">
                      <size>
