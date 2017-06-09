@@ -24,7 +24,11 @@ def maya_main_window():
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
 
 class importWindow(QtGui.QDialog):
-    def __init__(self, parent=None, default = '', terrainPath = '', heightmapPath = '', texturePath = '', wallsPath = '', treesPath = '', terrainSize = 50): 
+    def __init__(self, parent=None, default = '', terrainPath = '', terrainSize = 50,   \
+                 heightmapPath = '', texturePath = '', wallsPath = '',                  \
+                 treesPath = '', positionPath = '',                                     \
+                 farmX = 0, farmY = 0, farmZ = 0): 
+        
         super(importWindow, self).__init__(parent)
         self.setWindowFlags(QtCore.Qt.Tool)
         self.ui =  importUI.Ui_Dialog()
@@ -91,6 +95,8 @@ class importWindow(QtGui.QDialog):
         self.terrainChecked = True
         self.terrainSize = terrainSize
         
+        self.positions = positionPath
+        
         if not cmds.contextInfo('heightmapTool', exists = True):
             cmds.artPuttyCtx('heightmapTool')
 
@@ -105,7 +111,7 @@ class importWindow(QtGui.QDialog):
             if len(str(self.ui.terrainLine.text())) < 1:
                 flags = QtGui.QMessageBox.StandardButton.Ok
                 
-                result = QtGui.QMessageBox.warning(self, "No Terrain Path", "File path for the terrain not given", flags)
+                result = QtGui.QMessageBox.warning(self, "No Terrain Path", "<p align = 'center'>File path for the terrain not given</p>", flags)
                     
                 if result == QtGui.QMessageBox.Ok:
                     return
@@ -116,7 +122,7 @@ class importWindow(QtGui.QDialog):
             if len(str(self.ui.heightmapLine.text())) < 1:
                 flags = QtGui.QMessageBox.StandardButton.Ok
                 
-                result = QtGui.QMessageBox.warning(self, "No Heightmap Path", "File path for the heightmap not given", flags)
+                result = QtGui.QMessageBox.warning(self, "No Heightmap Path", "<p align = 'center'>File path for the heightmap not given</p>", flags)
                     
                 if result == QtGui.QMessageBox.Ok:
                     return
@@ -165,8 +171,7 @@ class importWindow(QtGui.QDialog):
                         
             cmds.sets(fe = "TerrainShadingGroup", e = True) 
             
-        if self.ui.wallsBox.isChecked():
-            
+        if self.ui.wallsBox.isChecked():            
             filepath = ''
             
             if len(self.ui.wallsEdit.toPlainText()) > 1:
@@ -177,6 +182,57 @@ class importWindow(QtGui.QDialog):
                         filepath = self.ui.wallsLine.text() + "/"
                     else:
                         filepath += c
+                        
+        if self.ui.treesBox.isChecked():            
+            filepath = ''
+            
+            treeMeshPaths = []
+            
+            if len(self.ui.treesEdit.toPlainText()) > 1:
+                filepath = self.ui.treesLine.text() + "/"
+                for c in self.ui.treesEdit.toPlainText():                
+                    if c == '\n':
+                        treeMeshPaths.append(filepath)
+                        filepath = self.ui.treesLine.text() + "/"
+                    else:
+                        filepath += c
+                                
+                f = open(self.positions + "/locationData.txt", "r")
+                
+                count = len(f.readlines())
+                f.seek(0)
+                
+                if count > 500:
+                    flags = QtGui.QMessageBox.StandardButton.Ok
+                    flags |= QtGui.QMessageBox.StandardButton.Abort
+                    
+                    result = QtGui.QMessageBox.critical(self, "Large Import", "<p align = 'center'>You are about to import " + str(count) + " meshes, this<br>may take some time. Do you wish to proceed?</p>", flags)
+                        
+                    if result == QtGui.QMessageBox.Ok:
+                        for line in f.readlines():                                
+                            if line.find("#") is -1:
+                                data = line.split("/")
+                                
+                                index = int(data[3].rstrip()) % len(treeMeshPaths)
+                                cmds.file(treeMeshPaths[index], i=True, ns="Trees", mnc=True)
+                                
+                                importedTrees = cmds.ls("Trees:*", sn = True)
+                                
+                                moveIndex = len(importedTrees) / 2
+                                
+                                if moveIndex is 1:
+                                    moveIndex = 0
+                                
+                                cmds.select(importedTrees[moveIndex].split("|")[0])
+                                cmds.xform(importedTrees[moveIndex].split("|")[0], t = (float(data[0]), float(data[1]), float(data[2])))
+                                
+                            else:
+                                continue                    
+                        
+                f.close()
+                
+                
+                
             
                                               
         self.close()
@@ -228,7 +284,7 @@ class importWindow(QtGui.QDialog):
                 flags = QtGui.QMessageBox.StandardButton.Retry
                 flags |= QtGui.QMessageBox.StandardButton.Cancel
                 
-                result = QtGui.QMessageBox.critical(self, "No files found", "Could not find any obj files at " + filepath, flags)
+                result = QtGui.QMessageBox.critical(self, "No files found", "<p align = 'center'>Could not find any obj files at " + filepath + "</p>", flags)
                 
                 if result == QtGui.QMessageBox.Retry:
                     self.search(lineEdit)
@@ -262,6 +318,7 @@ class importWindow(QtGui.QDialog):
     defaultLocation = ''
     terrainChecked = True
     terrainSize = 50
+    positions = ''
             
 
 class ControlMainWindow(QtGui.QDialog): 
@@ -278,6 +335,8 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.resetSettingsButton.clicked.connect(self.resetSettings)
         self.ui.saveSettingsButton.clicked.connect(lambda: self.saveSettings(False))
         
+        self.ui.trees.toggled.connect(self.ui.groupBox_5.setEnabled)
+        
         self.ui.farmMeshButton.clicked.connect(lambda: self.search(0))
         self.ui.treeMeshButton.clicked.connect(lambda: self.search(1))
         self.ui.terrainButton.clicked.connect(lambda: self.search(2))
@@ -287,8 +346,8 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.locationButton.clicked.connect(lambda: self.search(6))
         self.ui.defaultButton.clicked.connect(lambda: self.search(7))
         self.ui.pushButton.clicked.connect(lambda: self.search(8))
-        self.ui.pushButton_2.clicked.connect(lambda: self.search(9))  
-        
+        self.ui.pushButton_2.clicked.connect(lambda: self.search(9)) 
+                
         self.ui.postGenTerrain.clicked.connect(lambda: self.moveFile(0))
         self.ui.postGenTexture.clicked.connect(lambda: self.moveFile(1))
         self.ui.postGenHeightmap.clicked.connect(lambda: self.moveFile(2))
@@ -332,7 +391,7 @@ class ControlMainWindow(QtGui.QDialog):
             if len(self.ui.terrainLine.text()) < 1:
                 flags = QtGui.QMessageBox.StandardButton.Ok
             
-                result = QtGui.QMessageBox.warning(self, "No Export Path", "File path to export terrain not found", flags)
+                result = QtGui.QMessageBox.warning(self, "No Export Path", "<p align = 'center'>File path to export terrain not found</p>", flags)
                     
                 if result == QtGui.QMessageBox.Ok:
                     return 
@@ -341,7 +400,7 @@ class ControlMainWindow(QtGui.QDialog):
                 flags = QtGui.QMessageBox.StandardButton.Ok
                 flags |= QtGui.QMessageBox.StandardButton.Cancel
                 
-                result = QtGui.QMessageBox.warning(self, "File Exists", "A terrain obj already exists at " + self.ui.terrainLine.text() + "\nThis will replace it", flags)
+                result = QtGui.QMessageBox.warning(self, "File Exists", "<p align = 'center'>A terrain obj already exists at " + self.ui.terrainLine.text() + "<br>This will replace it</p>", flags)
                     
                 if result == QtGui.QMessageBox.Cancel:
                     return 
@@ -354,7 +413,7 @@ class ControlMainWindow(QtGui.QDialog):
             if len(self.ui.textureLine.text()) < 1:
                 flags = QtGui.QMessageBox.StandardButton.Ok
             
-                result = QtGui.QMessageBox.warning(self, "No Export Path", "File path to export texture not found", flags)
+                result = QtGui.QMessageBox.warning(self, "No Export Path", "<p align = 'center'>File path to export texture not found</p>", flags)
                     
                 if result == QtGui.QMessageBox.Ok:
                     return 
@@ -363,7 +422,7 @@ class ControlMainWindow(QtGui.QDialog):
                 flags = QtGui.QMessageBox.StandardButton.Ok
                 flags |= QtGui.QMessageBox.StandardButton.Cancel
                 
-                result = QtGui.QMessageBox.warning(self, "File Exists", "A texture already exists at " + self.ui.textureLine.text() + "\nThis will replace it", flags)
+                result = QtGui.QMessageBox.warning(self, "File Exists", "<p align = 'center'>A texture already exists at " + self.ui.textureLine.text() + "<br>This will replace it</p>", flags)
                     
                 if result == QtGui.QMessageBox.Cancel:
                     return 
@@ -387,7 +446,7 @@ class ControlMainWindow(QtGui.QDialog):
                 flags = QtGui.QMessageBox.StandardButton.Ok
                 flags |= QtGui.QMessageBox.StandardButton.Cancel
                 
-                result = QtGui.QMessageBox.warning(self, "File Exists", "A heightmap already exists at " + self.ui.heightmapLine.text() + "\nThis will replace it", flags)
+                result = QtGui.QMessageBox.warning(self, "File Exists", "<p align = 'center'>A heightmap already exists at " + self.ui.heightmapLine.text() + "<br>This will replace it</p>", flags)
                     
                 if result == QtGui.QMessageBox.Cancel:
                     return 
@@ -402,7 +461,7 @@ class ControlMainWindow(QtGui.QDialog):
             if len(self.ui.wallsLine.text()) < 1:
                 flags = QtGui.QMessageBox.StandardButton.Ok
             
-                result = QtGui.QMessageBox.warning(self, "No Export Path", "File path to export heightmap not found", flags)
+                result = QtGui.QMessageBox.warning(self, "No Export Path", "<p align = 'center'>File path to export heightmap not found</p>", flags)
                     
                 if result == QtGui.QMessageBox.Ok:
                     return 
@@ -411,7 +470,7 @@ class ControlMainWindow(QtGui.QDialog):
                 flags = QtGui.QMessageBox.StandardButton.Ok
                 flags |= QtGui.QMessageBox.StandardButton.Cancel
                 
-                result = QtGui.QMessageBox.warning(self, "File Exists", "Some walls files already exist at " + self.ui.wallsLine.text() + "\nThis will replace them", flags)
+                result = QtGui.QMessageBox.warning(self, "File Exists", "<p align = 'center'>Some walls files already exist at " + self.ui.wallsLine.text() + "<br>This will replace them</p>", flags)
                     
                 if result == QtGui.QMessageBox.Cancel:
                     return 
@@ -431,14 +490,17 @@ class ControlMainWindow(QtGui.QDialog):
             
         
     def createImportWindow(self):
-        importer = importWindow(self, self.defaultLocation, self.ui.terrainLine.text(), self.ui.heightmapLine.text(), self.ui.textureLine.text(), self.ui.wallsLine.text(), self.ui.treeMeshLine.text(), self.ui.terrainSizeBox.value())
+        importer = importWindow(self, self.defaultLocation, self.ui.terrainLine.text(), self.ui.terrainSizeBox.value(), \
+                                self.ui.heightmapLine.text(), self.ui.textureLine.text(), self.ui.wallsLine.text(),     \
+                                self.ui.treeMeshLine.text(), self.ui.locationLine.text(),                               \
+                                self.ui.translateXBox.value(), self.ui.translateYBox.value(), self.ui.translateZBox.value())
         importer.show()
 
     def loadSettings(self):        
         if len(self.ui.lineEdit.text()) < 1:
             flags = QtGui.QMessageBox.StandardButton.Ok
             
-            result = QtGui.QMessageBox.warning(self, "No Load Path", "File path to load settings not found", flags)
+            result = QtGui.QMessageBox.warning(self, "No Load Path", "<p align = 'center'>File path to load settings not found</p>", flags)
                 
             if result == QtGui.QMessageBox.Ok:
                 return 
@@ -448,17 +510,17 @@ class ControlMainWindow(QtGui.QDialog):
         if not os.path.exists(filepath + "/fieldSettings.txt"):
             flags = QtGui.QMessageBox.StandardButton.Ok
             
-            result = QtGui.QMessageBox.warning(self, "No Settings Found", "No settings file found at " + filepath, flags)
+            result = QtGui.QMessageBox.warning(self, "No Settings Found", "<p align = 'center'>No settings file found at " + filepath + "</p>", flags)
                 
             if result == QtGui.QMessageBox.Ok:
                 return    
                                
-        filepath = str(filepath)
+        # filepath = str(filepath)
         
         self.resetSettings()
         self.ui.lineEdit.setText(filepath)
         
-        f = open(filepath + "/fieldSettings.txt", 'r')     
+        f = open(str(filepath) + "/fieldSettings.txt", 'r')     
            
         value = int(f.readline())
         
@@ -641,7 +703,7 @@ class ControlMainWindow(QtGui.QDialog):
             if len(self.ui.lineEdit_2.text()) < 1:
                 flags = QtGui.QMessageBox.StandardButton.Ok
                 
-                result = QtGui.QMessageBox.warning(self, "No Save Path", "File path to save settings not found", flags)
+                result = QtGui.QMessageBox.warning(self, "No Save Path", "<p align = 'center'>File path to save settings not found</p>", flags)
                     
                 if result == QtGui.QMessageBox.Ok:
                     return  
@@ -652,7 +714,7 @@ class ControlMainWindow(QtGui.QDialog):
                 flags = QtGui.QMessageBox.StandardButton.Ok
                 flags |= QtGui.QMessageBox.StandardButton.Cancel
                 
-                result = QtGui.QMessageBox.warning(self, "File Exists", "A settings file already exists at " + filepath + "\nThis will replace it", flags)
+                result = QtGui.QMessageBox.warning(self, "File Exists", "<p align = 'center'>A settings file already exists at " + filepath + "<br>This will replace it</p>", flags)
                     
                 if result == QtGui.QMessageBox.Ok:
                     open(filepath + "/fieldSettings.txt", 'w').close()
@@ -817,7 +879,7 @@ class ControlMainWindow(QtGui.QDialog):
                 flags = QtGui.QMessageBox.StandardButton.Retry
                 flags |= QtGui.QMessageBox.StandardButton.Cancel
                 
-                result = QtGui.QMessageBox.critical(self, "No files found", "Could not find any obj files at " + filepath, flags)
+                result = QtGui.QMessageBox.critical(self, "No files found", "<p align = 'center'>Could not find any obj files at " + filepath + "</p>", flags)
                 
                 if result == QtGui.QMessageBox.Retry:
                     self.search(lineEdit)
@@ -928,7 +990,7 @@ class ControlMainWindow(QtGui.QDialog):
             if (len(self.ui.textureLine.text()) is 0) and (len(self.ui.heightmapLine.text()) is 0) and (len(self.ui.wallsLine.text()) is 0):
                 flags = QtGui.QMessageBox.StandardButton.Ok
 
-                result = QtGui.QMessageBox.warning(self, "No 2D Path", "No 2D images were exported (Texture, Heightmap, Walls)", flags)
+                result = QtGui.QMessageBox.warning(self, "No 2D Path", "<p align = 'center'>No 2D images were exported (Texture, Heightmap, Walls)</p>", flags)
 
                 if result == QtGui.QMessageBox.Ok:
                     return 
@@ -993,12 +1055,14 @@ class ControlMainWindow(QtGui.QDialog):
             flags = QtGui.QMessageBox.StandardButton.Ok
             flags |= QtGui.QMessageBox.StandardButton.Cancel
             
-            result = QtGui.QMessageBox.warning(self, "Regeneration Warning", "Doing this will regenerate the fields, do you want to proceed?", flags)
+            result = QtGui.QMessageBox.warning(self, "Regeneration Warning", "<p align = 'center'>Doing this will regenerate the fields, do you want to proceed?</p>", flags)
                 
             if result == QtGui.QMessageBox.Cancel:
                 return  
         
-        print("\nStarting terrain process\n");
+        print("\nStarting terrain process\n")
+        
+        self.ui.generateProgress.setValue(0)
         
         if not self.hasSettings:
             self.saveSettings(True)
@@ -1008,84 +1072,89 @@ class ControlMainWindow(QtGui.QDialog):
         else:
             subprocess.call(["rm", self.ui.wallsLine.text() + "/region*"])
             
-    
+        self.ui.generateProgress.setEnabled(True)
+        
         p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt"], stdout = subprocess.PIPE, bufsize = 1)
         
         for line in iter(p.stdout.readline, b''):
-            print line,
+            self.ui.generateProgress.setValue(float(line))
         
         p.stdout.close()
         p.wait()
         
-        output = ''
-        
-        if len(self.ui.terrainLine.text()) > 1:
-            output = self.ui.terrainLine.text()
-            cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
+        if self.ui.generateProgress.value() > 99:
+            output = ''
             
-            cmds.select("Terrain:*")
-            cmds.polySetToFaceNormal()
-            cmds.polyNormal(nm = 0, ch = 0)
-            cmds.polySoftEdge(a = 180, ch = 0)
-            cmds.select("Terrain:*")
-        
-            cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
-        
-            cmds.select("Terrain:*")
-            cmds.delete()
-        else:
-            cmds.file(self.execDir+ "/Output/Terrain.obj", i=True, ns="Terrain", mnc=True)
+            if len(self.ui.terrainLine.text()) > 1:
+                output = self.ui.terrainLine.text()
+                cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
+                
+                cmds.select("Terrain:*")
+                cmds.polySetToFaceNormal()
+                cmds.polyNormal(nm = 0, ch = 0)
+                cmds.polySoftEdge(a = 180, ch = 0)
+                cmds.select("Terrain:*")
             
-            cmds.select("Terrain:*")
-            cmds.polySetToFaceNormal()
-            cmds.polyNormal(nm = 0, ch = 0)
-            cmds.polySoftEdge(a = 180, ch = 0)
-            cmds.select("Terrain:*")
+                cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
             
-            cmds.file(self.execDir + "/Output/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
+                cmds.select("Terrain:*")
+                cmds.delete()
+            else:
+                cmds.file(self.execDir+ "/Output/Terrain.obj", i=True, ns="Terrain", mnc=True)
+                
+                cmds.select("Terrain:*")
+                cmds.polySetToFaceNormal()
+                cmds.polyNormal(nm = 0, ch = 0)
+                cmds.polySoftEdge(a = 180, ch = 0)
+                cmds.select("Terrain:*")
+                
+                cmds.file(self.execDir + "/Output/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
+                
+                cmds.select("Terrain:*")
+                cmds.delete()
+                
+                output = self.execDir + '/Output'
             
-            cmds.select("Terrain:*")
-            cmds.delete()
-            
-            output = self.execDir + '/Output'
-        
-        filetype = output + "/*.mtl"          
-        subprocess.call(["rm", "-f", filetype])
-        
-        if len(self.ui.wallsLine.text()) > 1:
-            filetype = self.ui.wallsLine.text() + "/*.mtl"
+            filetype = output + "/*.mtl"          
             subprocess.call(["rm", "-f", filetype])
-
-        print("Done")
-        
-        if self.is2D:
-            self.load3D() 
-        else:
-            self.change3D(10)
-        
-        self.ui.saveSettingsButton.setEnabled(True)
-        
-        self.ui.postGenTerrain.setEnabled(True)
-        
-        if len(self.ui.textureLine.text()) > 0:
-            self.ui.loadTextureButton.setEnabled(True)
             
-        self.ui.postGenTexture.setEnabled(True)
-        
-        if len(self.ui.heightmapLine.text()) > 0:
-            self.ui.loadHeightmapButton.setEnabled(True)
-        
-        self.ui.postGenHeightmap.setEnabled(True)
-        
-        if len(self.ui.wallsLine.text()) > 0:
-            self.ui.loadWallsButton.setEnabled(True)
-        
-        self.ui.postGenWalls.setEnabled(True)
-        
-        self.ui.switch3DButton.setEnabled(True)
-        self.ui.importButton.setEnabled(True)
-        
-        self.isGenerated = True 
+            if len(self.ui.wallsLine.text()) > 1:
+                filetype = self.ui.wallsLine.text() + "/*.mtl"
+                subprocess.call(["rm", "-f", filetype])
+
+            print("Done")
+            
+            if self.is2D:
+                self.load3D() 
+            else:
+                self.change3D(10)
+            
+            self.ui.saveSettingsButton.setEnabled(True)
+            
+            self.ui.postGenTerrain.setEnabled(True)
+            
+            if len(self.ui.textureLine.text()) > 0:
+                self.ui.loadTextureButton.setEnabled(True)
+                
+            self.ui.postGenTexture.setEnabled(True)
+            
+            if len(self.ui.heightmapLine.text()) > 0:
+                self.ui.loadHeightmapButton.setEnabled(True)
+            
+            self.ui.postGenHeightmap.setEnabled(True)
+            
+            if len(self.ui.wallsLine.text()) > 0:
+                self.ui.loadWallsButton.setEnabled(True)
+            
+            self.ui.postGenWalls.setEnabled(True)
+            
+            self.ui.switch3DButton.setEnabled(True)
+            self.ui.importButton.setEnabled(True)
+            
+            self.isGenerated = True
+            
+        else:
+            self.ui.generateProgress.setValue(0) 
         
     def centerWindow(self):                
         screenRes = QtGui.QDesktopWidget().screenGeometry()
