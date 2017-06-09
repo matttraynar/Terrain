@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'pythonUI.ui'
 #
-# Created: Thu Jun 08 21:08:16 2017
+# Created: Fri Jun 09 09:43:48 2017
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -809,7 +809,7 @@ class Ui_Dialog(object):
         self.verticalLayout_8.addWidget(self.vLayoutWidget)
 
         self.retranslateUi(Dialog)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QObject.connect(self.seedValueCheck, QtCore.SIGNAL("toggled(bool)"), self.seedValueBox.setEnabled)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
