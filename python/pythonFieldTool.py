@@ -24,7 +24,7 @@ def maya_main_window():
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
 
 class importWindow(QtGui.QDialog):
-    def __init__(self, parent=None, default = '', terrainPath = '', heightmapPath = '', texturePath = '', terrainSize = 50): 
+    def __init__(self, parent=None, default = '', terrainPath = '', heightmapPath = '', texturePath = '', wallsPath = '', terrainSize = 50): 
         super(importWindow, self).__init__(parent)
         self.setWindowFlags(QtCore.Qt.Tool)
         self.ui =  importUI.Ui_Dialog()
@@ -33,6 +33,7 @@ class importWindow(QtGui.QDialog):
         self.ui.terrainButton.clicked.connect(lambda: self.search(0))
         self.ui.heightmapButton.clicked.connect(lambda: self.search(1))
         self.ui.textureButton.clicked.connect(lambda: self.search(2))
+        self.ui.wallsButton.clicked.connect(lambda: self.search(3))
         
         self.ui.terrainBox.toggled.connect(self.switchGroupBox) 
         self.ui.heightmapBox.toggled.connect(self.switchGroupBox)       
@@ -48,12 +49,16 @@ class importWindow(QtGui.QDialog):
             
         if len(texturePath) > 0:
             self.ui.textureLine.setText(texturePath + "/terrainTexture.png")
+            
+        if len(wallsPath) > 0:
+            self.ui.wallsLine.setText(wallsPath)
         
         self.defaultLocation = default
         self.terrainChecked = True
         self.terrainSize = terrainSize
         
-        cmds.artPuttyCtx('artPuttyContext', ifl = self.ui.heightmapLine.text(), md = 20, e = True)
+        if not cmds.contextInfo('heightmapTool', exists = True):
+            cmds.artPuttyCtx('heightmapTool')
 
         
     def switchGroupBox(self):
@@ -73,10 +78,6 @@ class importWindow(QtGui.QDialog):
             else:                
                 filename = cmds.file(self.ui.terrainLine.text(), i=True, ns="Terrain", mnc=True)
                 
-                # cmds.select("Terrain:*")
-                # cmds.polySetToFaceNormal()
-                # cmds.polyNormal(nm = 0, ch = 0)
-                # cmds.polySoftEdge(a = 180, ch = 0)
         else:
             if len(str(self.ui.heightmapLine.text())) < 1:
                 flags = QtGui.QMessageBox.StandardButton.Ok
@@ -91,11 +92,11 @@ class importWindow(QtGui.QDialog):
                     cmds.delete()
                 
                 cmds.polyPlane(n="HeightmapTerrain", w=self.terrainSize, h=self.terrainSize, sx = 100, sy = 100)
-                cmds.select("HeightmapTerrain")                
-                    
+                cmds.select("HeightmapTerrain")    
                 
-                cmds.setToolTo('artPuttyContext')
-                cmds.artPuttyCtx('artPuttyContext', ifl = self.ui.heightmapLine.text(), md = 20, e = True)
+                cmds.setToolTo('heightmapTool')
+                cmds.artPuttyCtx('heightmapTool', md = 20, e = True)
+                cmds.artPuttyCtx('heightmapTool', ifl = self.ui.heightmapLine.text(), e = True)
 
                 cmds.setToolTo('selectSuperContext')
                 cmds.setAttr("HeightmapTerrain.scaleY", -1)
@@ -108,16 +109,42 @@ class importWindow(QtGui.QDialog):
                 cmds.polySoftEdge(a = 180)
                 
                 cmds.select(cl = True)
+                
+        if self.ui.textureBox.isChecked():
+            if not cmds.objExists("TerrainShader"):
+                lambertNode = cmds.shadingNode("lambert", asShader = True, n = "TerrainShader")
+                fileNode = cmds.shadingNode("file", asTexture = True, n = "TerrainTexture", icm = True)
+                shadingGrp = cmds.sets(renderable = True, noSurfaceShader = True, empty = True, n = "TerrainShadingGroup")
+                            
+                cmds.setAttr("TerrainTexture.fileTextureName", self.ui.textureLine.text(), type = "string")
+                cmds.connectAttr("%s.outColor" %lambertNode, "%s.surfaceShader" %shadingGrp)
+                cmds.connectAttr("%s.outColor" %fileNode, "%s.color" %lambertNode)
+            
+            else:
+                cmds.setAttr("TerrainTexture.fileTextureName", self.ui.textureLine.text(), type = "string")
+            
+            if self.terrainChecked:
+                cmds.select("Terrain:*")
+            else:
+                cmds.select("HeightmapTerrain")
+                        
+                        
+            cmds.sets(fe = "TerrainShadingGroup", e = True)                
+                
+            
+        if self.ui.wallsBox.isChecked():
+            print 'loading walls'
                                               
         self.close()
         
     def search(self, lineEdit):
         filepath = ''
+        filetype = ''
         if lineEdit is 0:
-            if len(self.defaultLocation) < 1 and len(self.ui.terrainPath.text()) < 1:
+            if len(self.defaultLocation) < 1 and len(self.ui.terrainLine.text()) < 1:
                 filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", ".", "Geometry files (*.obj)")
-            elif len(self.ui.terrainPath.text()) > 0:
-                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", self.ui.terrainPath.text(), "Geometry files (*.obj)")
+            elif len(self.ui.terrainLine.text()) > 0:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", self.ui.terrainLine.text(), "Geometry files (*.obj)")
             else:
                 filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Geometry files (*.obj)")
                 
@@ -136,6 +163,34 @@ class importWindow(QtGui.QDialog):
                 filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", self.ui.textureLine.text(), "Image files (*.png *.jpg)")
             else:
                 filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Image files (*.png *.jpg)")
+                
+        elif lineEdit is 3:
+            if len(self.defaultLocation) < 1 and len(self.ui.wallsLine.text()) < 1:
+                filepath = QtGui.QFileDialog.getExistingDirectory(self, "Choose a folder", ".", QtGui.QFileDialog.ShowDirsOnly)
+            elif len(self.ui.wallsLine.text()) > 0:
+                filepath = QtGui.QFileDialog.getExistingDirectory(self, "Choose a folder", self.ui.wallsLine.text(), QtGui.QFileDialog.ShowDirsOnly)
+            else:
+                filepath = QtGui.QFileDialog.getExistingDirectory(self, "Choose a folder", str(self.defaultLocation), QtGui.QFileDialog.ShowDirsOnly)
+            
+            if len(filepath) < 1:
+                return
+                                        
+            filetype = filepath + "/region*"
+            files = []
+                       
+            try:
+                files = subprocess.check_output(["ls", filetype]).split('\n')
+            except subprocess.CalledProcessError as e:
+                flags = QtGui.QMessageBox.StandardButton.Retry
+                flags |= QtGui.QMessageBox.StandardButton.Cancel
+                
+                result = QtGui.QMessageBox.critical(self, "No files found", "Could not find any obj files at " + filepath, flags)
+                
+                if result == QtGui.QMessageBox.Retry:
+                    self.search(lineEdit)
+                    return
+                elif result == QtGui.QMessageBox.Cancel:
+                    return   
             
             
         if len(filepath) < 1:
@@ -149,6 +204,16 @@ class importWindow(QtGui.QDialog):
                 
         elif lineEdit is 2:
             self.ui.textureLine.setText(filepath[0])
+            
+        elif lineEdit is 3:  
+            self.ui.wallsEdit.clear()
+            self.ui.wallsLine.setText(filepath)            
+                        
+            for line in subprocess.check_output(["ls", filetype]).split('\n'):
+                filename = line.rsplit('/', 1)[-1]
+                
+                if len(filename) > 1:
+                    self.ui.wallsEdit.appendPlainText(filename)
             
     defaultLocation = ''
     terrainChecked = True
@@ -313,7 +378,7 @@ class ControlMainWindow(QtGui.QDialog):
             
         
     def createImportWindow(self):
-        importer = importWindow(self, self.defaultLocation, self.ui.terrainLine.text(), self.ui.heightmapLine.text(), self.ui.textureLine.text(), self.ui.terrainSizeBox.value())
+        importer = importWindow(self, self.defaultLocation, self.ui.terrainLine.text(), self.ui.heightmapLine.text(), self.ui.textureLine.text(), self.ui.wallsLine.text(), self.ui.terrainSizeBox.value())
         importer.show()
 
     def loadSettings(self):        
@@ -710,6 +775,7 @@ class ControlMainWindow(QtGui.QDialog):
                     
                     
         if lineEdit == 0:
+            self.ui.farmMeshBrowser.clear()
             self.ui.farmMeshLine.setText(filepath)            
                         
             for line in subprocess.check_output(["ls", filetype]).split('\n'):
@@ -719,6 +785,7 @@ class ControlMainWindow(QtGui.QDialog):
                     self.ui.farmMeshBrowser.appendPlainText(filename)
                                 
         elif lineEdit == 1:
+            self.ui.treeMeshBrowser.clear()
             self.ui.treeMeshLine.setText(filepath)            
                         
             for line in subprocess.check_output(["ls", filetype]).split('\n'):
@@ -881,6 +948,9 @@ class ControlMainWindow(QtGui.QDialog):
         
         if not self.hasSettings:
             self.saveSettings(True)
+            
+        if len(self.ui.wallsLine.text()) < 1:
+            subprocess.call(["rm", self.execDir + "/Output/region*"])
     
         p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt"], stdout = subprocess.PIPE, bufsize = 1)
         
@@ -895,9 +965,6 @@ class ControlMainWindow(QtGui.QDialog):
         if len(self.ui.terrainLine.text()) > 1:
             output = self.ui.terrainLine.text()
             cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
-            # else:
-            #     output = self.ui.terrainLine.text()
-            #     cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
             
             cmds.select("Terrain:*")
             cmds.polySetToFaceNormal()
@@ -905,9 +972,6 @@ class ControlMainWindow(QtGui.QDialog):
             cmds.polySoftEdge(a = 180, ch = 0)
             cmds.select("Terrain:*")
         
-            # if len(self.ui.terrainLine.text()) < 1:
-            #     cmds.file(self.workingDir + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
-            # else:
             cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
         
             cmds.select("Terrain:*")
@@ -930,7 +994,7 @@ class ControlMainWindow(QtGui.QDialog):
         
         filetype = output + "/*.mtl"  
         
-        subprocess.check_output(["rm", "-f", filetype])
+        subprocess.call(["rm", "-f", filetype])
 
         print("Done")
         self.load3D()  
