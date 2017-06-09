@@ -33,9 +33,10 @@ int main(int argc, char *argv[])
     GLWidget window(filenameStr, settingsStr);
     std::cout<<"Setup complete, rendering";
 
-    window.renderOrtho();
 
     window.render3D();
+
+    window.renderOrtho();
 
     window.renderTexture();
 

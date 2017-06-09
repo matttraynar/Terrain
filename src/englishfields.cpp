@@ -83,7 +83,7 @@ EnglishFields::~EnglishFields()
 //    }
 }
 
-void EnglishFields::exportFields(std::string _exportPath)
+void EnglishFields::exportFields(std::string _exportPath, bool defaultPath)
 {
     std::stringstream stream;
 
@@ -91,7 +91,16 @@ void EnglishFields::exportFields(std::string _exportPath)
     {
         qInfo()<<"Exporting region "<<i;
         stream<<i;
-        m_regions[i].exportRegion(_exportPath + "/Output/region" + stream.str() + ".obj");
+
+        if(defaultPath)
+        {
+            m_regions[i].exportRegion(_exportPath + "/Output/region" + stream.str() + ".obj");
+        }
+        else
+        {
+            m_regions[i].exportRegion(_exportPath + "/region" + stream.str() + ".obj");
+        }
+
         stream.str("");
         qInfo()<<"Finished region";
     }

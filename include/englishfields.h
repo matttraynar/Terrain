@@ -84,7 +84,7 @@ public:
 
     ~EnglishFields();
 
-    void exportFields(std::string _exportPath);
+    void exportFields(std::string _exportPath, bool defaultPath);
 
     void operator = (EnglishFields &toCopy);
 

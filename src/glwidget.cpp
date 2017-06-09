@@ -366,8 +366,6 @@ void GLWidget::initializeGL()
 {
     if(doOnce)
     {
-        glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
-
         glEnable(GL_DEPTH_TEST);
 
 
@@ -512,12 +510,9 @@ void GLWidget::initializeGL()
         m_pgm.release();
 
         qInfo()<<"Exporting terrain";
-        std::cout<<s_triangulateTerrain<<std::endl;
         if(s_exportTerrain)
         {
-            std::cout<<"Exporting"<<std::endl;
             ExportScene::sendTo("obj", s_terrainPath + "/Terrain.obj", m_verts, m_norms, m_uvs, s_terrainSize, s_triangulateTerrain, true);
-            std::cout<<"Exported scene"<<std::endl;
         }
         else
         {
@@ -529,13 +524,11 @@ void GLWidget::initializeGL()
         qInfo()<<"Exporting fields";
         if(s_exportWalls)
         {
-            std::cout<<"Exporting walls"<<std::endl;
-            m_fieldGenerator.exportFields(s_wallsPath);
+            m_fieldGenerator.exportFields(s_wallsPath, false);
         }
         else
         {
-            std::cout<<"Exporting walls"<<std::endl;
-            m_fieldGenerator.exportFields(m_workingPath);
+            m_fieldGenerator.exportFields(m_workingPath, true);
         }
         std::cout<<"Fields exported"<<std::endl;
         qInfo()<<"Done";
@@ -657,7 +650,6 @@ void GLWidget::renderTexture()
     shading = false;
     m_ortho =  true;
     m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
-    changeOrtho();
 
     QPixmap texture = renderPixmap(720, 720, false);
 
@@ -677,7 +669,6 @@ void GLWidget::renderTexture()
 void GLWidget::renderHeightmap()
 {
     m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
-    changeOrtho();
     heightmap = true;
 
     QPixmap heightmapImage = renderPixmap(720, 720, false);
@@ -723,7 +714,7 @@ void GLWidget::render3D()
     shading = true;
     m_ortho = false;
 
-    changeOrtho();
+    glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
     std::cout<<"Saving persp"<<std::endl;
 
     m_yRot -= 10 * 10.0f * 16.0f;
