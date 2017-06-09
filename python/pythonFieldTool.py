@@ -129,11 +129,21 @@ class importWindow(QtGui.QDialog):
                 cmds.select("HeightmapTerrain")
                         
                         
-            cmds.sets(fe = "TerrainShadingGroup", e = True)                
-                
+            cmds.sets(fe = "TerrainShadingGroup", e = True) 
             
         if self.ui.wallsBox.isChecked():
-            print 'loading walls'
+            
+            filepath = ''
+            
+            if len(self.ui.wallsEdit.toPlainText()) > 1:
+                filepath = self.ui.wallsLine.text() + "/"
+                for c in self.ui.wallsEdit.toPlainText():                
+                    if c == '\n':
+                        cmds.file(filepath, i=True, ns="Walls", mnc=True)
+                        filepath = self.ui.wallsLine.text() + "/"
+                    else:
+                        filepath += c
+            
                                               
         self.close()
         
@@ -917,6 +927,7 @@ class ControlMainWindow(QtGui.QDialog):
         if not self.ui.imageButton.isEnabled():
             return   
         elif self.ui.imageButton.cursor().shape() == QtCore.Qt.CursorShape.ArrowCursor:
+            self.ui.imageButton.setDown(True)
             return
         
         if not self.ui.farmPosition.isChecked():
