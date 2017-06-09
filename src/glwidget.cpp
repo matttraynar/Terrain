@@ -119,20 +119,12 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
 
     std::cout<<"Heights done"<<std::endl;
 
-    if(s_clusterTrees)
-    {
-        std::cout<<"Getting cluster trees"<<std::endl;
-        m_treePositions = m_fieldGenerator.getTreePositions();
-    }
+//    for(uint i = 0; i < m_treePositions.size(); ++i)
+//    {
+//        int treeIndex = 5 * (float)rand()/(float)RAND_MAX;
 
-    std::cout<<"Got cluster trees"<<std::endl;
-
-    for(uint i = 0; i < m_treePositions.size(); ++i)
-    {
-        int treeIndex = 5 * (float)rand()/(float)RAND_MAX;
-
-        m_treeMeshesToUse.push_back(treeIndex);
-    }
+//        m_treeMeshesToUse.push_back(treeIndex);
+//    }
 
     std::cout<<"Meshes set"<<std::endl;
 
@@ -250,6 +242,11 @@ void GLWidget::loadThese(std::string _settingsPath)
                 s_treeMeshes.push_back(line);
                 getline(f, line);
             }
+        }
+        else
+        {
+            s_normTrees = false;
+            s_clusterTrees = false;
         }
 
         getline(f, line);
@@ -475,10 +472,26 @@ void GLWidget::initializeGL()
             m_vRegions[i].passVBOToShader(m_pgm);
         }
 
+
+        if(s_clusterTrees)
+        {
+            std::cout<<"Getting cluster trees"<<std::endl;
+            m_treePositions = m_fieldGenerator.getTreePositions();
+        }
+        std::cout<<m_treePositions.size()<<std::endl;
+
+        std::cout<<"Got cluster trees"<<std::endl;
+
         qInfo()<<"Preparing VAOs";
         prepareTerrain();
         prepareWater();
+
+        std::cout<<"############\n";
+        std::cout<<s_clusterTrees<<std::endl;
+        std::cout<<m_treePositions.size()<<std::endl;
         prepareTrees();
+        std::cout<<m_treePositions.size()<<std::endl;
+        std::cout<<"############\n";
 
         for(uint i = 0; i < m_treePositions.size(); ++i)
         {

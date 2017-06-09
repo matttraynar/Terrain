@@ -117,6 +117,7 @@ void EnglishFields::operator =(EnglishFields &toCopy)
     m_allVerts = toCopy.m_allVerts;
 
     m_farmRegion = toCopy.m_farmRegion;
+    m_treePositions = toCopy.m_treePositions;
 }
 
 //Field generation
