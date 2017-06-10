@@ -6,6 +6,7 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
     QGLWidget(parent)
 {
     loadThese(_settings);
+    m_live = false;
 
     QSurfaceFormat glFormat;
     glFormat.setVersion(3, 3);
@@ -20,6 +21,7 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
     m_mouseDelta = 0;
     m_cameraPos = QVector3D(20.0f, 50.0f, 20.0f);
 
+    heightmap = false;
     m_ortho = false;
     doOnce = true;
     shading = true;
@@ -38,11 +40,12 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
     startTimer(1);
 
     generateHeightMap(s_heightmapIters, s_roughness);
+    m_waterLevel = ((m_terrainMax - m_terrainMin) / 4.0f) + m_terrainMin;
     std::cout<<"20"<<std::endl;
 
     double width = 50.0;
 
-    m_fieldGenerator = EnglishFields(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, s_farmPos);
+    m_fieldGenerator = EnglishFields(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, s_farmPos, m_live);
 
     m_vRegions = m_fieldGenerator.getRegions();
 
@@ -134,6 +137,72 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
 
             m_treePositions[i].setY(yValue);
         }
+    }
+}
+
+GLWidget::GLWidget(bool _liveUpdate, std::string _filepath, std::string _settings, QVector3D _farmPos, QWidget *parent) :
+    QGLWidget(parent)
+{
+    loadThese(_settings);
+
+    m_live = _liveUpdate;
+
+    QSurfaceFormat glFormat;
+    glFormat.setVersion(3, 3);
+    glFormat.setProfile(QSurfaceFormat::CoreProfile);
+
+    m_workingPath = _filepath;
+
+    m_xRot = 0;
+    m_yRot = 0;
+    m_zRot = 0;
+    m_zDis = 0;
+    m_mouseDelta = 0;
+    m_cameraPos = QVector3D(20.0f, 50.0f, 20.0f);
+
+    m_ortho = true;
+    doOnce = true;
+    shading = true;
+
+    m_x = -0;
+    moveDown = false;
+
+    m_wireframe = false;
+
+    m_view.setToIdentity();
+    m_view.lookAt(m_cameraPos,
+                          QVector3D(0.0f, 0.0f, 0.0f),
+                          QVector3D(0.0f,1.0f, 0.0f));
+
+
+    startTimer(1);
+
+    std::cout<<"20"<<std::endl;
+
+    farmPosition = _farmPos;
+    m_fieldGenerator = EnglishFields(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, _farmPos, m_live);
+
+    m_vRegions = m_fieldGenerator.getRegions();
+
+    m_terrainMin = 1000000;
+    m_terrainMax = -100000;
+
+    if(s_exportTerrain)
+    {
+        ExportScene::getFrom(s_terrainPath + "/Terrain.obj", m_verts, m_norms, m_terrainMin, m_terrainMax);
+    }
+    else
+    {
+        ExportScene::getFrom(m_workingPath + "/Output/Terrain.obj", m_verts, m_norms, m_terrainMin, m_terrainMax);
+    }
+    m_waterLevel = ((m_terrainMax - m_terrainMin) / 4.0f) + m_terrainMin;
+
+    for(int i = 0; i < m_verts.size(); i += 4)
+    {
+        m_uvs.push_back(QVector2D(0, 0));
+        m_uvs.push_back(QVector2D(0.5f, 0));
+        m_uvs.push_back(QVector2D(0.5f, 0.5f));
+        m_uvs.push_back(QVector2D(0, 0.5f));
     }
 }
 
@@ -361,24 +430,6 @@ void GLWidget::initializeGL()
             }
         }
 
-//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree1.obj")));
-//        m_treeMeshes[0]->prepareMesh(m_pgm);
-
-//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree2.obj")));
-//        m_treeMeshes[1]->prepareMesh(m_pgm);
-
-//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree3.obj")));
-//        m_treeMeshes[2]->prepareMesh(m_pgm);
-
-//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree4.obj")));
-//        m_treeMeshes[3]->prepareMesh(m_pgm);
-
-//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree5.obj")));
-//        m_treeMeshes[4]->prepareMesh(m_pgm);
-
-//        m_treeMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Trees/tree6.obj")));
-//        m_treeMeshes[5]->prepareMesh(m_pgm);
-
         //Load the farm meshes
         if(s_hasFarm)
         {
@@ -389,63 +440,26 @@ void GLWidget::initializeGL()
             }
         }
 
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/mainhouse.obj")));
-//        m_farmMeshes[0]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse1.obj")));
-//        m_farmMeshes[1]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse2.obj")));
-//        m_farmMeshes[2]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse3.obj")));
-//        m_farmMeshes[3]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse4.obj")));
-//        m_farmMeshes[4]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse5.obj")));
-//        m_farmMeshes[5]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse6.obj")));
-//        m_farmMeshes[6]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/outhouse7.obj")));
-//        m_farmMeshes[7]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree1.obj")));
-//        m_farmMeshes[8]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree2.obj")));
-//        m_farmMeshes[9]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree3.obj")));
-//        m_farmMeshes[10]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree4.obj")));
-//        m_farmMeshes[11]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree5.obj")));
-//        m_farmMeshes[12]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree6.obj")));
-//        m_farmMeshes[13]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree7.obj")));
-//        m_farmMeshes[14]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree8.obj")));
-//        m_farmMeshes[15]->prepareMesh(m_pgm);
-
-//        m_farmMeshes.push_back(std::shared_ptr<Mesh>(new Mesh(m_workingPath + "Farm/tree9.obj")));
-//        m_farmMeshes[16]->prepareMesh(m_pgm);
-
-        std::cout<<"60"<<std::endl;
+        if(m_live)
+        {
+            std::cout<<"78"<<std::endl;
+        }
+        else
+        {
+            std::cout<<"60"<<std::endl;
+        }
 
         m_fieldGenerator.createWalls(m_pgm);
 
         m_vRegions = m_fieldGenerator.getRegions();
-        std::cout<<"70"<<std::endl;
+        if(m_live)
+        {
+            std::cout<<"85"<<std::endl;
+        }
+        else
+        {
+            std::cout<<"70"<<std::endl;
+        }
 
         for(uint i = 0; i < m_vRegions.size(); ++i)
         {
@@ -459,9 +473,13 @@ void GLWidget::initializeGL()
         }
 
         prepareTerrain();
-        prepareWater();
 
-        prepareTrees();
+        if(!m_live)
+        {
+            prepareWater();
+            prepareTrees();
+        }
+        m_waterLevel = ((m_terrainMax - m_terrainMin) / 4.0f) + m_terrainMin;
 
         for(uint i = 0; i < m_treePositions.size(); ++i)
         {
@@ -469,7 +487,16 @@ void GLWidget::initializeGL()
 
             m_treeMeshesToUse.push_back(treeIndex);
         }
-        std::cout<<"80"<<std::endl;
+
+
+        if(m_live)
+        {
+            std::cout<<"95"<<std::endl;
+        }
+        else
+        {
+            std::cout<<"80"<<std::endl;
+        }
 
         //Finished creating regions
 
@@ -565,8 +592,6 @@ void GLWidget::paintGL()
 
     m_pgm.bind();
 
-
-
     m_pgm.setUniformValue("lightPos",QVector3D(m_x, 10.0f, 0.0f));
 
     loadMatricesToShader(QVector3D(0,0,0));
@@ -583,7 +608,6 @@ void GLWidget::paintGL()
     {
         if(!m_ortho && s_hasTrees)
         {
-            qInfo()<<"Trees";
             vao_trees.bind();
 
             m_pgm.setUniformValue("mCol",QVector4D(0.05f, 0.24f,0.01f,0.5f));
@@ -601,7 +625,7 @@ void GLWidget::paintGL()
 
         if(s_hasFarm)
         {
-            m_pgm.setUniformValue("mCol",QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
+            m_pgm.setUniformValue("mCol",QVector4D(0.2f, 0.17f, 0.0f, 1.0f));
 
             loadMatricesToShader(farmPosition);
 
@@ -663,6 +687,7 @@ void GLWidget::renderOrtho()
 {
     m_ortho = true;
     heightmap = false;
+    glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
 
     m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
     changeOrtho();
@@ -1006,13 +1031,14 @@ void GLWidget::loadMatricesToShader(QVector3D position)
         m_model.rotate(4324.0f / 16.0f, QVector3D(1, 0, 0));
 
         m_model.translate(QVector3D(0,2,0));
+
+        m_model.translate(position);
     }
     else
     {
         m_model.setToIdentity();
 
 //        m_model.rotate(m_xRot / 16.0f, QVector3D(1, 0, 0));
-        qInfo()<<m_yRot / 16.0f;
         m_model.rotate(m_yRot / 16.0f, QVector3D(0, 1, 0));
 
         m_model.translate(position);

@@ -8,7 +8,7 @@ EnglishFields::EnglishFields()
     //Blank constructor, does nothing
 }
 
-EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasPos, int _numPoints, QVector3D _farmPos)
+EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasPos, int _numPoints, QVector3D _farmPos, bool _isLive)
 {
     //Set up and create the voronoi diagram.
     m_width = _width;
@@ -26,7 +26,14 @@ EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasP
         makeVoronoiDiagram(time(NULL));
     }
 
-    std::cout<<"30"<<std::endl;
+    if(_isLive)
+    {
+        std::cout<<"31"<<std::endl;
+    }
+    else
+    {
+        std::cout<<"30"<<std::endl;
+    }
 
     bool skipFarmField = _hasPos;
 
@@ -36,19 +43,40 @@ EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasP
     }
 
     subdivide();
-    std::cout<<"40"<<std::endl;
+    if(_isLive)
+    {
+        std::cout<<"46"<<std::endl;
+    }
+    else
+    {
+        std::cout<<"40"<<std::endl;
+    }
 
     editEdges();
-    std::cout<<"45"<<std::endl;
+    if(_isLive)
+    {
+        std::cout<<"55"<<std::endl;
+    }
+    else
+    {
+        std::cout<<"45"<<std::endl;
+    }
 
 
-    if(m_farmRegion > -1 && m_farmRegion < m_regions.size())
+    if(m_farmRegion < m_regions.size())
     {
         farmFieldEdges();
     }
 
     makeEdgesUsable();
-    std::cout<<"50"<<std::endl;
+    if(_isLive)
+    {
+        std::cout<<"64"<<std::endl;
+    }
+    else
+    {
+        std::cout<<"50"<<std::endl;
+    }
 }
 
 EnglishFields::EnglishFields(double _width,
@@ -246,7 +274,6 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
     }
 
     m_farmRegion = findFarmRegion(m_farmPos);
-    qInfo()<<"Farm is in region "<<m_farmRegion;
 }
 
 void EnglishFields::subdivide()
@@ -761,7 +788,6 @@ void EnglishFields::editEdges()
 void EnglishFields::farmFieldEdges()
 {
     QVector3D regionCenter = m_regions[m_farmRegion].getMiddle();
-    qInfo()<<"Center: "<<regionCenter;
 
     float minDistance = 10000;
     float maxDistance = -10000;
@@ -777,6 +803,8 @@ void EnglishFields::farmFieldEdges()
     QVector3D closestPointMax;
     QVector3D startPointMax2;
     QVector3D closestPointMax2;
+
+    regionCenter = m_farmPos;
 
     m_regions[m_farmRegion].updateEdgeCount();
 
@@ -970,8 +998,6 @@ void EnglishFields::farmFieldEdges()
         m_regions.push_back(VoronoiFace(newEdges));
     }
 
-    qInfo()<<"Center: "<<regionCenter;
-    qInfo()<<"Finished";
 }
 
 void EnglishFields::displaceEdge(VoronoiFace &_face)

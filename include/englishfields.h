@@ -79,7 +79,7 @@ class EnglishFields
 {
 public:
     EnglishFields();
-    EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasPos, int _numPoints, QVector3D _farmPos);
+    EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasPos, int _numPoints, QVector3D _farmPos, bool _isLive);
     EnglishFields(double _width, std::vector<QVector3D> _sites);
 
     ~EnglishFields();

@@ -30,19 +30,35 @@ int main(int argc, char *argv[])
     const char* settings = strdup(argv[1]);
     std::string settingsStr(settings);
 
-    GLWidget window(filenameStr, settingsStr);
+    if(argc == 2)
+    {
+        GLWidget window(filenameStr, settingsStr);
 
-    window.render3D();
-    std::cout<<"85"<<std::endl;
+        window.render3D();
+        std::cout<<"85"<<std::endl;
 
-    window.renderOrtho();
-    std::cout<<"90"<<std::endl;
+        window.renderOrtho();
+        std::cout<<"90"<<std::endl;
 
-    window.renderTexture();
-    std::cout<<"95"<<std::endl;
+        window.renderTexture();
+        std::cout<<"95"<<std::endl;
 
-    window.renderHeightmap();
-    std::cout<<"100"<<std::endl;
+        window.renderHeightmap();
+        std::cout<<"100"<<std::endl;
+    }
+    if(argc == 5)
+    {
+        const char* xChar = strdup(argv[2]);
+        const char* yChar = strdup(argv[3]);
+        const char* zChar = strdup(argv[4]);
+
+        QVector3D farmPosition(std::atof(xChar) - 25.0f, std::atof(yChar), std::atof(zChar) - 25.0f);
+
+        GLWidget window(true, filenameStr, settingsStr, farmPosition);
+
+        window.renderOrtho();
+        std::cout<<"100"<<std::endl;
+    }
 
     return 0;
 }

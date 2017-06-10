@@ -15,6 +15,7 @@ class ExportScene
 {
 public:
     static void sendTo(std::string _filetype, std::string _filepath, const std::vector<QVector3D> _verts, const std::vector<QVector3D> _norms, const std::vector<QVector2D> _uvs, float _terrainSize, bool _triangulate, bool _isTerrain);
+    static void getFrom(std::string _filepath, std::vector<QVector3D>& _verts, std::vector<QVector3D>& _norms, float &_min, float &_max);
 
 private:
     ExportScene();
