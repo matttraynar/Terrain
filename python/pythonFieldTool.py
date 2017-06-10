@@ -22,6 +22,7 @@ import maya.OpenMayaUI as omui
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
+            
 
 class importWindow(QtGui.QDialog):
     def __init__(self, parent=None, default = '', terrainPath = '', terrainSize = 50,   \
@@ -347,13 +348,15 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.defaultButton.clicked.connect(lambda: self.search(7))
         self.ui.pushButton.clicked.connect(lambda: self.search(8))
         self.ui.pushButton_2.clicked.connect(lambda: self.search(9)) 
+        
+        self.ui.liveUpdateButton.clicked.connect(self.startLiveUpdate)
                 
         self.ui.postGenTerrain.clicked.connect(lambda: self.moveFile(0))
         self.ui.postGenTexture.clicked.connect(lambda: self.moveFile(1))
         self.ui.postGenHeightmap.clicked.connect(lambda: self.moveFile(2))
         self.ui.postGenWalls.clicked.connect(lambda: self.moveFile(3))
 
-        self.ui.importButton.clicked.connect(self.createImportWindow)      
+        self.ui.importButton.clicked.connect(self.createImportWindow)    
         
         self.ui.loadWallsButton.clicked.connect(self.loadOrtho)
         self.ui.loadTextureButton.clicked.connect(self.loadTexture)
@@ -377,6 +380,32 @@ class ControlMainWindow(QtGui.QDialog):
         self.workingDir = customUI.__file__.rsplit('\\',1)[0]
         self.execDir = 'E:/mattt/Documents/Uni/FMP/Terrain/debug'
         self.notFirstClose = False
+        
+        self.liveUpdate = False
+        
+    def startLiveUpdate(self):
+        if  self.liveUpdate and self.isGenerated:
+            self.ui.liveUpdateButton.setText("Live Update On")
+            self.ui.acceptButton.setEnabled(False)
+            self.ui.liveUpdateProgress.setEnabled(False)
+            
+            self.liveUpdate = False
+            
+        # elif not self.liveUpdate and not self.isGenerated:
+        #     flags = QtGui.QMessageBox.StandardButton.Ok
+        
+        #     result = QtGui.QMessageBox.warning(self, "No Generated Data", "<p align = 'center'>You need to generate a system at least once<br>before you can use the live update feature</p>", flags)
+                
+        #     if result == QtGui.QMessageBox.Ok:
+        #         return             
+            
+        else:
+            self.ui.liveUpdateButton.setText("Live Update Off")
+            self.ui.acceptButton.setEnabled(True)
+            self.ui.liveUpdateProgress.setEnabled(True)
+            
+            self.liveUpdate = True
+            
     
     def closeEvent(self, event):
         if self.notFirstClose:
@@ -1050,6 +1079,22 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.translateXBox.setValue(xValue)                
         self.ui.translateYBox.setValue(yValue)
         
+        if self.liveUpdate:
+            self.hasSettings = False
+            self.saveSettings(True)
+            
+            p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt", str(xValue), "0.0", str(yValue)], stdout = subprocess.PIPE, bufsize = 1)
+            for line in iter(p.stdout.readline, b''):
+                self.ui.liveUpdateProgress.setValue(float(line))
+                
+            p.stdout.close()
+            p.wait()
+            
+            if self.ui.liveUpdateProgress.value() < 100:
+                self.ui.liveUpdateProgress.setValue(0)
+            
+            self.loadOrtho()
+        
     def generate(self):
         if self.isGenerated:
             flags = QtGui.QMessageBox.StandardButton.Ok
@@ -1077,7 +1122,8 @@ class ControlMainWindow(QtGui.QDialog):
         p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt"], stdout = subprocess.PIPE, bufsize = 1)
         
         for line in iter(p.stdout.readline, b''):
-            self.ui.generateProgress.setValue(float(line))
+            if line.find("Farm") is -1:
+                self.ui.generateProgress.setValue(float(line))
         
         p.stdout.close()
         p.wait()
@@ -1169,6 +1215,7 @@ class ControlMainWindow(QtGui.QDialog):
     workingDir = ''
     execDir = ''
     notFirstClose = False
+    liveUpdate = False
    
 global UI
 
