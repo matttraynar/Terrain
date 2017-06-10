@@ -59,6 +59,25 @@ int main(int argc, char *argv[])
         window.renderOrtho();
         std::cout<<"100"<<std::endl;
     }
+    if(argc == 6)
+    {
+        const char* xChar = strdup(argv[2]);
+        const char* yChar = strdup(argv[3]);
+        const char* zChar = strdup(argv[4]);
+
+        QVector3D farmPosition(std::atof(xChar) - 25.0f, std::atof(yChar), std::atof(zChar) - 25.0f);
+
+        GLWidget window(true, true, filenameStr, settingsStr, farmPosition);
+
+        window.render3D();
+
+        window.renderOrtho();
+
+        window.renderTexture();
+
+        window.renderHeightmap();
+        std::cout<<"100"<<std::endl;
+    }
 
     return 0;
 }

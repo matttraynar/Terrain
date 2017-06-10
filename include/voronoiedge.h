@@ -165,7 +165,7 @@ public:
         }
     };
 
-    void makeWall();
+    void makeWall(float width);
     void makeVBO(QOpenGLShaderProgram &_pgm);
     void drawWall();
 

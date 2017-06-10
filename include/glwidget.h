@@ -43,6 +43,8 @@ class GLWidget : public QGLWidget
 public:
     GLWidget(std::string _filepath = "", std::string _settings = "", QWidget* parent = 0);
     GLWidget(bool _liveUpdate = true, std::string _filepath = "", std::string _settings = "", QVector3D _farmPos = QVector3D(0,0,0), QWidget* parent = 0);
+    GLWidget(bool _liveUpdate = true, bool _finish = true, std::string _filepath = "", std::string _settings = "", QVector3D _farmPos = QVector3D(0,0,0), QWidget* parent = 0);
+
     ~GLWidget();
 
     bool m_ortho;

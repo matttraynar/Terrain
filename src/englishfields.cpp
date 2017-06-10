@@ -118,7 +118,6 @@ void EnglishFields::exportFields(std::string _exportPath, bool defaultPath)
         }
 
         stream.str("");
-        qInfo()<<"Finished region";
     }
 }
 
@@ -2318,13 +2317,10 @@ void EnglishFields::makeEdgesUsable()
 
     std::vector<uint> updatedEdgeIDs;
 
-    m_maxDisplacementIterations = 20;
-    qInfo()<<"###########";
-    qInfo()<<originalEdgeCount;
+    m_maxDisplacementIterations = int(m_width / 2);
 
     for(int i = 0; i < originalEdgeCount; ++i)
     {
-        qInfo()<<"---------"<<i;
         if(m_allEdges[i]->getLength() < 2.0f)
         {
             midPointEdge(m_allEdges[i], m_maxDisplacementIterations + 1, updatedEdgeIDs, false);
@@ -2599,7 +2595,7 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
 
     for(uint i = 0; i < m_allEdges.size(); ++i)
     {
-        m_allEdges[i]->makeWall();
+        m_allEdges[i]->makeWall(m_width);
         m_allEdges[i]->makeVBO(_pgm);
     }
 
@@ -2640,11 +2636,6 @@ void EnglishFields::drawWalls(QOpenGLShaderProgram &_pgm)
         else
         {
             _pgm.setUniformValue("mCol",QVector4D(0.15f, 0.1f ,0.1f, 1.0f));
-        }
-
-        if(m_farmRegion < 1000001 && i != m_farmRegion)
-        {
-//            continue;
         }
 
         m_regions[i].draw();

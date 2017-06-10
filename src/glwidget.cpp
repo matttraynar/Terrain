@@ -206,6 +206,162 @@ GLWidget::GLWidget(bool _liveUpdate, std::string _filepath, std::string _setting
     }
 }
 
+GLWidget::GLWidget(bool _liveUpdate, bool _finish, std::string _filepath, std::string _settings, QVector3D _farmPos, QWidget *parent)
+{
+    loadThese(_settings);
+
+    m_live = _liveUpdate;
+
+    QSurfaceFormat glFormat;
+    glFormat.setVersion(3, 3);
+    glFormat.setProfile(QSurfaceFormat::CoreProfile);
+
+    m_workingPath = _filepath;
+
+    m_xRot = 0;
+    m_yRot = 0;
+    m_zRot = 0;
+    m_zDis = 0;
+    m_mouseDelta = 0;
+    m_cameraPos = QVector3D(20.0f, 50.0f, 20.0f);
+
+    m_ortho = true;
+    doOnce = true;
+    shading = true;
+    heightmap = false;
+
+    m_x = -0;
+    moveDown = false;
+
+    m_wireframe = false;
+
+    m_view.setToIdentity();
+    m_view.lookAt(m_cameraPos,
+                          QVector3D(0.0f, 0.0f, 0.0f),
+                          QVector3D(0.0f,1.0f, 0.0f));
+
+
+    startTimer(1);
+
+    std::cout<<"20"<<std::endl;
+
+    farmPosition = _farmPos;
+    m_fieldGenerator = EnglishFields(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, _farmPos, m_live);
+
+    m_vRegions = m_fieldGenerator.getRegions();
+
+    m_terrainMin = 1000000;
+    m_terrainMax = -100000;
+
+    if(s_exportTerrain)
+    {
+        ExportScene::getFrom(s_terrainPath + "/Terrain.obj", m_verts, m_norms, m_terrainMin, m_terrainMax);
+    }
+    else
+    {
+        ExportScene::getFrom(m_workingPath + "/Output/Terrain.obj", m_verts, m_norms, m_terrainMin, m_terrainMax);
+    }
+    m_waterLevel = ((m_terrainMax - m_terrainMin) / 4.0f) + m_terrainMin;
+
+    for(int i = 0; i < m_verts.size(); i += 4)
+    {
+        m_uvs.push_back(QVector2D(0, 0));
+        m_uvs.push_back(QVector2D(0.5f, 0));
+        m_uvs.push_back(QVector2D(0.5f, 0.5f));
+        m_uvs.push_back(QVector2D(0, 0.5f));
+    }
+
+    bool adjustHeights = true;
+
+    if(adjustHeights)
+    {
+        qInfo()<<"Adjusting heights";
+
+        float minDistance = 1000000;
+        float yValue = 0.0f;
+
+        for(uint i = 0; i < m_fieldGenerator.getVerts().size(); ++i)
+        {
+            minDistance = 1000000;
+            yValue = 0.0f;
+
+            for(int k = 0; k < m_verts.size(); ++k)
+            {
+                QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
+                QVector3D flatVector2(m_fieldGenerator.getVert(i)->x(), 0.0f, m_fieldGenerator.getVert(i)->z());
+
+                if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+                {
+                    if((flatVector1 - flatVector2).length() < minDistance)
+                    {
+                        minDistance = (flatVector1 - flatVector2).length();
+                        yValue = m_verts[k].y();
+                    }
+                }
+            }
+
+            m_fieldGenerator.getVert(i)->setY(yValue);
+        }
+
+        minDistance = 1000000;
+        yValue = 0.0f;
+
+        if(s_hasFarm)
+        {
+            farmPosition = m_fieldGenerator.getFarmPosition();
+            qInfo()<<m_verts.size();
+            for(int k = 0; k < m_verts.size(); ++k)
+            {
+                qInfo()<<k;
+                QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
+                QVector3D flatVector2(farmPosition.x(), 0.0f, farmPosition.z());
+
+                if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+                {
+                    if((flatVector1 - flatVector2).length() < minDistance)
+                    {
+                        minDistance = (flatVector1 - flatVector2).length();
+                        yValue = m_verts[k].y();
+                    }
+                }
+            }
+
+            farmPosition.setY(yValue);
+            qInfo()<<"Position: "<<farmPosition;
+        }
+
+
+    }
+
+    bool adjustTreeHeights = true;
+
+    if(adjustTreeHeights)
+    {
+        for(uint i = 0; i < m_treePositions.size(); ++i)
+        {
+            float minDistance = 1000000;
+            float yValue = 0.0f;
+
+            for(int k = 0; k < m_verts.size(); ++k)
+            {
+                QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
+                QVector3D flatVector2(m_treePositions[i].x(), 0.0f, m_treePositions[i].z());
+
+                if(((flatVector1.x() - flatVector2.x()) < 0.25f) || ((flatVector1.z() - flatVector2.z()) < 0.25f))
+                {
+                    if((flatVector1 - flatVector2).length() < minDistance)
+                    {
+                        minDistance = (flatVector1 - flatVector2).length();
+                        yValue = m_verts[k].y();
+                    }
+                }
+            }
+
+            m_treePositions[i].setY(yValue);
+        }
+    }
+}
+
 GLWidget::~GLWidget()
 {
 
