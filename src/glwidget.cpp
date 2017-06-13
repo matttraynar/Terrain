@@ -1,6 +1,6 @@
 #include "glwidget.h"
 
-#include <QDebug>
+//#include <QDebug>
 
 GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent ) :
     QGLWidget(parent)
@@ -53,7 +53,7 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
 
     if(adjustHeights)
     {
-        qInfo()<<"Adjusting heights";
+//        qInfo()<<"Adjusting heights";
 
         float minDistance = 1000000;
         float yValue = 0.0f;
@@ -84,13 +84,13 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
         minDistance = 1000000;
         yValue = 0.0f;
 
-        if(s_hasFarm)
+        if(s_hasFarm && m_fieldGenerator.farmIndexIsValid())
         {
             farmPosition = m_fieldGenerator.getFarmPosition();
-            qInfo()<<m_verts.size();
+//            qInfo()<<m_verts.size();
             for(int k = 0; k < m_verts.size(); ++k)
             {
-                qInfo()<<k;
+//                qInfo()<<k;
                 QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
                 QVector3D flatVector2(farmPosition.x(), 0.0f, farmPosition.z());
 
@@ -105,7 +105,7 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
             }
 
             farmPosition.setY(yValue);
-            qInfo()<<"Position: "<<farmPosition;
+//            qInfo()<<"Position: "<<farmPosition;
         }
 
 
@@ -138,6 +138,7 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
             m_treePositions[i].setY(yValue);
         }
     }
+//    qInfo()<<"initi complete";
 }
 
 GLWidget::GLWidget(bool _liveUpdate, std::string _filepath, std::string _settings, QVector3D _farmPos, QWidget *parent) :
@@ -275,7 +276,7 @@ GLWidget::GLWidget(bool _liveUpdate, bool _finish, std::string _filepath, std::s
 
     if(adjustHeights)
     {
-        qInfo()<<"Adjusting heights";
+//        qInfo()<<"Adjusting heights";
 
         float minDistance = 1000000;
         float yValue = 0.0f;
@@ -309,10 +310,10 @@ GLWidget::GLWidget(bool _liveUpdate, bool _finish, std::string _filepath, std::s
         if(s_hasFarm)
         {
             farmPosition = m_fieldGenerator.getFarmPosition();
-            qInfo()<<m_verts.size();
+//            qInfo()<<m_verts.size();
             for(int k = 0; k < m_verts.size(); ++k)
             {
-                qInfo()<<k;
+//                qInfo()<<k;
                 QVector3D flatVector1(m_verts[k].x(), 0, m_verts[k].z());
                 QVector3D flatVector2(farmPosition.x(), 0.0f, farmPosition.z());
 
@@ -327,7 +328,7 @@ GLWidget::GLWidget(bool _liveUpdate, bool _finish, std::string _filepath, std::s
             }
 
             farmPosition.setY(yValue);
-            qInfo()<<"Position: "<<farmPosition;
+//            qInfo()<<"Position: "<<farmPosition;
         }
 
 
@@ -374,6 +375,8 @@ void GLWidget::loadThese(std::string _settingsPath)
 
     if(f)
     {
+        //The file is valid so we read line by line. As this is in a format
+        //I have written the order of data can be assumed
         getline(f, line);
         s_seed = std::stoi(line);
         (s_seed < 0) ? s_hasSeed = false : s_hasSeed = true;
@@ -519,10 +522,12 @@ void GLWidget::loadThese(std::string _settingsPath)
     }
     else
     {
-        std::cout<<"INVALID SETTINGS FILE";
+        std::cout<<"##INVALID SETTINGS FILE";
+        f.close();
+        exit(1);
     }
 
-
+    //Prints for debugging
 //    std::cout<<s_seed<<std::endl;
 //    std::cout<<s_terrainSize<<std::endl;
 //    std::cout<<s_numPoints<<std::endl;
@@ -567,7 +572,7 @@ void GLWidget::initializeGL()
     {
         glEnable(GL_DEPTH_TEST);
 
-
+        //Get the shaders ready
         if(!prepareShaderProgram(m_workingPath + "shaders/vert.glsl", m_workingPath + "shaders/frag.glsl") )
         {
             exit(1);
@@ -605,8 +610,13 @@ void GLWidget::initializeGL()
             std::cout<<"60"<<std::endl;
         }
 
+
+        std::cout<<"##Added meshes"<<std::endl;
+
+        //Create the vaos for drawing the walls
         m_fieldGenerator.createWalls(m_pgm);
 
+        //Copy to a local
         m_vRegions = m_fieldGenerator.getRegions();
         if(m_live)
         {
@@ -617,17 +627,20 @@ void GLWidget::initializeGL()
             std::cout<<"70"<<std::endl;
         }
 
+        //Make sure the regions are correctly passed to the shader
         for(uint i = 0; i < m_vRegions.size(); ++i)
         {
             m_vRegions[i].passVBOToShader(m_pgm);
         }
 
+        std::cout<<"##Got regions"<<std::endl;
 
         if(s_clusterTrees)
         {
             m_treePositions = m_fieldGenerator.getTreePositions();
         }
 
+        //Prepare VAOs for terrain and other features
         prepareTerrain();
 
         if(!m_live)
@@ -637,6 +650,7 @@ void GLWidget::initializeGL()
         }
         m_waterLevel = ((m_terrainMax - m_terrainMin) / 4.0f) + m_terrainMin;
 
+        //Assign a random index to use when drawing the trees
         for(uint i = 0; i < m_treePositions.size(); ++i)
         {
             int treeIndex = m_treeMeshes.size() * (float)rand()/(float)RAND_MAX;
@@ -656,6 +670,8 @@ void GLWidget::initializeGL()
 
         //Finished creating regions
 
+        //Bind the texture to the shader program
+        std::cout<<"##Doing Textures"<<std::endl;
         m_pgm.bind();
 
         QOpenGLTexture* sand = addNewTexture(m_workingPath + "textures/sand.png");
@@ -676,8 +692,10 @@ void GLWidget::initializeGL()
 
         m_pgm.release();
 
+        //Export the terrain and fields
         if(s_exportTerrain)
         {
+            std::cout<<"##Exporting terrain"<<std::endl;
             ExportScene::sendTo("obj", s_terrainPath + "/Terrain.obj", m_verts, m_norms, m_uvs, s_terrainSize, s_triangulateTerrain, true);
         }
         else
@@ -687,6 +705,7 @@ void GLWidget::initializeGL()
 
         if(s_exportWalls)
         {
+            std::cout<<"##Exporting walls"<<std::endl;
             m_fieldGenerator.exportFields(s_wallsPath, false);
         }
         else
@@ -694,11 +713,15 @@ void GLWidget::initializeGL()
             m_fieldGenerator.exportFields(m_workingPath, true);
         }
 
+        //Export the tree data
         if(s_hasTrees)
         {
+            std::cout<<"##Exporting tree locations"<<std::endl;
             exportLocations();
         }
 
+
+        std::cout<<"##Finished"<<std::endl;
         doOnce = false;
     }
     else
@@ -734,8 +757,10 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::paintGL()
 {
+    std::cout<<"##Rendering..."<<std::endl;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    //Bind to the shader program and set uniforms
     m_pgm.bind();
     m_pgm.setUniformValue("min", m_terrainMin);
     m_pgm.setUniformValue("range", m_terrainMax - m_terrainMin);
@@ -758,18 +783,22 @@ void GLWidget::paintGL()
     {
         m_pgm.setUniformValue("mCol",QVector4D(1.0f,1.0f,1.0f,1.0f));
     }
+
+    //Draw the terrain
     drawTerrain();
 
+    //Don't need to do any more drawing if not using shading so check
     if(shading)
     {
+        //Draw trees if desired
         if(!m_ortho && s_hasTrees)
         {
             vao_trees.bind();
 
             m_pgm.setUniformValue("mCol",QVector4D(0.05f, 0.24f,0.01f,0.5f));
 
-            qInfo()<<m_treePositions.size();
-            qInfo()<<m_treeMeshesToUse.size();
+//            qInfo()<<m_treePositions.size();
+//            qInfo()<<m_treeMeshesToUse.size();
             for(uint i = 0; i < m_treePositions.size(); ++i)
             {
                 loadMatricesToShader(m_treePositions[i]);
@@ -779,6 +808,7 @@ void GLWidget::paintGL()
             vao_trees.release();
         }
 
+        //Etc farms
         if(s_hasFarm)
         {
             m_pgm.setUniformValue("mCol",QVector4D(0.2f, 0.17f, 0.0f, 1.0f));
@@ -787,7 +817,7 @@ void GLWidget::paintGL()
 
             for(uint i = 0; i < m_farmMeshes.size(); ++i)
             {
-                qInfo()<<"Farm building "<<i;
+//                qInfo()<<"Farm building "<<i;
                 m_farmMeshes[i]->draw();
             }
         }
@@ -796,7 +826,8 @@ void GLWidget::paintGL()
 
         loadMatricesToShader(QVector3D(0,0,0));
 
-        qInfo()<<"Walls";
+
+        //Finally draw walls
         m_fieldGenerator.drawWalls(m_pgm);
     }
 
@@ -805,6 +836,7 @@ void GLWidget::paintGL()
 
 void GLWidget::renderTexture()
 {
+    //Render a top, orthographic view with no walls, trees or shading
     shading = false;
     m_ortho =  true;
     m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
@@ -824,6 +856,7 @@ void GLWidget::renderTexture()
 
 void GLWidget::renderHeightmap()
 {
+    //Render a top orthographic view using a height based colour ramp
     m_pgm.setUniformValue("mCol",QVector4D(0.2f,0.95f,0.2f,0.0f));
     heightmap = true;
 
@@ -841,6 +874,7 @@ void GLWidget::renderHeightmap()
 
 void GLWidget::renderOrtho()
 {
+    //Render a top orthographic view
     m_ortho = true;
     heightmap = false;
     glClearColor(0.0f, 0.0f, 0.2f, 0.0f);
@@ -862,6 +896,8 @@ void GLWidget::renderOrtho()
 
 void GLWidget::render3D()
 {
+    //Render multiple 3D images by rotating around a point, used
+    //to allow the user to 'rotate' their 3D model within the UI
     shading = true;
     m_ortho = false;
 

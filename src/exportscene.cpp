@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <QDebug>
+//#include <QDebug>
 
 ExportScene::ExportScene()
 {
@@ -121,7 +121,7 @@ void ExportScene::getFrom(std::string _filepath, std::vector<QVector3D> &_verts,
         //Check for loading errors
         if(!scene)
         {
-            qWarning() << "Error: File didn't load: ASSIMP: " << importer.GetErrorString();
+//            qWarning() << "Error: File didn't load: ASSIMP: " << importer.GetErrorString();
             exit(1);
         }
 

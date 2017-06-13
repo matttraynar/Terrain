@@ -1,6 +1,6 @@
 #include "englishfields.h"
 
-#include <QDebug>
+//#include <QDebug>
 #include <stdio.h>
 
 EnglishFields::EnglishFields()
@@ -26,6 +26,9 @@ EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasP
         makeVoronoiDiagram(time(NULL));
     }
 
+    std::cout<<"##Voronoi done"<<std::endl;
+
+    //Output for UI
     if(_isLive)
     {
         std::cout<<"31"<<std::endl;
@@ -37,12 +40,15 @@ EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasP
 
     bool skipFarmField = _hasPos;
 
+    //If we're not using a farm region change the value
     if(!skipFarmField)
     {
         m_farmRegion = 1000000;
     }
 
+    //Subdivide the faces
     subdivide();
+    std::cout<<"##Faces subdivided"<<std::endl;
     if(_isLive)
     {
         std::cout<<"46"<<std::endl;
@@ -52,7 +58,11 @@ EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasP
         std::cout<<"40"<<std::endl;
     }
 
+    //Edit the regions (add new features)
     editEdges();
+
+    std::cout<<"##Field features done"<<std::endl;
+
     if(_isLive)
     {
         std::cout<<"55"<<std::endl;
@@ -62,13 +72,15 @@ EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasP
         std::cout<<"45"<<std::endl;
     }
 
-
+    //Now add in edges for the farm field if we're doing that
     if(m_farmRegion < m_regions.size())
     {
         farmFieldEdges();
     }
 
+    //Subdivide the edges for later
     makeEdgesUsable();
+    std::cout<<"##Regions ready to use"<<std::endl;
     if(_isLive)
     {
         std::cout<<"64"<<std::endl;
@@ -79,6 +91,7 @@ EnglishFields::EnglishFields(double _width, bool _hasSeed, int _seed, bool _hasP
     }
 }
 
+//NO LONGER USED
 EnglishFields::EnglishFields(double _width,
                                           std::vector<QVector3D> _sites)
 {
@@ -101,11 +114,12 @@ EnglishFields::~EnglishFields()
 
 void EnglishFields::exportFields(std::string _exportPath, bool defaultPath)
 {
+    //Export the edges in each region
     std::stringstream stream;
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
-        qInfo()<<"Exporting region "<<i;
+//        qInfo()<<"Exporting region "<<i;
         stream<<i;
 
         if(defaultPath)
@@ -147,9 +161,7 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
 
     //If not randomly create m_width (e.g. 50) points in the range (-m_width / 2.0, m_width / 2.0)
     srand(_seed);
-    qInfo()<<"Seed: "<<_seed;
-
-//    uint numPoints = 7;
+//    qInfo()<<"Seed: "<<_seed;
 
     points.reserve(m_numPoints);
 
@@ -158,6 +170,7 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
         points.push_back(K::Point_2((m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0), (m_width * (double)rand()/(double)RAND_MAX) - (m_width / 2.0)));
     }
 
+    //Add the position of the farm if we're using that
     if(m_hasFarm)
     {
         points.push_back(K::Point_2(m_farmPos.x(), m_farmPos.y()));
@@ -280,27 +293,32 @@ void EnglishFields::subdivide()
     //Container for storing our edited faces in
     std::vector<uint> subdividedFaces;
 
+    //Store the intitial number of regions
     int startFaceCount = m_regions.size();
 
+    //If we're skipping the farm region decrement this count
     if(m_farmRegion < 1000)
     {
         --startFaceCount;
     }
 
+    //Iterate through the regions
     for(uint i = 0; i < startFaceCount; ++i)
     {
+        //Skip if we're doing the farm region
         if(i == m_farmRegion)
         {
             continue;
         }
 
+        //Only subdivide with faces that have more than three edges
         if((m_regions[i].getEdgeCount()) > 3)
         {
+            //Use a random value to decide what type of subdivision to do
             float subdivideSwitch = 100.0f * (float)rand() / (float)RAND_MAX;
 
             if((int)(m_regions[i].getEdgeCount()) % 2 == 0)
             {
-                qInfo()<<"IGNORING "<<i;
                 //We're on an even face, check our switch
                 if(subdivideSwitch > 0.0f)
                 {
@@ -422,7 +440,7 @@ void EnglishFields::subdivide()
                     subdividedFaces.push_back(i);
                     std::vector<uint> newEdgeIDs;
 
-                    qInfo()<<"Subdividing "<<i;
+//                    qInfo()<<"Subdividing "<<i;
                     //Otherwise first get the index of the 'middle' edge.
                     //For a face with edges {0,1,2,3,4} this ID is 2
                     int startID = (m_regions[i].getEdgeCount() - 1) / 2;
@@ -618,8 +636,13 @@ void EnglishFields::subdivide()
 
     m_editedEdgeIDs.clear();
 
+    //See if any faces were subdivided
     if(subdividedFaces.size() > 0)
     {
+        //If there were this means the old representations are going to be removed from the list,
+        //and replaced with the two new faces created during subdivision. This means that
+        //the indices need updating
+
         float tmpFarmRegion = m_farmRegion;
 
         for(uint i = 0; i < subdividedFaces.size(); ++i)
@@ -652,6 +675,7 @@ void EnglishFields::subdivide()
 
     }
 
+    //Finally load the verts and store the current edge states for each region
     for(uint i = 0; i < m_regions.size(); ++i)
     {
         m_regions[i].loadVerts(m_allEdges);
@@ -662,7 +686,7 @@ void EnglishFields::subdivide()
 void EnglishFields::editEdges()
 {
     int startFaceCount = m_regions.size();
-    qInfo()<<m_regions.size();
+//    qInfo()<<m_regions.size();
 
     if(m_farmRegion < 1000)
     {
@@ -694,7 +718,7 @@ void EnglishFields::editEdges()
 
     m_editedEdgeIDs.clear();
 
-    qInfo()<<"Finished updating";
+//    qInfo()<<"Finished updating";
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
@@ -702,7 +726,7 @@ void EnglishFields::editEdges()
         m_regions[i].organiseEdgeIDs();
     }
 
-    qInfo()<<"Verts loaded";
+//    qInfo()<<"Verts loaded";
 
     std::vector<uint> threeFieldRemoval;
 
@@ -719,20 +743,22 @@ void EnglishFields::editEdges()
 
         if(fieldTypeSwitch < 40.0f)
         {
-            qInfo()<<"Three field"<<i;
+//            qInfo()<<"Three field"<<i;
             threeField(m_regions[i]);
             threeFieldRemoval.push_back(i);
         }
         else if(fieldTypeSwitch < 80.0f)
         {
-            qInfo()<<"Straight field"<<i;
+//            qInfo()<<"Straight field"<<i;
             straightField(m_regions[i]);
         }
         else
         {
-            qInfo()<<"Nothing"<<i;
+//            qInfo()<<"Nothing"<<i;
         }
     }
+
+//    qInfo()<<"Done";
 
     float tmpFarmRegion = m_farmRegion;
 
@@ -1172,7 +1198,7 @@ void EnglishFields::threeField(VoronoiFace &_face)
         if(intersection != QVector3D(1000000.0f, 0.0f, 1000000.0f))
         {
             //If there was an intersection then this edge and face aren't viable
-            qInfo()<<"Edge "<<edgeIndex<<" intersects with "<<i;
+//            qInfo()<<"Edge "<<edgeIndex<<" intersects with "<<i;
             return;
         }
     }
@@ -1188,6 +1214,11 @@ void EnglishFields::threeField(VoronoiFace &_face)
     //Now we'll check for intersections
     for(uint i = 0; i < _face.getEdgeCount(); ++i)
     {
+        if(_face.getEdgeID(i) == 10000000)
+        {
+            return;
+        }
+
         //Get intersection points
         QVector3D intersection = edgeToUse->intersectEdge(m_allEdges[_face.getEdgeID(i)]);
 
@@ -2036,7 +2067,6 @@ void EnglishFields::threeField(VoronoiFace &_face)
 
         m_regions.push_back(VoronoiFace(newFace2));
     }
-
 }
 
 void EnglishFields::straightField(VoronoiFace &_face)
@@ -2100,7 +2130,7 @@ void EnglishFields::straightField(VoronoiFace &_face)
     {
         if(xValue > 1000.0f)
         {
-            qInfo()<<"SOMETHING WENT VERY WRONG";
+//            qInfo()<<"SOMETHING WENT VERY WRONG";
             break;
         }
 
@@ -2150,7 +2180,7 @@ void EnglishFields::straightField(VoronoiFace &_face)
                 }
                 else
                 {
-                    qInfo()<<"Edges have been updated "<<i;
+//                    qInfo()<<"Edges have been updated "<<i;
                 }
 
 //                    if(editStart)// && isStartSide)
@@ -2336,7 +2366,7 @@ void EnglishFields::makeEdgesUsable()
         m_editedEdgeIDs.push_back(i);
     }
 
-    qInfo()<<"Edges edited: "<<m_editedEdgeIDs.size();
+//    qInfo()<<"Edges edited: "<<m_editedEdgeIDs.size();
 
     for(uint i = 0; i < m_editedEdgeIDs.size(); ++i)
     {
@@ -2486,7 +2516,7 @@ uint EnglishFields::findFarmRegion(QVector3D _pos)
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
-        qInfo()<<"Region "<<i;
+//        qInfo()<<"Region "<<i;
         switch(m_regions[i].containsPoint(_pos))
         {
         case inside:
@@ -2549,7 +2579,7 @@ void EnglishFields::createWalls(QOpenGLShaderProgram &_pgm)
         sharedVerts.push_back(thisVert);
     }
 
-    qInfo()<<m_regions.size();
+//    qInfo()<<m_regions.size();
     for(uint i = 0; i < m_regions.size(); ++i)
     {
         getSegments(m_regions[i]);

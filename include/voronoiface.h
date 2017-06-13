@@ -40,7 +40,8 @@ public:
 
     inline int getEdgeCount() const                                    { return m_edgeCount; }
     inline int getOriginalEdgeCount() const                         { return m_originalEdges.size(); }
-    inline uint getEdgeID(int index) const                           { return m_indices[index]; }
+    inline uint getEdgeID(int index) const                           { if(index < m_indices.size()) { return m_indices[index];}
+                                                                                      else { return 10000000; }}
     inline VoronoiEdge* getOriginalEdge(int index) const     { return m_originalEdges[index]; }
 
     inline void updateEdgeCount() { m_edgeCount = m_indices.size(); }

@@ -102,7 +102,7 @@ class importWindow(QtGui.QDialog):
             cmds.artPuttyCtx('heightmapTool')
 
         
-    def switchGroupBox(self):
+    def switchGroupBox(self):        
         self.terrainChecked = not self.terrainChecked
         self.ui.terrainBox.setChecked(self.terrainChecked)
         self.ui.heightmapBox.setChecked(not self.terrainChecked)
@@ -230,11 +230,7 @@ class importWindow(QtGui.QDialog):
                             else:
                                 continue                    
                         
-                f.close()
-                
-                
-                
-            
+                f.close()   
                                               
         self.close()
         
@@ -346,8 +342,9 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.wallsButton.clicked.connect(lambda: self.search(5))
         self.ui.locationButton.clicked.connect(lambda: self.search(6))
         self.ui.defaultButton.clicked.connect(lambda: self.search(7))
-        self.ui.pushButton.clicked.connect(lambda: self.search(8))
+        self.ui.pushButton.clicked.connect(lambda: self.searchFile(1))
         self.ui.pushButton_2.clicked.connect(lambda: self.search(9)) 
+        self.ui.userTerrainButton.clicked.connect(lambda: self.searchFile(0))
         
         self.ui.liveUpdateButton.clicked.connect(self.startLiveUpdate)
         self.ui.acceptButton.clicked.connect(self.acceptFarmPosition)
@@ -367,8 +364,9 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.imageButton.clicked.connect(self.setPos)        
         
         self.centerWindow()    
-                
-        img = QtGui.QPixmap("E:/mattt/Documents/Uni/FMP/Terrain/ui/tmpImage.png")
+            
+        print customUI.__file__
+        img = QtGui.QPixmap(customUI.__file__.rsplit('\\', 1)[0] + "/Images/tmpImage.png")
                     
         scaled_img = img.scaled(self.ui.imageButton.size(), QtCore.Qt.KeepAspectRatio)
                 
@@ -379,7 +377,7 @@ class ControlMainWindow(QtGui.QDialog):
         self.isNotValid = False
         self.defaultLocation = ''        
         self.workingDir = customUI.__file__.rsplit('\\',1)[0]
-        self.execDir = 'E:/mattt/Documents/Uni/FMP/Terrain/debug'
+        self.execDir = customUI.__file__.rsplit('\\', 1)[0]
         self.notFirstClose = False
         
         self.liveUpdate = False
@@ -394,7 +392,11 @@ class ControlMainWindow(QtGui.QDialog):
         p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt", str(self.ui.translateXBox.value()), str(self.ui.translateZBox.value()), str(self.ui.translateYBox.value()), "Accept"], stdout = subprocess.PIPE, bufsize = 1)
         
         for line in iter(p.stdout.readline, b''):
-            self.ui.generateProgress.setValue(float(line))
+            if line.find("#") is -1:
+                self.ui.generateProgress.setValue(float(line))
+            else:
+                print line,
+                    
             
         p.stdout.close()
         p.wait()      
@@ -461,13 +463,13 @@ class ControlMainWindow(QtGui.QDialog):
             
             self.liveUpdate = False
             
-        # elif not self.liveUpdate and not self.isGenerated:
-        #     flags = QtGui.QMessageBox.StandardButton.Ok
+        elif not self.liveUpdate and not self.isGenerated:
+            flags = QtGui.QMessageBox.StandardButton.Ok
         
-        #     result = QtGui.QMessageBox.warning(self, "No Generated Data", "<p align = 'center'>You need to generate a system at least once<br>before you can use the live update feature</p>", flags)
+            result = QtGui.QMessageBox.warning(self, "No Generated Data", "<p align = 'center'>You need to generate a system at least once<br>before you can use the live update feature</p>", flags)
                 
-        #     if result == QtGui.QMessageBox.Ok:
-        #         return             
+            if result == QtGui.QMessageBox.Ok:
+                return             
             
         else:
             self.ui.liveUpdateButton.setText("Live Update Off")
@@ -1031,8 +1033,32 @@ class ControlMainWindow(QtGui.QDialog):
             self.ui.lineEdit.setText(filepath)
             
         elif lineEdit == 9:
+            self.ui.lineEdit_2.setText(filepath)            
+        
+        elif lineEdit == 10:
             self.ui.lineEdit_2.setText(filepath)
-            
+    
+    def searchFile(self, lineEdit):
+        filepath = ''
+        
+        if lineEdit is 0:           
+            if len(self.defaultLocation) < 1:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", ".", "Geometry files (*.obj)")
+            else:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Geometry files (*.obj)")
+                
+            self.ui.userTerrainLine.setText(filepath[0])
+        
+        elif lineEdit is 1:           
+            if len(self.defaultLocation) < 1:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", ".", "Settings files (*.txt)")
+            else:
+                filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Settings files (*.txt)")
+                
+            self.ui.lineEdit.setText(filepath[0])
+               
+               
+        
             
                     
     def loadImage(self, img): 
@@ -1155,8 +1181,11 @@ class ControlMainWindow(QtGui.QDialog):
             
             p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt", str(xValue), "0.0", str(yValue)], stdout = subprocess.PIPE, bufsize = 1)
             for line in iter(p.stdout.readline, b''):
-                self.ui.liveUpdateProgress.setValue(float(line))
-                
+                if line.find("#") is -1:
+                    self.ui.liveUpdateProgress.setValue(float(line))
+                else:
+                    print line,
+                    
             p.stdout.close()
             p.wait()
             
@@ -1174,103 +1203,174 @@ class ControlMainWindow(QtGui.QDialog):
                 
             if result == QtGui.QMessageBox.Cancel:
                 return  
-        
+                
         print("\nStarting terrain process\n")
         
-        self.ui.generateProgress.setValue(0)
-        
-        if not self.hasSettings:
-            self.saveSettings(True)
-                        
-        if len(self.ui.wallsLine.text()) < 1:
-            subprocess.call(["rm", self.execDir + "/Output/region*"])
-        else:
-            subprocess.call(["rm", self.ui.wallsLine.text() + "/region*"])
-            
         self.ui.generateProgress.setEnabled(True)
+        self.ui.generateProgress.setValue(0)
+                
+        if len(self.ui.userTerrainLine.text()) > 0:
+            self.saveSettings(True)            
+            
+            os.rename(self.ui.userTerrainLine.text(), self.execDir + "/Output/Terrain.obj")
+            
+            p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt", str(self.ui.translateXBox.value()), str(self.ui.translateZBox.value()), str(self.ui.translateYBox.value()), "Accept"], stdout = subprocess.PIPE, bufsize = 1)
         
-        p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt"], stdout = subprocess.PIPE, bufsize = 1)
-        
-        for line in iter(p.stdout.readline, b''):
-            if line.find("Farm") is -1:
-                self.ui.generateProgress.setValue(float(line))
-        
-        p.stdout.close()
-        p.wait()
-        
-        if self.ui.generateProgress.value() > 99:
-            output = ''
-            
-            if len(self.ui.terrainLine.text()) > 1:
-                output = self.ui.terrainLine.text()
-                cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
+            for line in iter(p.stdout.readline, b''):
+                if line.find("#") is -1:
+                    self.ui.generateProgress.setValue(float(line))
+                else:
+                    print line,
+                        
                 
-                cmds.select("Terrain:*")
-                cmds.polySetToFaceNormal()
-                cmds.polyNormal(nm = 0, ch = 0)
-                cmds.polySoftEdge(a = 180, ch = 0)
-                cmds.select("Terrain:*")
+            p.stdout.close()
+            p.wait()   
             
-                cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
+            os.rename(self.execDir + "/Output/Terrain.obj", self.ui.userTerrainLine.text())    
             
-                cmds.select("Terrain:*")
-                cmds.delete()
-            else:
-                cmds.file(self.execDir+ "/Output/Terrain.obj", i=True, ns="Terrain", mnc=True)
+            if self.ui.generateProgress.value() > 99:
+                output = ''
                 
-                cmds.select("Terrain:*")
-                cmds.polySetToFaceNormal()
-                cmds.polyNormal(nm = 0, ch = 0)
-                cmds.polySoftEdge(a = 180, ch = 0)
-                cmds.select("Terrain:*")
+                if len(self.ui.terrainLine.text()) > 1:
+                    output = self.ui.terrainLine.text()
+                    
+                else:                
+                    output = self.execDir + '/Output'
                 
-                cmds.file(self.execDir + "/Output/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
-                
-                cmds.select("Terrain:*")
-                cmds.delete()
-                
-                output = self.execDir + '/Output'
-            
-            filetype = output + "/*.mtl"          
-            subprocess.call(["rm", "-f", filetype])
-            
-            if len(self.ui.wallsLine.text()) > 1:
-                filetype = self.ui.wallsLine.text() + "/*.mtl"
+                filetype = output + "/*.mtl"          
                 subprocess.call(["rm", "-f", filetype])
-
-            print("Done")
-            
-            if self.is2D:
-                self.load3D() 
-            else:
-                self.change3D(10)
-            
-            self.ui.saveSettingsButton.setEnabled(True)
-            
-            self.ui.postGenTerrain.setEnabled(True)
-            
-            if len(self.ui.textureLine.text()) > 0:
-                self.ui.loadTextureButton.setEnabled(True)
                 
-            self.ui.postGenTexture.setEnabled(True)
-            
-            if len(self.ui.heightmapLine.text()) > 0:
-                self.ui.loadHeightmapButton.setEnabled(True)
-            
-            self.ui.postGenHeightmap.setEnabled(True)
-            
-            if len(self.ui.wallsLine.text()) > 0:
-                self.ui.loadWallsButton.setEnabled(True)
-            
-            self.ui.postGenWalls.setEnabled(True)
-            
-            self.ui.switch3DButton.setEnabled(True)
-            self.ui.importButton.setEnabled(True)
-            
-            self.isGenerated = True
-            
+                if len(self.ui.wallsLine.text()) > 1:
+                    filetype = self.ui.wallsLine.text() + "/*.mtl"
+                    subprocess.call(["rm", "-f", filetype])
+
+                print("Done")
+                
+                if self.is2D:
+                    self.load3D() 
+                else:
+                    self.change3D(10)
+                
+                self.ui.saveSettingsButton.setEnabled(True)
+                
+                self.ui.postGenTerrain.setEnabled(True)
+                
+                if len(self.ui.textureLine.text()) > 0:
+                    self.ui.loadTextureButton.setEnabled(True)
+                    
+                self.ui.postGenTexture.setEnabled(True)
+                
+                if len(self.ui.heightmapLine.text()) > 0:
+                    self.ui.loadHeightmapButton.setEnabled(True)
+                
+                self.ui.postGenHeightmap.setEnabled(True)
+                
+                if len(self.ui.wallsLine.text()) > 0:
+                    self.ui.loadWallsButton.setEnabled(True)
+                
+                self.ui.postGenWalls.setEnabled(True)
+                
+                self.ui.switch3DButton.setEnabled(True)
+                self.ui.importButton.setEnabled(True)
+                
+                self.isGenerated = True
+                
+            else:
+                self.ui.generateProgress.setValue(0)        
+        
         else:
-            self.ui.generateProgress.setValue(0) 
+            if not self.hasSettings:
+                self.saveSettings(True)
+                            
+            if len(self.ui.wallsLine.text()) < 1:
+                subprocess.call(["rm", self.execDir + "/Output/region*"])
+            else:
+                subprocess.call(["rm", self.ui.wallsLine.text() + "/region*"])
+                           
+            p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt"], stdout = subprocess.PIPE, bufsize = 1)
+            
+            for line in iter(p.stdout.readline, b''):
+                if line.find("#") is -1:
+                    self.ui.generateProgress.setValue(float(line))
+                else:
+                    print line,
+            
+            p.stdout.close()
+            p.wait()
+            
+            if self.ui.generateProgress.value() > 99:
+                output = ''
+                
+                if len(self.ui.terrainLine.text()) > 1:
+                    output = self.ui.terrainLine.text()
+                    cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", i=True, ns="Terrain", mnc=True)
+                    
+                    cmds.select("Terrain:*")
+                    cmds.polySetToFaceNormal()
+                    cmds.polyNormal(nm = 0, ch = 0)
+                    cmds.polySoftEdge(a = 180, ch = 0)
+                    cmds.select("Terrain:*")
+                
+                    cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
+                
+                    cmds.select("Terrain:*")
+                    cmds.delete()
+                else:
+                    cmds.file(self.execDir+ "/Output/Terrain.obj", i=True, ns="Terrain", mnc=True)
+                    
+                    cmds.select("Terrain:*")
+                    cmds.polySetToFaceNormal()
+                    cmds.polyNormal(nm = 0, ch = 0)
+                    cmds.polySoftEdge(a = 180, ch = 0)
+                    cmds.select("Terrain:*")
+                    
+                    cmds.file(self.execDir + "/Output/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
+                    
+                    cmds.select("Terrain:*")
+                    cmds.delete()
+                    
+                    output = self.execDir + '/Output'
+                
+                filetype = output + "/*.mtl"          
+                subprocess.call(["rm", "-f", filetype])
+                
+                if len(self.ui.wallsLine.text()) > 1:
+                    filetype = self.ui.wallsLine.text() + "/*.mtl"
+                    subprocess.call(["rm", "-f", filetype])
+
+                print("Done")
+                
+                if self.is2D:
+                    self.load3D() 
+                else:
+                    self.change3D(10)
+                
+                self.ui.saveSettingsButton.setEnabled(True)
+                
+                self.ui.postGenTerrain.setEnabled(True)
+                
+                if len(self.ui.textureLine.text()) > 0:
+                    self.ui.loadTextureButton.setEnabled(True)
+                    
+                self.ui.postGenTexture.setEnabled(True)
+                
+                if len(self.ui.heightmapLine.text()) > 0:
+                    self.ui.loadHeightmapButton.setEnabled(True)
+                
+                self.ui.postGenHeightmap.setEnabled(True)
+                
+                if len(self.ui.wallsLine.text()) > 0:
+                    self.ui.loadWallsButton.setEnabled(True)
+                
+                self.ui.postGenWalls.setEnabled(True)
+                
+                self.ui.switch3DButton.setEnabled(True)
+                self.ui.importButton.setEnabled(True)
+                
+                self.isGenerated = True
+                
+            else:
+                self.ui.generateProgress.setValue(0) 
         
     def centerWindow(self):                
         screenRes = QtGui.QDesktopWidget().screenGeometry()
@@ -1287,13 +1387,3 @@ class ControlMainWindow(QtGui.QDialog):
     notFirstClose = False
     liveUpdate = False
    
-global UI
-
-try:
-    UI.close()
-except: 
-    pass
-
-UI = ControlMainWindow(parent=maya_main_window())
-
-UI.show()

@@ -6,7 +6,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 
-#include <QDebug>
+//#include <QDebug>
 
 class VoronoiEdge
 {
@@ -73,14 +73,14 @@ public:
 
     void hasPTRS()
     {
-        if(m_startPTR != NULL && m_endPTR != NULL)
-        {
-            qInfo()<<"Pointers not NULL";
-        }
-        else
-        {
-            qInfo()<<"Pointers are NULL";
-        }
+//        if(m_startPTR != NULL && m_endPTR != NULL)
+//        {
+//            qInfo()<<"Pointers not NULL";
+//        }
+//        else
+//        {
+//            qInfo()<<"Pointers are NULL";
+//        }
     }
 
     QVector3D intersectEdge(VoronoiEdge* _test);
@@ -155,14 +155,14 @@ public:
 
     inline void print()
     {
-        if(m_startPTR != NULL && m_endPTR != NULL)
-        {
-            qInfo()<<"Start: "<<*m_startPTR<<" End: "<<*m_endPTR;
-        }
-        else
-        {
-            qInfo()<<"Start: "<<m_start<<" End: "<<m_end;
-        }
+//        if(m_startPTR != NULL && m_endPTR != NULL)
+//        {
+//            qInfo()<<"Start: "<<*m_startPTR<<" End: "<<*m_endPTR;
+//        }
+//        else
+//        {
+//            qInfo()<<"Start: "<<m_start<<" End: "<<m_end;
+//        }
     };
 
     void makeWall(float width);

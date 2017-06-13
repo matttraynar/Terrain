@@ -107,6 +107,7 @@ public:
     inline std::vector<QVector3D> getTreePositions() const { return m_treePositions; }
 
     QVector3D getFarmPosition() { return m_regions[m_farmRegion].getMiddle(); }
+    bool farmIndexIsValid() { return (m_farmRegion < m_regions.size()); }
 
 private:
     void subdivide();

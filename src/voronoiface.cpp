@@ -394,7 +394,7 @@ std::vector<QVector3D> VoronoiFace::createTreePositions()
         float floorDisp = 20.0f;// (tmp2 - tmp1).length();
         float yDisp = 20.0f;//endPoint.y() - startPoint.y();
 
-        qInfo()<<"Done";
+//        qInfo()<<"Done";
         if(yDisp / 3.0f > floorDisp)
         {
             m_segmentIndices[j].clear();
@@ -708,9 +708,12 @@ void VoronoiFace::exportRegion(std::string filepath)
 //        }
 //    }
 
-    qInfo()<<"Data loaded, exporting";
-    ExportScene::sendTo(type, filepath, tmpVerts, tmpNorms, tmpUVs, 0.0f, false, false);
-    qInfo()<<"Finished exporting";
+//    qInfo()<<"Data loaded, exporting";
+    if(!tmpVerts.empty())
+    {
+        ExportScene::sendTo(type, filepath, tmpVerts, tmpNorms, tmpUVs, 0.0f, false, false);
+    }
+//    qInfo()<<"Finished exporting";
 }
 
 void VoronoiFace::checkUsable()
@@ -719,7 +722,7 @@ void VoronoiFace::checkUsable()
     {
         if(m_edges.size() == 3)
         {
-            qInfo()<<"Not enough edges";
+//            qInfo()<<"Not enough edges";
             m_isUsable = false;
         }
         else
@@ -736,7 +739,7 @@ void VoronoiFace::checkUsable()
 
             if(count > 2)
             {
-                qInfo()<<"Too many short edges";
+//                qInfo()<<"Too many short edges";
                 m_isUsable = false;
             }
         }
@@ -747,7 +750,7 @@ void VoronoiFace::print()
 {
     for(uint i = 0; i < m_edgeVerts.size(); ++i)
     {
-        qInfo()<<"Point "<<i<<": ("<<m_edgeVerts[i].x()<<", 0, "<<m_edgeVerts[i].z()<<") \n";
+//        qInfo()<<"Point "<<i<<": ("<<m_edgeVerts[i].x()<<", 0, "<<m_edgeVerts[i].z()<<") \n";
     }
 }
 
@@ -824,7 +827,7 @@ positionCase VoronoiFace::containsPoint(QVector3D _pos)
     {
         points.push_back(CGALPoint(m_edgeVerts[i].x(), m_edgeVerts[i].z()));
     }
-    qInfo()<<"Points size: "<<m_edgeVerts.size();
+//    qInfo()<<"Points size: "<<m_edgeVerts.size();
 
 
     CGALPoint testPoint(_pos.x(), _pos.z());

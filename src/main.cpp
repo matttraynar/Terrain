@@ -6,6 +6,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    //Used to show as QtWidgetWindow
 //    MainWindow w;
 
 //    w.resize(720, 720);
@@ -13,6 +14,7 @@ int main(int argc, char *argv[])
 
 //    return a.exec();
 
+    //Used to run as exe
     if(argc < 2)
     {
         std::cout<<"Wrong number of parameters entered, needs settings file"<<std::endl;
@@ -45,6 +47,8 @@ int main(int argc, char *argv[])
 
         window.renderHeightmap();
         std::cout<<"100"<<std::endl;
+
+        std::cout<<"##Complete"<<std::endl;
     }
     if(argc == 5)
     {
