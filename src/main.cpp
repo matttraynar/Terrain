@@ -1,12 +1,13 @@
 #include "MainWindow.h"
 #include "glwidget.h"
 #include <QApplication>
+#include <unistd.h>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    //Used to show as QtWidgetWindow
+//    //Used to show as QtWidgetWindow
 //    MainWindow w;
 
 //    w.resize(720, 720);
@@ -21,13 +22,13 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    const char* filepath = strdup(argv[0]);
+    char cwd[1024];
+    const char* filepath = strdup(getcwd(cwd, sizeof(cwd)));
     std::string filenameStr(filepath);
+    filenameStr += "/";
 
-    for(uint i = 0; i < 11; ++i)
-    {
-        filenameStr.pop_back();
-    }
+    //HARDCODE
+    filenameStr = "/local/vince/maya/projects/MattTraynar_demo/scripts/FieldTool/";
 
     const char* settings = strdup(argv[1]);
     std::string settingsStr(settings);

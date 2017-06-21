@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-//#include <QDebug>
-
 ExportScene::ExportScene()
 {
 

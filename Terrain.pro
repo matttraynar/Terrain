@@ -5,32 +5,32 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = Terrain
 TEMPLATE = app
 
-SOURCES += src/main.cpp \
-					src/MainWindow.cpp \
-					src/glwidget.cpp \
-					src/perlinnoise.cpp \
-					src/englishfields.cpp \
-    src/voronoiface.cpp \
-    src/voronoiedge.cpp \
-    src/mesh.cpp \
-    src/exportscene.cpp
+SOURCES +=  src/main.cpp \
+            src/MainWindow.cpp \
+            src/glwidget.cpp \
+            src/perlinnoise.cpp \
+            src/englishfields.cpp \
+            src/voronoiface.cpp \
+            src/voronoiedge.cpp \
+            src/mesh.cpp \
+            src/exportscene.cpp
 
 
 HEADERS  += include/MainWindow.h \
-					include/glwidget.h \
-					include/perlinnoise.h \
-					include/englishfields.h \
-    include/voronoiface.h \
-    include/voronoiedge.h \
-    include/mesh.h \
-	include/exportscene.h \
-	ui_MainWindow.h
+            include/glwidget.h \
+            include/perlinnoise.h \
+            include/englishfields.h \
+            include/voronoiface.h \
+            include/voronoiedge.h \
+            include/mesh.h \
+            include/exportscene.h \
+            ui_MainWindow.h
 
 
 FORMS    += MainWindow.ui
 
 DISTFILES += debug/shaders/vert.glsl \
-					debug/shaders/frag.glsl
+            debug/shaders/frag.glsl
 
 win32::LIBS += -lopengl32
 
@@ -38,14 +38,16 @@ INCLUDEPATH += include/
 INCLUDEPATH += borrowed/
 
 ## CGAL STUFF
-INCLUDEPATH += C:/CGAL-4.9_64/include
-INCLUDEPATH += C:/CGAL-4.9_64/auxiliary/gmp/include
-INCLUDEPATH += C:/boost
+INCLUDEPATH += $$PWD/../cgal/include
+INCLUDEPATH += $$PWD/../boost_1_60_0
+INCLUDEPATH += $$PWD/../assimp-3.3.1/include/
 
-LIBS += C:/CGAL-4.9_64/auxiliary/gmp/lib/libgmp-10.lib
-LIBS += C:/CGAL-4.9_64/auxiliary/gmp/lib/libmpfr-4.lib
-LIBS += C:/CGAL-4.9_64/lib/CGAL-vc140-mt-gd-4.9.lib
+LIBS += -L/local/vince/Documents/MattTraynar_files/assimp-3.3.1/lib/ -lassimp
+LIBS += -lCGAL
+LIBS += -lgmp
+LIBS += -lmpfr
+LIBS += -lboost_thread
 
-win32::LIBS += $$PWD/libs/assimp-3.3.1/lib/Debug/assimp-vc140-mt.lib
+#-L/local/vince/Documents/MattTraynar_files/mpfr-3.1.5/src/.libs/
 
-INCLUDEPATH += $$PWD/libs/assimp-3.3.1/include/
+

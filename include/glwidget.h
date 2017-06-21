@@ -133,6 +133,9 @@ private:
     bool prepareShaderProgram(const std::string &vertexShaderPath, const std::string &fragmentShaderPath);
     void loadMatricesToShader(QVector3D position);
 
+    QOpenGLTexture *addNewTexture(QString filename);
+    QOpenGLTexture *addNewTexture(std::string filename);
+
     QOpenGLShaderProgram m_pgm;
 
     EnglishFields m_fieldGenerator;
@@ -154,9 +157,6 @@ private:
     void prepareTerrain();
     void prepareWater();
     void prepareTrees();
-
-    QOpenGLTexture *addNewTexture(QString &filename);
-    QOpenGLTexture *addNewTexture(std::string &filename);
 
     std::vector<std::shared_ptr<Mesh>> m_farmMeshes;
     QVector3D farmPosition;

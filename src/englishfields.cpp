@@ -135,7 +135,7 @@ void EnglishFields::exportFields(std::string _exportPath, bool defaultPath)
     }
 }
 
-void EnglishFields::operator =(EnglishFields &toCopy)
+void EnglishFields::operator = (EnglishFields &toCopy)
 {
     //Copy the data
     m_width =        toCopy.m_width;
@@ -198,7 +198,7 @@ void EnglishFields::makeVoronoiDiagram(int _seed)
         //A container for storing edge vertices in
 //        std::vector<QVector3D> edgeVerts;
         std::vector<VoronoiEdge*> edges;
-        std::vector<uint> edgeIDs;
+        std::vector<uint> edgeIDs;        
 
         do{
             //Do some assertions before we start using the data
@@ -686,7 +686,6 @@ void EnglishFields::subdivide()
 void EnglishFields::editEdges()
 {
     int startFaceCount = m_regions.size();
-//    qInfo()<<m_regions.size();
 
     if(m_farmRegion < 1000)
     {
@@ -718,15 +717,11 @@ void EnglishFields::editEdges()
 
     m_editedEdgeIDs.clear();
 
-//    qInfo()<<"Finished updating";
-
     for(uint i = 0; i < m_regions.size(); ++i)
     {
         m_regions[i].loadVerts(m_allEdges);
         m_regions[i].organiseEdgeIDs();
     }
-
-//    qInfo()<<"Verts loaded";
 
     std::vector<uint> threeFieldRemoval;
 
@@ -739,26 +734,16 @@ void EnglishFields::editEdges()
 
         float fieldTypeSwitch = 100.0f * (float)rand()/(float)RAND_MAX;
 
-//        fieldTypeSwitch = 60.0f;
-
         if(fieldTypeSwitch < 40.0f)
         {
-//            qInfo()<<"Three field"<<i;
             threeField(m_regions[i]);
             threeFieldRemoval.push_back(i);
         }
         else if(fieldTypeSwitch < 80.0f)
         {
-//            qInfo()<<"Straight field"<<i;
             straightField(m_regions[i]);
         }
-        else
-        {
-//            qInfo()<<"Nothing"<<i;
-        }
     }
-
-//    qInfo()<<"Done";
 
     float tmpFarmRegion = m_farmRegion;
 
@@ -789,25 +774,11 @@ void EnglishFields::editEdges()
         m_farmRegion = tmpFarmRegion;
     }
 
-//    for(uint i = 0; i < m_editedEdgeIDs.size(); ++i)
-//    {
-//        removeEdge(m_editedEdgeIDs[i]);
-
-//        for(uint j = 0; j < m_editedEdgeIDs.size(); ++j)
-//        {
-//            if(m_editedEdgeIDs[j] > m_editedEdgeIDs[i])
-//            {
-//                m_editedEdgeIDs[j]--;
-//            }
-//        }
-//    }
-
-//    m_editedEdgeIDs.clear();
 
     for(uint i = 0; i < m_regions.size(); ++i)
     {
         m_regions[i].loadVerts(m_allEdges);
-    }
+    }    
 }
 
 void EnglishFields::farmFieldEdges()

@@ -470,6 +470,8 @@ VoronoiFace::VoronoiFace(const VoronoiFace &_toCopy)
 
     m_midPoint = _toCopy.m_midPoint;
 
+    m_edgeCount = _toCopy.m_edgeCount;
+
 }
 
 void VoronoiFace::operator =(const VoronoiFace &_toCopy)
@@ -491,6 +493,8 @@ void VoronoiFace::operator =(const VoronoiFace &_toCopy)
     m_midPointIsCalculated = _toCopy.m_midPointIsCalculated;
 
     m_midPoint = _toCopy.m_midPoint;
+
+    m_edgeCount = _toCopy.m_edgeCount;
 }
 
 void VoronoiFace::updateVerts()

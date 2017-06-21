@@ -5,6 +5,7 @@
 GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent ) :
     QGLWidget(parent)
 {
+    std::cout<<"##"<<_filepath<<std::endl;
     loadThese(_settings);
     m_live = false;
 
@@ -45,7 +46,8 @@ GLWidget::GLWidget(std::string _filepath, std::string _settings, QWidget* parent
 
     double width = 50.0;
 
-    m_fieldGenerator = EnglishFields(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, s_farmPos, m_live);
+    EnglishFields newSystem(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, s_farmPos, m_live);
+    m_fieldGenerator = newSystem;
 
     m_vRegions = m_fieldGenerator.getRegions();
 
@@ -181,7 +183,8 @@ GLWidget::GLWidget(bool _liveUpdate, std::string _filepath, std::string _setting
     std::cout<<"20"<<std::endl;
 
     farmPosition = _farmPos;
-    m_fieldGenerator = EnglishFields(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, _farmPos, m_live);
+    EnglishFields newSystem(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, _farmPos, m_live);
+    m_fieldGenerator = newSystem;
 
     m_vRegions = m_fieldGenerator.getRegions();
 
@@ -247,7 +250,8 @@ GLWidget::GLWidget(bool _liveUpdate, bool _finish, std::string _filepath, std::s
     std::cout<<"20"<<std::endl;
 
     farmPosition = _farmPos;
-    m_fieldGenerator = EnglishFields(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, _farmPos, m_live);
+    EnglishFields newSystem(s_terrainSize, s_hasSeed, s_seed, s_hasFarm, s_numPoints, _farmPos, m_live);
+    m_fieldGenerator = newSystem;
 
     m_vRegions = m_fieldGenerator.getRegions();
 
@@ -372,6 +376,8 @@ void GLWidget::loadThese(std::string _settingsPath)
 {
     std::string line;
     std::ifstream f(_settingsPath);
+
+    std::cout<<"##"<<_settingsPath<<std::endl;
 
     if(f)
     {
@@ -674,6 +680,7 @@ void GLWidget::initializeGL()
         std::cout<<"##Doing Textures"<<std::endl;
         m_pgm.bind();
 
+
         QOpenGLTexture* sand = addNewTexture(m_workingPath + "textures/sand.png");
         sand->bind(0);
         m_pgm.setUniformValue("sandTexture", 0);
@@ -847,7 +854,7 @@ void GLWidget::renderTexture()
 
     if(!s_exportTexture)
     {
-        output = m_workingPath + "/Output/terrainTexture.png";
+        output = m_workingPath + "Output/terrainTexture.png";
     }
 
 
@@ -866,7 +873,7 @@ void GLWidget::renderHeightmap()
 
     if(!s_exportHeightmap)
     {
-        output = m_workingPath + "/Output/heightmap.png";
+        output = m_workingPath + "Output/heightmap.png";
     }
 
     heightmapImage.save(output.c_str(), "PNG", 100);
@@ -888,7 +895,7 @@ void GLWidget::renderOrtho()
 
     if(!s_exportWalls)
     {
-        output = m_workingPath + "/Output/orthoImage.png";
+        output = m_workingPath + "Output/orthoImage.png";
     }
 
     picture.save(output.c_str(), "PNG", 100);
@@ -1895,7 +1902,7 @@ void GLWidget::prepareTrees()
     }
 }
 
-QOpenGLTexture* GLWidget::addNewTexture(QString &filename)
+QOpenGLTexture* GLWidget::addNewTexture(QString filename)
 {
     QOpenGLTexture* texture = new QOpenGLTexture(QImage(filename));
 
@@ -1908,7 +1915,7 @@ QOpenGLTexture* GLWidget::addNewTexture(QString &filename)
     return texture;
 }
 
-QOpenGLTexture* GLWidget::addNewTexture(std::string &filename)
+QOpenGLTexture* GLWidget::addNewTexture(std::string filename)
 {
     QOpenGLTexture* texture = new QOpenGLTexture(QImage(filename.c_str()));
 

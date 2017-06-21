@@ -6,6 +6,8 @@
 #include <vector>
 #include <memory>
 
+#include <assimp/ProgressHandler.hpp>
+
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
