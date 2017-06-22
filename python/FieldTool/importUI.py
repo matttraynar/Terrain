@@ -55,7 +55,7 @@ class Ui_Dialog(object):
         self.terrainButton = QtGui.QPushButton(self.layoutWidget)
         self.terrainButton.setText("")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(__file__.rsplit('\\', 1)[0]+"/Images/browseFolder.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("/local/vince/maya/projects/MattTraynar_demo/scripts/FieldTool/Images/browseFolder.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.terrainButton.setIcon(icon)
         self.terrainButton.setIconSize(QtCore.QSize(25, 25))
         self.terrainButton.setFlat(True)

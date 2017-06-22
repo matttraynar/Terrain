@@ -62,7 +62,7 @@ class importWindow(QtGui.QDialog):
             
             filetype = wallsPath + "/region*"  
                         
-            for line in subprocess.check_output(["ls", filetype]).split('\n'):
+            for line in subprocess.check_output("ls " + filetype, shell = True).split('\n'):
                 filename = line.rsplit('/', 1)[-1]
                 
                 if len(filename) > 1:
@@ -74,7 +74,7 @@ class importWindow(QtGui.QDialog):
             
             filetype = treesPath + "/*obj"  
                         
-            for line in subprocess.check_output(["ls", filetype]).split('\n'):
+            for line in subprocess.check_output("ls " + filetype, shell = True).split('\n'):
                 filename = line.rsplit('/', 1)[-1]
                 
                 if len(filename) > 1:
@@ -278,7 +278,7 @@ class importWindow(QtGui.QDialog):
             files = []
                        
             try:
-                files = subprocess.check_output(["ls", filetype]).split('\n')
+                files = subprocess.check_output("ls " + filetype, shell = True).split('\n')
             except subprocess.CalledProcessError as e:
                 flags = QtGui.QMessageBox.StandardButton.Retry
                 flags |= QtGui.QMessageBox.StandardButton.Cancel
@@ -308,7 +308,7 @@ class importWindow(QtGui.QDialog):
             self.ui.wallsEdit.clear()
             self.ui.wallsLine.setText(filepath)            
                         
-            for line in subprocess.check_output(["ls", filetype]).split('\n'):
+            for line in subprocess.check_output("ls " + filetype, shell = True).split('\n'):
                 filename = line.rsplit('/', 1)[-1]
                 
                 if len(filename) > 1:
@@ -326,7 +326,7 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.setWindowFlags(QtCore.Qt.Tool)
         self.ui =  customUI.Ui_FieldTool()
         self.ui.setupUi(self)
-        
+
         self.ui.slider3D.setVisible(False)
         self.ui.slider3D.valueChanged.connect(self.change3D)
         
@@ -367,19 +367,13 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.ui.imageButton.clicked.connect(self.setPos)        
         
         self.centerWindow()    
-            
-        img = QtGui.QPixmap(customUI.__file__.rsplit('\\', 1)[0] + "/Images/tmpImage.png")
-                    
-        scaled_img = img.scaled(self.ui.imageButton.size(), QtCore.Qt.KeepAspectRatio)
                 
-        newIcon = QtGui.QIcon(scaled_img)
-        self.ui.imageButton.setIcon(newIcon)
-        
         self.is2D = True
         self.isNotValid = False
         self.defaultLocation = ''        
-        self.workingDir = customUI.__file__.rsplit('\\',1)[0]
-        self.execDir = customUI.__file__.rsplit('\\', 1)[0]
+        self.workingDir = customUI.__file__.rsplit('/',1)[0]
+        self.execDir = customUI.__file__.rsplit('/', 1)[0]
+        
         self.notFirstClose = False
 
         self.ortho = False
@@ -387,7 +381,7 @@ class ControlMainWindow(QtGui.QMainWindow):
         self.heightmap = False
         self.persp = False
         
-        self.liveUpdate = False
+        self.liveUpdate = False                
         
     def acceptFarmPosition(self):    
         self.hasSettings = False
@@ -424,7 +418,7 @@ class ControlMainWindow(QtGui.QMainWindow):
                 filetype = self.ui.wallsLine.text() + "/*.mtl"
                 subprocess.call(["rm", "-f", filetype])
 
-            print("Done")
+            self.ui.statusbar.showMessage("Complete", 5)
             
             if self.is2D:
                 self.load3D() 
@@ -468,6 +462,9 @@ class ControlMainWindow(QtGui.QMainWindow):
             self.ui.acceptButton.setEnabled(False)
             self.ui.liveUpdateProgress.setEnabled(False)
             
+            if self.is2D:
+                self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.CrossCursor)
+            
             self.liveUpdate = False
             
         elif not self.liveUpdate and not self.isGenerated:
@@ -488,7 +485,7 @@ class ControlMainWindow(QtGui.QMainWindow):
     
     def closeEvent(self, event):
         if self.notFirstClose:
-            subprocess.call(["rm", "-f", self.execDir + "/Output/*"])
+            subprocess.call("rm -f " + self.execDir + "/Output/*", shell = True)
         else:
             self.notFirstClose = True
 
@@ -513,8 +510,9 @@ class ControlMainWindow(QtGui.QMainWindow):
             scaled_img = img.scaled(self.ui.imageButton.size(), QtCore.Qt.KeepAspectRatio)
                 
             newIcon = QtGui.QIcon(scaled_img)
-            self.ui.imageButton.setIcon(newIcon)
-            
+            self.ui.imageButton.setIcon(newIcon)         
+
+        self.update()
 
         event.accept()        
         
@@ -537,7 +535,7 @@ class ControlMainWindow(QtGui.QMainWindow):
                 if result == QtGui.QMessageBox.Cancel:
                     return 
                 elif result == QtGui.QMessageBox.Ok:
-                    subprocess.call(["rm", "-f", self.ui.terrainLine.text() + "/Terrain.obj"])
+                    subprocess.call("rm -f " + self.ui.terrainLine.text() + "/Terrain.obj", shell = True)
             
             os.rename(self.execDir + "/Output/Terrain.obj", self.ui.terrainLine.text() + "/Terrain.obj")
         
@@ -559,7 +557,7 @@ class ControlMainWindow(QtGui.QMainWindow):
                 if result == QtGui.QMessageBox.Cancel:
                     return 
                 elif result == QtGui.QMessageBox.Ok:
-                    subprocess.call(["rm", "-f", self.ui.textureLine.text() + "/terrainTexture.png"])
+                    subprocess.call("rm -f " + self.ui.textureLine.text() + "/terrainTexture.png", shell = True)
                     
             os.rename(self.execDir + "/Output/terrainTexture.png", self.ui.textureLine.text() + "/terrainTexture.png")
             
@@ -583,7 +581,7 @@ class ControlMainWindow(QtGui.QMainWindow):
                 if result == QtGui.QMessageBox.Cancel:
                     return 
                 elif result == QtGui.QMessageBox.Ok:
-                    subprocess.call(["rm", "-f", self.ui.heightmapLine.text() + "/heightmap.png"])
+                    subprocess.call("rm -f " + self.ui.heightmapLine.text() + "/heightmap.png", shell = True)
               
             os.rename(self.execDir + "/Output/heightmap.png", self.ui.heightmapLine.text() + "/heightmap.png")
          
@@ -607,18 +605,20 @@ class ControlMainWindow(QtGui.QMainWindow):
                 if result == QtGui.QMessageBox.Cancel:
                     return 
                 elif result == QtGui.QMessageBox.Ok:
-                    subprocess.call(["rm", "-f", self.ui.wallsLine.text() + "/orthoImage.png"])
-                    subprocess.call(["rm", "-f", self.ui.wallsLine.text() + "/region*"])
+                    subprocess.call("rm -f " + self.ui.wallsLine.text() + "/orthoImage.png", shell = True)
+                    subprocess.call("rm -f " + self.ui.wallsLine.text() + "/region*", shell = True)
                     
             os.rename(self.execDir + "/Output/orthoImage.png", self.ui.wallsLine.text() + "/orthoImage.png")
             
-            for line in subprocess.check_output(["ls", self.execDir + "/Output/region*"]).split('\n'):
+            for line in subprocess.check_output("ls " + self.execDir + "/Output/region*", shell = True).split('\n'):
                 filename = line.rsplit('/', 1)[-1]
                 
                 if len(filename) > 1:          
                     os.rename(line, self.ui.wallsLine.text() + "/" + filename)
             
             self.ui.loadWallsButton.setEnabled(True)
+        
+        self.ui.statusbar.showMessage("Complete", 5)
             
         
     def createImportWindow(self):
@@ -653,7 +653,6 @@ class ControlMainWindow(QtGui.QMainWindow):
         f = open(str(filepath), 'r')     
            
         a = f.readline()
-        print a
         value = int(a)
         
         if value > -1:            
@@ -859,7 +858,7 @@ class ControlMainWindow(QtGui.QMainWindow):
         if self.hasSettings:
             os.rename(self.settingsDir + "/fieldSettings.txt", filepath + "/fieldSettings.txt")
             self.settingsDir = filepath
-        else:                                
+        else:                            
             f = open(filepath + "/fieldSettings.txt", 'w')
             
             if self.ui.seedValueCheck.isChecked():
@@ -1006,7 +1005,7 @@ class ControlMainWindow(QtGui.QMainWindow):
         
         if lineEdit < 2:            
             try:
-                files = subprocess.check_output(["ls", filetype]).split('\n')
+                files = subprocess.check_output("ls " + filetype, shell = True).split('\n')
             except subprocess.CalledProcessError as e:
                 flags = QtGui.QMessageBox.StandardButton.Retry
                 flags |= QtGui.QMessageBox.StandardButton.Cancel
@@ -1025,7 +1024,7 @@ class ControlMainWindow(QtGui.QMainWindow):
             self.ui.farmMeshBrowser.clear()
             self.ui.farmMeshLine.setText(filepath)            
                         
-            for line in subprocess.check_output(["ls", filetype]).split('\n'):
+            for line in subprocess.check_output("ls " + filetype, shell = True).split('\n'):
                 filename = line.rsplit('/', 1)[-1]
                 
                 if len(filename) > 1:
@@ -1035,7 +1034,7 @@ class ControlMainWindow(QtGui.QMainWindow):
             self.ui.treeMeshBrowser.clear()
             self.ui.treeMeshLine.setText(filepath)            
                         
-            for line in subprocess.check_output(["ls", filetype]).split('\n'):
+            for line in subprocess.check_output("ls " + filetype, shell = True).split('\n'):
                 filename = line.rsplit('/', 1)[-1]
                 
                 if len(filename) > 1:
@@ -1086,11 +1085,7 @@ class ControlMainWindow(QtGui.QMainWindow):
             else:
                 filepath = QtGui.QFileDialog.getOpenFileName(self, "Choose a file", str(self.defaultLocation), "Settings files (*.txt)")
                 
-            self.ui.lineEdit.setText(filepath[0])
-               
-               
-        
-            
+            self.ui.lineEdit.setText(filepath[0])  
                     
     def loadImage(self, img): 
         if not self.ui.imageButton.isEnabled():    
@@ -1107,6 +1102,10 @@ class ControlMainWindow(QtGui.QMainWindow):
         if not self.is2D:
             self.ui.switch3DButton.setText("Switch to 3D")
             self.is2D = True
+            self.ui.slider3D.setVisible(False)
+
+            if self.liveUpdate:
+                self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.CrossCursor)
                    
         if len(self.ui.wallsLine.text()) > 0:
             img = QtGui.QPixmap(self.ui.wallsLine.text() + '/orthoImage.png')        
@@ -1121,6 +1120,10 @@ class ControlMainWindow(QtGui.QMainWindow):
         if not self.is2D:
             self.ui.switch3DButton.setText("Switch to 3D")
             self.is2D = True
+            self.ui.slider3D.setVisible(False)
+
+            if self.liveUpdate:
+                self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.CrossCursor)
             
         if len(self.ui.textureLine.text()) > 0:
             img = QtGui.QPixmap(self.ui.textureLine.text() + '/terrainTexture.png')        
@@ -1136,6 +1139,7 @@ class ControlMainWindow(QtGui.QMainWindow):
         if not self.is2D:
             self.ui.switch3DButton.setText("Switch to 3D")
             self.is2D = True
+            self.ui.slider3D.setVisible(False)
           
         if len(self.ui.heightmapLine.text()) > 0:
             img = QtGui.QPixmap(self.ui.heightmapLine.text() + '/heightmap.png')        
@@ -1177,13 +1181,17 @@ class ControlMainWindow(QtGui.QMainWindow):
                 img = QtGui.QPixmap(self.ui.wallsLine.text() + '/orthoImage.png')
             
                 self.loadImage(img)
-                self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.CrossCursor)
+
+                if self.liveUpdate:
+                    self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.CrossCursor)
                 
             elif len(self.ui.textureLine.text()) > 0:                     
                 img = QtGui.QPixmap(self.ui.textureLine.text() + '/terrainTexture.png')
             
                 self.loadImage(img)
-                self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.CrossCursor)
+
+                if self.liveUpdate:
+                    self.ui.imageButton.setCursor(QtCore.Qt.CursorShape.CrossCursor)
                 
             elif len(self.ui.heightmapLine.text()) > 0:                     
                 img = QtGui.QPixmap(self.ui.heightmapLine.text() + '/heightmap.png')
@@ -1265,7 +1273,7 @@ class ControlMainWindow(QtGui.QMainWindow):
             
             os.rename(self.ui.userTerrainLine.text(), self.execDir + "/Output/Terrain.obj")
             
-            p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt", str(self.ui.translateXBox.value()), str(self.ui.translateZBox.value()), str(self.ui.translateYBox.value()), "Accept"], stdout = subprocess.PIPE, bufsize = 1)
+            p = subprocess.Popen([self.execDir + "/Terrain", self.settingsDir + "/fieldSettings.txt", str(self.ui.translateXBox.value()), str(self.ui.translateZBox.value()), str(self.ui.translateYBox.value()), "Accept"], stdout = subprocess.PIPE, bufsize = 1)
         
             for line in iter(p.stdout.readline, b''):
                 if line.find("#") is -1:
@@ -1288,15 +1296,15 @@ class ControlMainWindow(QtGui.QMainWindow):
                 else:                
                     output = self.execDir + '/Output'
                 
-                filetype = output + "/*.mtl"          
-                subprocess.call(["rm", "-f", filetype])
+                filetype = output + "/*.mtl"  
+                subprocess.check_output("rm -f " + filetype, shell = True)
                 
                 if len(self.ui.wallsLine.text()) > 1:
                     filetype = self.ui.wallsLine.text() + "/*.mtl"
-                    subprocess.call(["rm", "-f", filetype])
-
-                print("Done")
+                    subprocess.call("rm -f " + filetype, shell = True)
                 
+                self.ui.statusbar.showMessage("Complete", 5)
+
                 if self.is2D:
                     self.load3D() 
                 else:
@@ -1325,6 +1333,7 @@ class ControlMainWindow(QtGui.QMainWindow):
                 self.ui.importButton.setEnabled(True)
                 
                 self.isGenerated = True
+                self.persp = True
                 
             else:
                 self.ui.generateProgress.setValue(0)        
@@ -1335,19 +1344,20 @@ class ControlMainWindow(QtGui.QMainWindow):
                             
             if len(self.ui.wallsLine.text()) < 1:
                 try:
-                    subprocess.call(["rm", self.execDir + "/Output/region*"])
+                    subprocess.call("rm " + self.execDir + "/Output/region*", shell = True)
                 except:
                     pass
 
             else:
                 try:
-                    subprocess.call(["rm", self.ui.wallsLine.text() + "/region*"])
+                    subprocess.call("rm " + self.ui.wallsLine.text() + "/region*", shell = True)
                 except:
                     pass
                            
-            p = subprocess.Popen([self.execDir + "/Terrain.exe", self.settingsDir + "/fieldSettings.txt"], stdout = subprocess.PIPE, bufsize = 1)
+            p = subprocess.Popen([self.execDir + "/Terrain", self.settingsDir + "/fieldSettings.txt"], stdout = subprocess.PIPE, bufsize = 1)
             
             for line in iter(p.stdout.readline, b''):
+                print line,
                 if line.find("#") is -1:
                     self.ui.generateProgress.setValue(float(line))
                 else:
@@ -1368,7 +1378,7 @@ class ControlMainWindow(QtGui.QMainWindow):
                     cmds.polyNormal(nm = 0, ch = 0)
                     cmds.polySoftEdge(a = 180, ch = 0)
                     cmds.select("Terrain:*")
-                
+
                     cmds.file(self.ui.terrainLine.text() + "/Terrain.obj", f = True, typ = "OBJexport", es = True, op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
                 
                     cmds.select("Terrain:*")
@@ -1389,14 +1399,14 @@ class ControlMainWindow(QtGui.QMainWindow):
                     
                     output = self.execDir + '/Output'
                 
-                filetype = output + "/*.mtl"          
-                subprocess.call(["rm", "-f", filetype])
+                filetype = output + "/*.mtl"  
+                subprocess.check_output("rm -f " + filetype, shell = True)
                 
                 if len(self.ui.wallsLine.text()) > 1:
                     filetype = self.ui.wallsLine.text() + "/*.mtl"
-                    subprocess.call(["rm", "-f", filetype])
+                    subprocess.call("rm -f " + filetype, shell = True)
 
-                print("Done")
+                self.ui.statusbar.showMessage("Complete", 5)
                 
                 if self.is2D:
                     self.load3D() 
@@ -1426,6 +1436,7 @@ class ControlMainWindow(QtGui.QMainWindow):
                 self.ui.importButton.setEnabled(True)
                 
                 self.isGenerated = True
+                self.persp = True
                 
             else:
                 self.ui.generateProgress.setValue(0) 

@@ -1,6 +1,8 @@
 import os, sys
     
-cmd_subfolder = os.environ['MAYA_SCRIPT_PATH'].split(';')[2] + "/FieldTool"
+cmd_subfolder = os.environ['MAYA_SCRIPT_PATH'].split(':')[0] + "/FieldTool"
+
+cmd_subfolder = "/local/vince/maya/projects/MattTraynar_demo/scripts/FieldTool/"
 
 if cmd_subfolder not in sys.path:
      sys.path.insert(0, cmd_subfolder)

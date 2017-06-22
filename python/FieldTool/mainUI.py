@@ -55,7 +55,7 @@ class Ui_FieldTool(object):
         self.imageButton.setCheckable(False)
         self.imageButton.setAutoDefault(False)
         self.imageButton.setFlat(False)
-        self.imageButton.setObjectName("imageButton")
+        self.imageButton.setObjectName("imageButton")        
         self.gridLayout_13.addWidget(self.imageButton, 0, 0, 1, 1)
         self.switch3DButton = QtGui.QPushButton(self.dockWidgetContents_10)
         self.switch3DButton.setEnabled(False)
@@ -196,7 +196,7 @@ class Ui_FieldTool(object):
         self.farmMeshButton.setMinimumSize(QtCore.QSize(10, 0))
         self.farmMeshButton.setText("")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("Images/browseFolder.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("/local/vince/maya/projects/MattTraynar_demo/scripts/FieldTool/Images/browseFolder.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.farmMeshButton.setIcon(icon)
         self.farmMeshButton.setIconSize(QtCore.QSize(25, 25))
         self.farmMeshButton.setCheckable(False)
@@ -905,4 +905,3 @@ class Ui_FieldTool(object):
         self.saveSettingsButton.setText(QtGui.QApplication.translate("FieldTool", "Save Settings", None, QtGui.QApplication.UnicodeUTF8))
         self.resetSettingsButton.setText(QtGui.QApplication.translate("FieldTool", "Reset Settings", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), QtGui.QApplication.translate("FieldTool", "Save", None, QtGui.QApplication.UnicodeUTF8))
-
